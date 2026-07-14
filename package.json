@@ -1,0 +1,25 @@
+{
+  "name": "pioneer-auctions",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "pnpm": ">=11.4.0 <12"
+  },
+  "scripts": {
+    "build": "corepack pnpm -r --if-present build",
+    "check": "corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test",
+    "dev": "corepack pnpm -r --parallel --if-present dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "corepack pnpm -r --if-present lint",
+    "test": "corepack pnpm -r --if-present test",
+    "typecheck": "corepack pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "turbo": "2.5.5",
+    "typescript": "5.8.3"
+  }
+}
