@@ -1,0 +1,47 @@
+name: Task 003 web preview
+
+on:
+  push:
+    branches: [agent/task-003-design-system]
+    paths:
+      - ".github/workflows/task-003-preview.yml"
+      - "apps/web/**"
+      - "packages/design-tokens/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pages: write
+
+concurrency:
+  group: task-003-pages-preview
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack prepare pnpm@11.4.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Build static preview
+        run: pnpm --filter @pioneer/web build
+        env:
+          GITHUB_PAGES: "true"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/web/out
+      - id: deployment
+        uses: actions/deploy-pages@v4
