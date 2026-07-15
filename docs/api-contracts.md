@@ -17,7 +17,14 @@ Status: version 1 draft for implementation. Product/legal decisions marked **OPE
 - Lot events are ordered by an integer `sequence` that increases monotonically within one lot.
 - The server is authoritative. Client clocks/countdowns are display aids only.
 
-Machine-consumable types begin in `packages/contracts`. Task 002 adds runtime schemas, generated OpenAPI, examples, and compatibility tests.
+The executable source is the Zod schema package at `packages/contracts`. It exports inferred TypeScript types and typed Socket.IO maps for API, web, and admin. Generated artifacts are checked in at:
+
+- `packages/contracts/openapi/v1.json` — OpenAPI 3.1 inventory for every REST path below; contracted endpoints have full request/response schemas and planned endpoints are explicitly marked with `x-implementation-status: planned`.
+- `packages/contracts/schemas/v1/golden-fixtures.schema.json` — JSON Schema used for cross-language generation.
+- `packages/contracts/dart/lib/pioneer_contracts.dart` — generated Dart models; do not hand-edit.
+- `packages/contracts/fixtures/v1` — valid, invalid, and cross-language golden payloads.
+
+The API exposes the same checked-in document at `GET /api/v1/openapi.json`. Run `pnpm --filter @pioneer/contracts generate` after an intentional schema change. Tests fail when generated files, examples, fixtures, or the documented REST inventory drift.
 
 ## 2. Common types
 
@@ -195,20 +202,27 @@ Socket commands are preferred while connected. Equivalent REST commands support 
 
 Admin paths require RBAC and audit metadata. Destructive/financial actions may require step-up authentication.
 
-| Method         | Path                                     | Purpose                                        |
-| -------------- | ---------------------------------------- | ---------------------------------------------- |
-| GET/POST/PATCH | `/admin/lots...`                         | Lot CRUD, media/docs, feature flags            |
-| GET/POST/PATCH | `/admin/auctions...`                     | Auction scheduling/configuration               |
-| POST           | `/admin/auctions/:id/pause`              | Audited pause with reason                      |
-| POST           | `/admin/auctions/:id/resume`             | Audited resume with timing decision            |
-| POST           | `/admin/auctions/:id/cancel`             | Audited cancel                                 |
-| GET            | `/admin/final-bid-approvals`             | Approval queue with SLA                        |
-| POST           | `/admin/final-bid-approvals/:id/approve` | Confirm hammer and generate obligations        |
-| POST           | `/admin/final-bid-approvals/:id/reject`  | Reject with structured reason; price unchanged |
-| GET/POST       | `/admin/offer-decisions...`              | Offer queue and decisions                      |
-| GET/POST       | `/admin/consignment-reviews...`          | Listing moderation                             |
-| GET/POST       | `/admin/deposit-actions...`              | Holds, applications, permitted refunds         |
-| GET            | `/admin/audit-events`                    | Filtered immutable audit view                  |
+| Method | Path                                     | Purpose                                        |
+| ------ | ---------------------------------------- | ---------------------------------------------- |
+| GET    | `/admin/lots`                            | List lots for operations                       |
+| POST   | `/admin/lots`                            | Create lot                                     |
+| PATCH  | `/admin/lots/:id`                        | Update lot, media/docs, feature flags          |
+| GET    | `/admin/auctions`                        | List auctions for operations                   |
+| POST   | `/admin/auctions`                        | Create auction schedule/configuration          |
+| PATCH  | `/admin/auctions/:id`                    | Update auction schedule/configuration          |
+| POST   | `/admin/auctions/:id/pause`              | Audited pause with reason                      |
+| POST   | `/admin/auctions/:id/resume`             | Audited resume with timing decision            |
+| POST   | `/admin/auctions/:id/cancel`             | Audited cancel                                 |
+| GET    | `/admin/final-bid-approvals`             | Approval queue with SLA                        |
+| POST   | `/admin/final-bid-approvals/:id/approve` | Confirm hammer and generate obligations        |
+| POST   | `/admin/final-bid-approvals/:id/reject`  | Reject with structured reason; price unchanged |
+| GET    | `/admin/offer-decisions`                 | Offer queue                                    |
+| POST   | `/admin/offer-decisions/:id`             | Record offer decision                          |
+| GET    | `/admin/consignment-reviews`             | Listing moderation queue                       |
+| POST   | `/admin/consignment-reviews/:id`         | Record listing moderation decision             |
+| GET    | `/admin/deposit-actions`                 | Deposit operations queue                       |
+| POST   | `/admin/deposit-actions/:id`             | Record hold/application/permitted refund       |
+| GET    | `/admin/audit-events`                    | Filtered immutable audit view                  |
 
 ## 5. REST bid example
 
@@ -236,9 +250,10 @@ Accepted (`201`):
   "contractVersion": 1,
   "commandId": "835cb208-e936-4e0c-9863-c85a96f2ff60",
   "status": "ACCEPTED",
-  "correlationId": "01J2…",
+  "correlationId": "corr-rest-bid",
+  "serverTime": "2026-07-14T17:00:00.000Z",
   "result": {
-    "lotId": "5ed…",
+    "lotId": "11111111-1111-4111-8111-111111111111",
     "sequence": 42,
     "currentBid": { "currency": "AED", "amountFils": 5200000 },
     "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
@@ -257,14 +272,15 @@ Rejected bid commands return a semantic result rather than using transport failu
   "contractVersion": 1,
   "commandId": "835cb208-e936-4e0c-9863-c85a96f2ff60",
   "status": "REJECTED",
-  "correlationId": "01J2…",
+  "correlationId": "corr-rest-bid",
+  "serverTime": "2026-07-14T17:00:00.000Z",
   "error": {
     "code": "BID_TOO_LOW",
     "message": "The current bid changed. The next bid is AED 53,000.",
     "retryable": true
   },
   "latest": {
-    "lotId": "5ed…",
+    "lotId": "11111111-1111-4111-8111-111111111111",
     "sequence": 42,
     "currentBid": { "currency": "AED", "amountFils": 5200000 },
     "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
@@ -403,9 +419,11 @@ type CommandAck<T> =
         retryable: boolean;
         retryAfterMs?: number;
       };
-      latest?: LotPublicState;
+      latest?: BidLatestState;
     };
 ```
+
+For bid/proxy commands, `BidLatestState` is the minimum authoritative recovery shape: `lotId`, `sequence`, `currentBid`, `nextMinimumBid`, and `closesAt`. A client may receive additive fields and should tolerate them.
 
 Transport timeout means “unknown,” not “rejected.” The client retries the same `commandId` or syncs; it must never create a new command blindly.
 
@@ -696,9 +714,26 @@ The bid decision and updated close time are atomic. The close worker must fence 
 
 Before changing this contract:
 
-- classify additive vs breaking;
+- classify the change as additive or breaking;
 - update this document and runtime schemas;
 - add examples and compatibility tests;
 - update web, admin, and Flutter consumer fixtures;
 - record semantics in `docs/decisions-log.md`;
 - define rollout order and minimum supported client version for breaking behavior.
+
+Additive changes include optional object fields and new independent endpoints. V1 object decoders must ignore fields they do not use. Unknown event names and unknown required enum values are not silently coerced: clients log the contract mismatch, stop applying that message, and recover with a supported snapshot or upgrade path.
+
+Breaking changes include removing or renaming a field, changing units or meaning, making an optional field required, changing command/event semantics, or introducing a required enum value without an agreed fallback. A breaking change requires a new `/api/vN` base path and `/auctions/vN` namespace. The rollout order is server dual-read/dual-publish support, compatible client releases, minimum-version enforcement after the documented adoption window, then old-version retirement. Mobile store review latency must be included in that window.
+
+## 17. Dart generation and golden proof
+
+Quicktype consumes the generated JSON Schema and emits Dart without semantic field renaming. Flutter should import or vendor the generated `pioneer_contracts.dart` file through its contracts package; application-specific view models may wrap it but must not redefine transport DTOs.
+
+The shared proof decodes `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck`, then performs a round trip:
+
+```bash
+dart analyze packages/contracts/dart
+dart run packages/contracts/dart/test/golden_decode_test.dart
+```
+
+CI runs both commands with the pinned Dart SDK. Regeneration and the TypeScript contract tests must be committed together so a Dart diff is reviewable alongside the schema change.

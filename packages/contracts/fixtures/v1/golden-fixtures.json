@@ -1,0 +1,52 @@
+{
+  "money": { "currency": "AED", "amountFils": 5200000 },
+  "lotSnapshot": {
+    "contractVersion": 1,
+    "event": "lot:snapshot",
+    "lotId": "11111111-1111-4111-8111-111111111111",
+    "auctionId": "22222222-2222-4222-8222-222222222222",
+    "sequence": 42,
+    "generatedAt": "2026-07-15T08:00:01.000Z",
+    "state": {
+      "lifecycle": "LIVE",
+      "currentBid": { "currency": "AED", "amountFils": 5200000 },
+      "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+      "bidCount": 12,
+      "reserveStatus": "MET",
+      "startsAt": "2026-07-15T07:00:00.000Z",
+      "closesAt": "2026-07-15T08:04:00.000Z",
+      "softClose": {
+        "enabled": true,
+        "windowMs": 120000,
+        "extensionMs": 120000,
+        "extensionCount": 1
+      }
+    }
+  },
+  "placeBidCommand": {
+    "contractVersion": 1,
+    "commandId": "33333333-3333-4333-8333-333333333333",
+    "sentAt": "2026-07-15T08:00:00.000Z",
+    "lotId": "11111111-1111-4111-8111-111111111111",
+    "amount": { "currency": "AED", "amountFils": 5200000 },
+    "expectedSequence": 41,
+    "termsVersionId": "44444444-4444-4444-8444-444444444444"
+  },
+  "commandAck": {
+    "contractVersion": 1,
+    "commandId": "33333333-3333-4333-8333-333333333333",
+    "status": "ACCEPTED",
+    "correlationId": "corr-command",
+    "serverTime": "2026-07-15T08:00:01.000Z",
+    "result": {
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "sequence": 42,
+      "currentBid": { "currency": "AED", "amountFils": 5200000 },
+      "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+      "myBidStatus": "WINNING",
+      "reserveStatus": "MET",
+      "closesAt": "2026-07-15T08:04:00.000Z",
+      "extended": true
+    }
+  }
+}

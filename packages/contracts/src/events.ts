@@ -1,119 +1,271 @@
-import type {
-  BidEligibility,
-  LotLifecycle,
-  LotPublicState,
-  MyBidState,
-  MyBidStatus,
-  ReserveStatus,
+import { z } from "zod";
+
+import {
+  BidEligibilitySchema,
+  LotLifecycleSchema,
+  LotPublicStateSchema,
+  MyBidStateSchema,
+  MyBidStatusSchema,
+  ReserveStatusSchema,
 } from "./auction.js";
-import type { ContractVersion, IsoDateTime, Money, Uuid } from "./core.js";
+import {
+  ContractVersionSchema,
+  CorrelationIdSchema,
+  DeepLinkSchema,
+  IsoDateTimeSchema,
+  MoneySchema,
+  NonNegativeIntegerSchema,
+  PositiveIntegerSchema,
+  UuidSchema,
+} from "./core.js";
 
-export interface ServerHello {
-  readonly contractVersion: ContractVersion;
-  readonly connectionId: string;
-  readonly serverTime: IsoDateTime;
-  readonly heartbeatIntervalMs: number;
-  readonly maxCommandSkewSequence: number;
+export const ServerHelloSchema = z
+  .object({
+    connectionId: z.string().min(1),
+    contractVersion: ContractVersionSchema,
+    heartbeatIntervalMs: PositiveIntegerSchema,
+    maxCommandSkewSequence: NonNegativeIntegerSchema,
+    serverTime: IsoDateTimeSchema,
+  })
+  .passthrough();
+
+function lotEventEnvelopeSchema<TName extends string, TData extends z.ZodType>(
+  event: TName,
+  data: TData,
+) {
+  return z
+    .object({
+      auctionId: UuidSchema,
+      contractVersion: ContractVersionSchema,
+      correlationId: CorrelationIdSchema,
+      data,
+      event: z.literal(event),
+      eventId: UuidSchema,
+      lotId: UuidSchema,
+      occurredAt: IsoDateTimeSchema,
+      sequence: NonNegativeIntegerSchema,
+    })
+    .passthrough();
 }
 
-export interface LotEventEnvelope<TName extends string, TData> {
-  readonly contractVersion: ContractVersion;
-  readonly eventId: Uuid;
-  readonly event: TName;
-  readonly lotId: Uuid;
-  readonly auctionId: Uuid;
-  readonly sequence: number;
-  readonly occurredAt: IsoDateTime;
-  readonly correlationId: string;
-  readonly data: TData;
+function personalEventSchema<TName extends string, TData extends z.ZodType>(
+  event: TName,
+  data: TData,
+) {
+  return z
+    .object({
+      contractVersion: ContractVersionSchema,
+      correlationId: CorrelationIdSchema,
+      data,
+      event: z.literal(event),
+      eventId: UuidSchema,
+      occurredAt: IsoDateTimeSchema,
+    })
+    .passthrough();
 }
 
-export interface LotSnapshot {
-  readonly contractVersion: ContractVersion;
-  readonly event: "lot:snapshot";
-  readonly lotId: Uuid;
-  readonly auctionId: Uuid;
-  readonly sequence: number;
-  readonly generatedAt: IsoDateTime;
-  readonly state: LotPublicState;
-  readonly myBidState?: MyBidState;
-}
+export const LotSnapshotSchema = z
+  .object({
+    auctionId: UuidSchema,
+    contractVersion: ContractVersionSchema,
+    event: z.literal("lot:snapshot"),
+    generatedAt: IsoDateTimeSchema,
+    lotId: UuidSchema,
+    myBidState: MyBidStateSchema.optional(),
+    sequence: NonNegativeIntegerSchema,
+    state: LotPublicStateSchema,
+  })
+  .passthrough();
 
-export type BidAcceptedEvent = LotEventEnvelope<
+export const BidAcceptedEventSchema = lotEventEnvelopeSchema(
   "bid:accepted",
-  {
-    readonly bidId: Uuid;
-    readonly amount: Money;
-    readonly bidderAlias: string;
-    readonly bidKind: "MANUAL" | "PROXY";
-    readonly currentBid: Money;
-    readonly nextMinimumBid: Money;
-    readonly bidCount: number;
-    readonly reserveStatus: ReserveStatus;
-  }
->;
+  z
+    .object({
+      amount: MoneySchema,
+      bidCount: NonNegativeIntegerSchema,
+      bidId: UuidSchema,
+      bidderAlias: z.string().min(1).max(64),
+      bidKind: z.enum(["MANUAL", "PROXY"]),
+      currentBid: MoneySchema,
+      nextMinimumBid: MoneySchema,
+      reserveStatus: ReserveStatusSchema,
+    })
+    .passthrough(),
+);
 
-export type AuctionExtendedEvent = LotEventEnvelope<
+export const AuctionExtendedEventSchema = lotEventEnvelopeSchema(
   "auction:extended",
-  {
-    readonly previousClosesAt: IsoDateTime;
-    readonly closesAt: IsoDateTime;
-    readonly extensionMs: number;
-    readonly extensionCount: number;
-    readonly reason: "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW";
-  }
->;
+  z
+    .object({
+      closesAt: IsoDateTimeSchema,
+      extensionCount: PositiveIntegerSchema,
+      extensionMs: PositiveIntegerSchema,
+      previousClosesAt: IsoDateTimeSchema,
+      reason: z.literal("QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW"),
+    })
+    .passthrough(),
+);
 
-export type AuctionStateChangedEvent = LotEventEnvelope<
+export const AuctionStateChangedEventSchema = lotEventEnvelopeSchema(
   "auction:state-changed",
-  {
-    readonly previousLifecycle: LotLifecycle;
-    readonly lifecycle: LotLifecycle;
-    readonly closesAt: IsoDateTime;
-    readonly reasonCode?: string;
-    readonly approvalSlaDueAt?: IsoDateTime;
-  }
->;
+  z
+    .object({
+      approvalSlaDueAt: IsoDateTimeSchema.optional(),
+      closesAt: IsoDateTimeSchema,
+      lifecycle: LotLifecycleSchema,
+      previousLifecycle: LotLifecycleSchema,
+      reasonCode: z.string().min(1).optional(),
+    })
+    .passthrough(),
+);
 
-export type ReserveStatusChangedEvent = LotEventEnvelope<
+export const ReserveStatusChangedEventSchema = lotEventEnvelopeSchema(
   "reserve:status-changed",
-  { readonly reserveStatus: "MET" }
->;
+  z.object({ reserveStatus: z.literal("MET") }).passthrough(),
+);
 
-export type LotPresenceChangedEvent = LotEventEnvelope<
+export const LotPresenceChangedEventSchema = lotEventEnvelopeSchema(
   "lot:presence-changed",
-  { readonly approximateViewerCount: number }
+  z.object({ approximateViewerCount: NonNegativeIntegerSchema }).passthrough(),
+);
+
+export const MyBidStatusChangedEventSchema = personalEventSchema(
+  "bid:status-changed",
+  z
+    .object({
+      activeProxyMaximum: MoneySchema.nullable(),
+      auctionId: UuidSchema,
+      closesAt: IsoDateTimeSchema,
+      currentBid: MoneySchema,
+      lotId: UuidSchema,
+      lotSequence: NonNegativeIntegerSchema,
+      nextMinimumBid: MoneySchema,
+      status: MyBidStatusSchema,
+    })
+    .passthrough(),
+);
+
+export const EligibilityChangedEventSchema = personalEventSchema(
+  "eligibility:changed",
+  z
+    .object({
+      eligibility: BidEligibilitySchema,
+      lotId: UuidSchema.optional(),
+    })
+    .passthrough(),
+);
+
+export const ProxyBidChangedEventSchema = personalEventSchema(
+  "proxy-bid:changed",
+  z
+    .object({
+      activeProxyMaximum: MoneySchema.nullable(),
+      currentBid: MoneySchema,
+      lotId: UuidSchema,
+      lotSequence: NonNegativeIntegerSchema,
+      nextMinimumBid: MoneySchema,
+      status: z.enum(["ACTIVE", "EXCEEDED", "CANCELLED", "ENDED"]),
+    })
+    .passthrough(),
+);
+
+export const ApprovalChangedEventSchema = personalEventSchema(
+  "approval:changed",
+  z
+    .object({
+      approvalSlaDueAt: IsoDateTimeSchema.optional(),
+      auctionId: UuidSchema,
+      deepLink: DeepLinkSchema,
+      hammerPrice: MoneySchema,
+      lotId: UuidSchema,
+      outcome: z.enum(["PENDING", "APPROVED", "REJECTED"]),
+      paymentDueAt: IsoDateTimeSchema.optional(),
+      rejectionReason: z
+        .object({ code: z.string().min(1), message: z.string().min(1) })
+        .passthrough()
+        .optional(),
+    })
+    .passthrough(),
+);
+
+function entityChangedDataSchema(idField: string) {
+  return z
+    .object({
+      changedAt: IsoDateTimeSchema,
+      deepLink: DeepLinkSchema,
+      displayAmount: MoneySchema.optional(),
+      state: z.string().trim().min(1).max(64),
+    })
+    .catchall(z.unknown())
+    .refine((data) => UuidSchema.safeParse(data[idField]).success, {
+      message: `${idField} must be a UUID`,
+      path: [idField],
+    });
+}
+
+export const DepositChangedEventSchema = personalEventSchema(
+  "deposit:changed",
+  entityChangedDataSchema("depositId"),
+);
+export const PaymentChangedEventSchema = personalEventSchema(
+  "payment:changed",
+  entityChangedDataSchema("paymentId"),
+);
+export const OfferChangedEventSchema = personalEventSchema(
+  "offer:changed",
+  entityChangedDataSchema("offerId"),
+);
+export const NotificationCreatedEventSchema = personalEventSchema(
+  "notification:created",
+  entityChangedDataSchema("notificationId"),
+);
+
+export const serverEventSchemas = {
+  "approval:changed": ApprovalChangedEventSchema,
+  "auction:extended": AuctionExtendedEventSchema,
+  "auction:state-changed": AuctionStateChangedEventSchema,
+  "bid:accepted": BidAcceptedEventSchema,
+  "bid:status-changed": MyBidStatusChangedEventSchema,
+  "deposit:changed": DepositChangedEventSchema,
+  "eligibility:changed": EligibilityChangedEventSchema,
+  "lot:presence-changed": LotPresenceChangedEventSchema,
+  "lot:snapshot": LotSnapshotSchema,
+  "notification:created": NotificationCreatedEventSchema,
+  "offer:changed": OfferChangedEventSchema,
+  "payment:changed": PaymentChangedEventSchema,
+  "proxy-bid:changed": ProxyBidChangedEventSchema,
+  "reserve:status-changed": ReserveStatusChangedEventSchema,
+  "server:hello": ServerHelloSchema,
+} as const;
+
+export type ServerEventName = keyof typeof serverEventSchemas;
+export type ServerHello = z.infer<typeof ServerHelloSchema>;
+export type LotSnapshot = z.infer<typeof LotSnapshotSchema>;
+export type BidAcceptedEvent = z.infer<typeof BidAcceptedEventSchema>;
+export type AuctionExtendedEvent = z.infer<typeof AuctionExtendedEventSchema>;
+export type AuctionStateChangedEvent = z.infer<
+  typeof AuctionStateChangedEventSchema
 >;
-
-export interface MyBidStatusChangedEvent {
-  readonly contractVersion: ContractVersion;
-  readonly eventId: Uuid;
-  readonly event: "bid:status-changed";
-  readonly occurredAt: IsoDateTime;
-  readonly correlationId: string;
-  readonly data: {
-    readonly lotId: Uuid;
-    readonly auctionId: Uuid;
-    readonly lotSequence: number;
-    readonly status: MyBidStatus;
-    readonly currentBid: Money;
-    readonly nextMinimumBid: Money;
-    readonly activeProxyMaximum: Money | null;
-    readonly closesAt: IsoDateTime;
-  };
-}
-
-export interface EligibilityChangedEvent {
-  readonly contractVersion: ContractVersion;
-  readonly eventId: Uuid;
-  readonly event: "eligibility:changed";
-  readonly occurredAt: IsoDateTime;
-  readonly correlationId: string;
-  readonly data: {
-    readonly lotId?: Uuid;
-    readonly eligibility: BidEligibility;
-  };
-}
+export type ReserveStatusChangedEvent = z.infer<
+  typeof ReserveStatusChangedEventSchema
+>;
+export type LotPresenceChangedEvent = z.infer<
+  typeof LotPresenceChangedEventSchema
+>;
+export type MyBidStatusChangedEvent = z.infer<
+  typeof MyBidStatusChangedEventSchema
+>;
+export type EligibilityChangedEvent = z.infer<
+  typeof EligibilityChangedEventSchema
+>;
+export type ProxyBidChangedEvent = z.infer<typeof ProxyBidChangedEventSchema>;
+export type ApprovalChangedEvent = z.infer<typeof ApprovalChangedEventSchema>;
+export type DepositChangedEvent = z.infer<typeof DepositChangedEventSchema>;
+export type PaymentChangedEvent = z.infer<typeof PaymentChangedEventSchema>;
+export type OfferChangedEvent = z.infer<typeof OfferChangedEventSchema>;
+export type NotificationCreatedEvent = z.infer<
+  typeof NotificationCreatedEventSchema
+>;
 
 export type PublicLotEvent =
   | BidAcceptedEvent

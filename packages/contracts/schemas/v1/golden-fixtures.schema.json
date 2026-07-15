@@ -1,0 +1,702 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "commandAck": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "commandId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "contractVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1
+            },
+            "correlationId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "closesAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                },
+                "currentBid": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "extended": {
+                  "type": "boolean"
+                },
+                "lotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "myBidStatus": {
+                  "type": "string",
+                  "enum": [
+                    "WINNING",
+                    "OUTBID"
+                  ]
+                },
+                "nextMinimumBid": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "reserveStatus": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_APPLICABLE",
+                    "NOT_MET",
+                    "MET"
+                  ]
+                },
+                "sequence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "closesAt",
+                "currentBid",
+                "extended",
+                "lotId",
+                "myBidStatus",
+                "nextMinimumBid",
+                "reserveStatus",
+                "sequence"
+              ],
+              "additionalProperties": {}
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "ACCEPTED"
+            }
+          },
+          "required": [
+            "commandId",
+            "contractVersion",
+            "correlationId",
+            "result",
+            "serverTime",
+            "status"
+          ],
+          "additionalProperties": {}
+        },
+        {
+          "type": "object",
+          "properties": {
+            "commandId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "contractVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1
+            },
+            "correlationId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "AUTH_REQUIRED",
+                    "AUTH_FORBIDDEN",
+                    "ACCOUNT_RESTRICTED",
+                    "KYC_REQUIRED",
+                    "KYC_PENDING",
+                    "DEPOSIT_REQUIRED",
+                    "DEPOSIT_INSUFFICIENT",
+                    "TERMS_ACCEPTANCE_REQUIRED",
+                    "AUCTION_NOT_LIVE",
+                    "AUCTION_PAUSED",
+                    "AUCTION_CLOSED",
+                    "LOT_NOT_FOUND",
+                    "LOT_NOT_BIDDABLE",
+                    "BID_TOO_LOW",
+                    "BID_AMOUNT_INVALID",
+                    "PROXY_MAX_TOO_LOW",
+                    "OFFER_NOT_ALLOWED",
+                    "COMMAND_CONFLICT",
+                    "RATE_LIMITED",
+                    "PROVIDER_UNAVAILABLE",
+                    "VALIDATION_FAILED",
+                    "INTERNAL_ERROR"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "retryable": {
+                  "type": "boolean"
+                },
+                "retryAfterMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "retryable"
+              ],
+              "additionalProperties": {}
+            },
+            "latest": {
+              "type": "object",
+              "properties": {
+                "closesAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                },
+                "currentBid": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "lotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nextMinimumBid": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "sequence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "closesAt",
+                "currentBid",
+                "lotId",
+                "nextMinimumBid",
+                "sequence"
+              ],
+              "additionalProperties": {}
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "REJECTED"
+            }
+          },
+          "required": [
+            "commandId",
+            "contractVersion",
+            "correlationId",
+            "error",
+            "serverTime",
+            "status"
+          ],
+          "additionalProperties": {}
+        }
+      ]
+    },
+    "lotSnapshot": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "contractVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "event": {
+          "type": "string",
+          "const": "lot:snapshot"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+        },
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "myBidState": {
+          "type": "object",
+          "properties": {
+            "activeProxyMaximum": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "eligibility": {
+              "type": "object",
+              "properties": {
+                "eligible": {
+                  "type": "boolean"
+                },
+                "eligibleDeposit": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "reasonCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "KYC_REQUIRED",
+                      "KYC_PENDING",
+                      "DEPOSIT_REQUIRED",
+                      "DEPOSIT_INSUFFICIENT",
+                      "TERMS_ACCEPTANCE_REQUIRED",
+                      "ACCOUNT_RESTRICTED"
+                    ]
+                  }
+                },
+                "requiredDeposit": {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                "termsVersionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "eligible",
+                "reasonCodes"
+              ],
+              "additionalProperties": {}
+            },
+            "myHighestVisibleBid": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "NOT_BIDDING",
+                "WINNING",
+                "OUTBID",
+                "WON_PENDING_APPROVAL",
+                "WON",
+                "LOST"
+              ]
+            }
+          },
+          "required": [
+            "activeProxyMaximum",
+            "eligibility",
+            "myHighestVisibleBid",
+            "status"
+          ],
+          "additionalProperties": {}
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "approximateViewerCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "bidCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "closesAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+            },
+            "currentBid": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "amountFils": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "AED"
+                    }
+                  },
+                  "required": [
+                    "amountFils",
+                    "currency"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lifecycle": {
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "LIVE",
+                "PAUSED",
+                "CLOSED",
+                "PENDING_APPROVAL",
+                "APPROVED",
+                "REJECTED",
+                "CANCELLED"
+              ]
+            },
+            "nextMinimumBid": {
+              "type": "object",
+              "properties": {
+                "amountFils": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "currency": {
+                  "type": "string",
+                  "const": "AED"
+                }
+              },
+              "required": [
+                "amountFils",
+                "currency"
+              ],
+              "additionalProperties": false
+            },
+            "reserveStatus": {
+              "type": "string",
+              "enum": [
+                "NOT_APPLICABLE",
+                "NOT_MET",
+                "MET"
+              ]
+            },
+            "softClose": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "extensionCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "extensionMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "windowMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "enabled",
+                "extensionCount",
+                "extensionMs",
+                "windowMs"
+              ],
+              "additionalProperties": {}
+            },
+            "startsAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+            }
+          },
+          "required": [
+            "bidCount",
+            "closesAt",
+            "currentBid",
+            "lifecycle",
+            "nextMinimumBid",
+            "reserveStatus",
+            "softClose",
+            "startsAt"
+          ],
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "auctionId",
+        "contractVersion",
+        "event",
+        "generatedAt",
+        "lotId",
+        "sequence",
+        "state"
+      ],
+      "additionalProperties": {}
+    },
+    "money": {
+      "type": "object",
+      "properties": {
+        "amountFils": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "const": "AED"
+        }
+      },
+      "required": [
+        "amountFils",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "placeBidCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "contractVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "sentAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+        },
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amountFils": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "const": "AED"
+            }
+          },
+          "required": [
+            "amountFils",
+            "currency"
+          ],
+          "additionalProperties": false
+        },
+        "expectedSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "termsVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        }
+      },
+      "required": [
+        "commandId",
+        "contractVersion",
+        "sentAt",
+        "amount",
+        "expectedSequence",
+        "lotId",
+        "termsVersionId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "commandAck",
+    "lotSnapshot",
+    "money",
+    "placeBidCommand"
+  ],
+  "additionalProperties": false,
+  "$id": "https://pioneer-auctions.ae/schemas/v1/golden-fixtures.json",
+  "title": "PioneerContracts"
+}

@@ -65,6 +65,20 @@ Record durable product and architecture decisions here. New entries are append-o
 - Decision: Pin NestJS 11.1.28 for the API, Next.js 16.2.10 and React 19.2.7 for web/admin, TypeScript 5.9.3, ESLint 9.39.5, and Vitest 4.1.10. Hold ESLint at the newest v9 release until Next.js's bundled lint plugins support v10.
 - Why: These exact versions pass install, peer-dependency, strict type, test, and production-build validation together. Exact pins keep parallel agents and CI reproducible.
 
+## DEC-010 — Zod-first transport contracts and generated consumers
+
+- Date: 2026-07-15
+- Status: accepted
+- Decision: Zod 4 schemas are the executable source for v1 transport validation and inferred TypeScript types. Native JSON Schema conversion feeds an OpenAPI 3.1 document and Quicktype-generated Dart models. Checked-in JSON fixtures are shared by TypeScript and Dart compatibility tests; generated artifacts must reproduce byte-for-byte in CI.
+- Why: One runtime schema source rejects malformed external input while producing standard JSON Schema/OpenAPI artifacts and consumer models. This removes handwritten TypeScript/schema duplication and lets Flutter consume the same field names and golden payloads without semantic renaming.
+
+## DEC-011 — Public contract compatibility and rollout policy
+
+- Date: 2026-07-15
+- Status: accepted
+- Decision: v1 consumers must tolerate additive object fields but fail safely on unknown event names and required enum values. Adding optional fields or enum-independent endpoints is additive. Removing/renaming fields, making optional fields required, changing meaning/units, adding required enum variants without fallback, or changing event/command semantics is breaking and requires a new versioned namespace/base path, a documented overlap window, and minimum supported client versions.
+- Why: Mobile clients cannot be upgraded atomically with the server. Explicit classification and overlapping rollout keep older clients safe while server authority and event observability remain intact.
+
 ## Open decisions
 
 - Exact soft-close window and extension policy per category/auction.

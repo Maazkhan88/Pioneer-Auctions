@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 24.18.0
           package-manager-cache: false
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
       - run: corepack enable
       - run: corepack prepare pnpm@11.4.0 --activate
       - run: pnpm install --frozen-lockfile
@@ -27,6 +30,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: dart analyze packages/contracts/dart
+      - run: dart run packages/contracts/dart/test/golden_decode_test.dart
       - run: pnpm build
 
   security:

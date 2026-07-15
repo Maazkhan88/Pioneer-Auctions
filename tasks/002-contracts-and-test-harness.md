@@ -2,6 +2,8 @@
 
 Recommended owner: Codex
 
+Status: Complete on `agent/task-002-runtime-contracts` (2026-07-15).
+
 ## Goal
 
 Make `docs/api-contracts.md` executable through runtime schemas, OpenAPI, Socket.IO typing, examples, and consumer compatibility tests.
@@ -39,6 +41,21 @@ pnpm check
 ```
 
 Run the Flutter golden decode command documented by the implementation.
+
+## Handoff
+
+Zod is the v1 executable source in `packages/contracts`; it generates OpenAPI 3.1, JSON Schema, and Dart models. API, web, and admin import that package, while TypeScript and Dart decode the same checked-in golden fixture. CI validates schema/examples/fixtures, generated-file drift, the API-exposed OpenAPI document, and the Dart analyzer/golden decoder. Compatibility and rollout policy is recorded in DEC-010 and DEC-011.
+
+Validated on 2026-07-15 with:
+
+```bash
+pnpm --filter @pioneer/contracts test
+pnpm --filter @pioneer/api test:contract
+pnpm check
+pnpm build
+dart analyze packages/contracts/dart
+dart run packages/contracts/dart/test/golden_decode_test.dart
+```
 
 ## Out of scope
 

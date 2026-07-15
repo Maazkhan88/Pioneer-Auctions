@@ -1,6 +1,6 @@
 # Current state
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 Repository: `https://github.com/Maazkhan88/Pioneer-Auctions` (`main`)
 
@@ -30,6 +30,10 @@ Phase 0: foundation and contract definition.
 - Shared ESLint 9.39.5, TypeScript 5.9.3, Vitest 4.1.10, and Prettier configuration.
 - Local PostgreSQL, Redis, MinIO, and Mailpit Compose services with health checks and named volumes.
 - Pull-request CI covering clean install, Compose validation, formatting, linting, type checks, tests, builds, secret scanning, and production dependency audit.
+- Zod 4.4.3 runtime schemas and inferred TypeScript types for v1 money/time/errors, snapshots, bid/proxy commands, acknowledgements, and every named Socket.IO event.
+- Typed Socket.IO client/server maps plus shared valid, invalid, and cross-language golden fixtures.
+- Generated OpenAPI 3.1, JSON Schema, and Quicktype 25.0.0 Dart models with byte-for-byte drift checks in CI.
+- The API serves the generated contract at `GET /api/v1/openapi.json`; API, web, and admin compatibility tests import the same package.
 
 ## What does not exist yet
 
@@ -40,22 +44,22 @@ Phase 0: foundation and contract definition.
 
 ## Active task
 
-No task is active. Task 001 was completed by Codex on `agent/task-001-foundation`.
+No task is currently active. Task 002 is complete on `agent/task-002-runtime-contracts` and awaiting review as a stacked draft pull request.
 
-| Task                   | Owner      | Branch                      | Status             | Notes                                |
-| ---------------------- | ---------- | --------------------------- | ------------------ | ------------------------------------ |
-| 001 Foundation         | Codex      | `agent/task-001-foundation` | Complete           | Scaffold, local services, CI         |
-| 002 Contracts          | Unassigned | —                           | Ready              | Contract tests and generated clients |
-| 003 Design system      | Unassigned | —                           | Ready after 001    | EN/AR primitives                     |
-| 004 Bidding engine     | Unassigned | —                           | Blocked by 001–002 | Highest-risk correctness work        |
-| 005 Web buyer loop     | Unassigned | —                           | Blocked by 002–004 | Full bidding client                  |
-| 006 Mobile buyer loop  | Unassigned | —                           | Blocked by 002–004 | Flutter owner stays consistent       |
-| 007 Admin core         | Unassigned | —                           | Blocked by 001–002 | Lots, auctions, approval queues      |
-| 008 Identity/KYC       | Unassigned | —                           | Blocked by 001–002 | Provider adapter first               |
-| 009 Deposits/payments  | Unassigned | —                           | Blocked by 001–002 | Ledger + webhook safety              |
-| 010 Notifications      | Unassigned | —                           | Blocked by 002     | Transactional matrix                 |
-| 011 Observability/load | Unassigned | —                           | Blocked by 004     | Test-auction readiness               |
-| 012 MVP hardening      | Unassigned | —                           | Blocked by 004–011 | Real test auction gate               |
+| Task                   | Owner      | Branch                             | Status             | Notes                                     |
+| ---------------------- | ---------- | ---------------------------------- | ------------------ | ----------------------------------------- |
+| 001 Foundation         | Codex      | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
+| 002 Contracts          | Codex      | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
+| 003 Design system      | Unassigned | —                                  | Ready after 001    | EN/AR primitives                          |
+| 004 Bidding engine     | Unassigned | —                                  | Ready after 002    | Product rulings still gate production     |
+| 005 Web buyer loop     | Unassigned | —                                  | Blocked by 002–004 | Full bidding client                       |
+| 006 Mobile buyer loop  | Unassigned | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
+| 007 Admin core         | Unassigned | —                                  | Ready after 002    | Lots, auctions, approval queues           |
+| 008 Identity/KYC       | Unassigned | —                                  | Ready after 002    | Provider adapter first                    |
+| 009 Deposits/payments  | Unassigned | —                                  | Ready after 002    | Ledger + webhook safety                   |
+| 010 Notifications      | Unassigned | —                                  | Ready after 002    | Transactional matrix                      |
+| 011 Observability/load | Unassigned | —                                  | Blocked by 004     | Test-auction readiness                    |
+| 012 MVP hardening      | Unassigned | —                                  | Blocked by 004–011 | Real test auction gate                    |
 
 ## Decisions already made
 
@@ -69,6 +73,8 @@ No task is active. Task 001 was completed by Codex on `agent/task-001-foundation
 - Authority: server owns bids, price, reserve state, and close time.
 - Languages: English and Arabic/RTL in MVP.
 - Primary infrastructure target: AWS, with provider abstractions for local development.
+- Contracts: Zod is the executable transport source; OpenAPI 3.1 and Dart models are generated, fixtures are shared across languages, and CI rejects artifact drift.
+- Compatibility: v1 tolerates additive object fields but rejects unknown event names and required enum values; breaking changes require a new REST base path and Socket.IO namespace with an overlap rollout.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -82,13 +88,15 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Claim and execute `tasks/002-contracts-and-test-harness.md`. The contract and design-token packages build successfully inside the completed workspace.
+Claim `tasks/003-design-system-and-localization.md` for the shared EN/AR visual primitives, or `tasks/004-bidding-engine.md` for the next backend critical path after confirming its open product defaults.
 
 ## Last validation
 
-- `corepack pnpm install` and the lockfile supply-chain policy check passed on 2026-07-14.
-- `corepack pnpm infra:config`, formatting, linting, strict type checks, and 8 tests passed.
-- `corepack pnpm build` compiled the API, contract package, design tokens, and both localized Next.js surfaces.
+- `corepack pnpm check` passed formatting, lint, strict type checks, 11 contract tests, 5 API tests, 3 web tests, and 3 admin tests on 2026-07-15.
+- `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
+- Dart SDK 3.12.2 reported no analysis issues and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
+- `corepack pnpm build` compiled the API, contracts, design tokens, and both localized Next.js production surfaces.
+- `corepack pnpm security:audit` reported no known production dependency vulnerabilities.
 - Runtime smoke tests returned HTTP 200 from API liveness, Arabic customer web, and English admin routes.
 - Production dependency audit reports no known vulnerabilities after the PostCSS security override.
 - Docker is not installed in the current Windows environment. Compose YAML and required health/volume structure were validated, but container startup, readiness degradation, and recovery must be exercised on the first Docker-enabled machine or CI runner.
