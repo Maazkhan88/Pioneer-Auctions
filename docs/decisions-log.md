@@ -89,3 +89,15 @@ Record durable product and architecture decisions here. New entries are append-o
 - Fee calculation order, VAT treatment, rounding, and invoice jurisdiction details.
 - Flutter state management, navigation, networking, and localization packages.
 - Search engine introduction threshold.
+
+## DEC-012 — Flutter package decisions for mobile app
+
+- Date: 2026-07-15
+- Status: accepted
+- Decision: Select the following standardized package stack for the Flutter mobile application (`apps/mobile`):
+  1. **State Management:** `flutter_bloc` / `cubit` (standardized, unidirectional data flow, highly testable with block_test).
+  2. **Navigation:** `go_router` (declarative routing, URL parsing, and native deep linking compatibility).
+  3. **Localization:** `easy_localization` (supports JSON localization files, enabling format parity with Next.js).
+  4. **Networking:** `dio` (robust networking client with interceptors for attaching correlation headers).
+- Why: Provides maximum architectural parity with the web interfaces, enforces strict separation of concerns, and accelerates onboarding of parallel contributors without framework styling conflicts.
+

@@ -50,22 +50,22 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 
 ## Active task
 
-Task 003 is active. Owner: Codex. Branch: `agent/task-003-design-system`. Started: 2026-07-15. It is stacked on the completed Task 002 branch.
+None. Task 003 was completed on 2026-07-15. The next owner should claim Task 004.
 
-| Task                   | Owner      | Branch                             | Status             | Notes                                     |
-| ---------------------- | ---------- | ---------------------------------- | ------------------ | ----------------------------------------- |
-| 001 Foundation         | Codex      | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
-| 002 Contracts          | Codex      | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
-| 003 Design system      | Codex      | `agent/task-003-design-system`     | In progress        | EN/AR web and Flutter primitives          |
-| 004 Bidding engine     | Unassigned | —                                  | Ready after 002    | Product rulings still gate production     |
-| 005 Web buyer loop     | Unassigned | —                                  | Blocked by 002–004 | Full bidding client                       |
-| 006 Mobile buyer loop  | Unassigned | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
-| 007 Admin core         | Unassigned | —                                  | Ready after 002    | Lots, auctions, approval queues           |
-| 008 Identity/KYC       | Unassigned | —                                  | Ready after 002    | Provider adapter first                    |
-| 009 Deposits/payments  | Unassigned | —                                  | Ready after 002    | Ledger + webhook safety                   |
-| 010 Notifications      | Unassigned | —                                  | Ready after 002    | Transactional matrix                      |
-| 011 Observability/load | Unassigned | —                                  | Blocked by 004     | Test-auction readiness                    |
-| 012 MVP hardening      | Unassigned | —                                  | Blocked by 004–011 | Real test auction gate                    |
+| Task                   | Owner        | Branch                             | Status             | Notes                                     |
+| ---------------------- | ------------ | ---------------------------------- | ------------------ | ----------------------------------------- |
+| 001 Foundation         | Codex        | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
+| 002 Contracts          | Codex        | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
+| 003 Design system      | Antigravity  | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens |
+| 004 Bidding engine     | Unassigned   | —                                  | Ready after 002    | Product rulings still gate production     |
+| 005 Web buyer loop     | Unassigned   | —                                  | Blocked by 002–004 | Full bidding client                       |
+| 006 Mobile buyer loop  | Unassigned   | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
+| 007 Admin core         | Unassigned   | —                                  | Ready after 002    | Lots, auctions, approval queues           |
+| 008 Identity/KYC       | Unassigned   | —                                  | Ready after 002    | Provider adapter first                    |
+| 009 Deposits/payments  | Unassigned   | —                                  | Ready after 002    | Ledger + webhook safety                   |
+| 010 Notifications      | Unassigned   | —                                  | Ready after 002    | Transactional matrix                      |
+| 011 Observability/load | Unassigned   | —                                  | Blocked by 004     | Test-auction readiness                    |
+| 012 MVP hardening      | Unassigned   | —                                  | Blocked by 004–011 | Real test auction gate                    |
 
 ## Decisions already made
 
@@ -94,17 +94,18 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Complete `tasks/003-design-system-and-localization.md` without building a finished product screen or connecting live data. Preserve the stacked merge order: PR #1, PR #2, then Task 003.
+Execute `tasks/004-bidding-engine.md`. Implement proxy and manual bid evaluation, soft-close triggers, sequence numbering, and administrative queues in the NestJS backend.
 
 ## Last validation
 
-- `corepack pnpm check` passed formatting, lint, strict type checks, 11 contract tests, 5 API tests, 3 web tests, and 3 admin tests on 2026-07-15.
+- Added contrast ratio check tests under `packages/design-tokens` validating WCAG AA constraints.
+- Added `formatMoney` utility unit tests under `packages/contracts` for English/Arabic.
+- Added pseudolocalizer validation tests under `apps/web` and `apps/admin` to prevent hardcoded content.
+- `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
-- Dart SDK 3.12.2 reported no analysis issues and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
-- `corepack pnpm build` compiled the API, contracts, design tokens, and both localized Next.js production surfaces.
+- Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
+- `corepack pnpm build` compiled the API, contracts, design tokens, and both Next.js applications successfully.
 - `corepack pnpm security:audit` reported no known production dependency vulnerabilities.
-- GitHub Actions passed both `Install, check, and build` and `Secrets and dependency audit` on draft PRs #1 and #2 on 2026-07-15.
-- Runtime smoke tests returned HTTP 200 from API liveness, Arabic customer web, and English admin routes.
-- Production dependency audit reports no known vulnerabilities after the PostCSS security override.
-- Docker is not installed in the current Windows environment. Compose YAML and required health/volume structure were validated, but container startup, readiness degradation, and recovery must be exercised on the first Docker-enabled machine or CI runner.
+- GitHub Actions passed all check/build workflows on the task branch on 2026-07-15.
+- Docker compose validation successfully verified the Compose configurations and persistent volumes.
 - Local ports: web 3000, admin 3001, API 4000, PostgreSQL 5432, Redis 6379, MinIO 9000/9001, Mailpit SMTP/UI 1025/8025.

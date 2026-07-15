@@ -140,3 +140,17 @@ export type CommandAck<TResult, TLatest = never> =
       readonly error: CommandError;
       readonly latest?: TLatest;
     };
+
+export function formatMoney(amountFils: number, locale: "en" | "ar"): string {
+  const amount = amountFils / 100;
+  const formatter = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: amountFils % 100 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+  const formatted = formatter.format(amount);
+  if (locale === "ar") {
+    return `${formatted} د.إ`;
+  }
+  return `AED ${formatted}`;
+}
+

@@ -10,6 +10,7 @@ import {
   PlaceBidRestRequestSchema,
   UuidSchema,
   clientCommandSchemas,
+  formatMoney,
   restOperations,
   serverEventSchemas,
 } from "../src/index.js";
@@ -171,3 +172,13 @@ async function readJson<T>(relativePath: string): Promise<T> {
   );
   return JSON.parse(content) as T;
 }
+
+describe("formatMoney", () => {
+  it("formats AED correctly for English and Arabic", () => {
+    expect(formatMoney(5200000, "en")).toBe("AED 52,000");
+    expect(formatMoney(5200000, "ar")).toBe("52,000 د.إ");
+    expect(formatMoney(5200050, "en")).toBe("AED 52,000.50");
+    expect(formatMoney(5200050, "ar")).toBe("52,000.50 د.إ");
+  });
+});
+

@@ -1,4 +1,6 @@
-{
+// Generated from tokens.json. Do not edit manually.
+
+export const tokens = {
   "color": {
     "purple": {
       "900": "#2E1065",
@@ -47,12 +49,36 @@
     "pill": 999
   },
   "type": {
-    "display": { "fontSize": 40, "lineHeight": 48, "fontWeight": 700 },
-    "h1": { "fontSize": 28, "lineHeight": 36, "fontWeight": 700 },
-    "h2": { "fontSize": 22, "lineHeight": 30, "fontWeight": 700 },
-    "h3": { "fontSize": 18, "lineHeight": 26, "fontWeight": 600 },
-    "body": { "fontSize": 16, "lineHeight": 24, "fontWeight": 400 },
-    "caption": { "fontSize": 13, "lineHeight": 18, "fontWeight": 500 }
+    "display": {
+      "fontSize": 40,
+      "lineHeight": 48,
+      "fontWeight": 700
+    },
+    "h1": {
+      "fontSize": 28,
+      "lineHeight": 36,
+      "fontWeight": 700
+    },
+    "h2": {
+      "fontSize": 22,
+      "lineHeight": 30,
+      "fontWeight": 700
+    },
+    "h3": {
+      "fontSize": 18,
+      "lineHeight": 26,
+      "fontWeight": 600
+    },
+    "body": {
+      "fontSize": 16,
+      "lineHeight": 24,
+      "fontWeight": 400
+    },
+    "caption": {
+      "fontSize": 13,
+      "lineHeight": 18,
+      "fontWeight": 500
+    }
   },
   "motion": {
     "fastMs": 120,
@@ -93,4 +119,6 @@
       "info": "#3B82F6"
     }
   }
-}
+} as const;
+
+export type Tokens = typeof tokens;
