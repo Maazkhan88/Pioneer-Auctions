@@ -2,6 +2,8 @@
 
 Recommended owner: Codex
 
+Status: Complete on `agent/task-001-foundation` (2026-07-14). Docker runtime validation remains recorded as an environment limitation in `docs/current-state.md`.
+
 ## Goal
 
 Turn the documentation starter into a clean-install, runnable monorepo without implementing auction business behavior.
@@ -45,3 +47,5 @@ Manually stop PostgreSQL and Redis to verify readiness degradation and recovery.
 ## Handoff
 
 Update `docs/current-state.md` with exact framework versions, commands, service ports, and any environment limitations. Do not mark Task 002 ready until the contract package builds inside the workspace.
+
+Completed handoff: framework pins, commands, ports, validation evidence, and the missing-Docker limitation are recorded in `docs/current-state.md`. The contract package builds inside the workspace, so Task 002 is ready to claim.

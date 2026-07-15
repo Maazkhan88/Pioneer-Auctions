@@ -2,4 +2,14 @@ packages:
   - apps/*
   - packages/*
 
-onlyBuiltDependencies: []
+allowBuilds:
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - "@types/supertest@7.2.1"
+
+overrides:
+  postcss: 8.5.10

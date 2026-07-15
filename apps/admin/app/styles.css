@@ -1,0 +1,106 @@
+@import "@pioneer/design-tokens/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--pa-color-background);
+  color: var(--pa-color-text);
+  font-family: Inter, "IBM Plex Sans Arabic", Tajawal, system-ui, sans-serif;
+}
+
+.locale-shell {
+  min-height: 100vh;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) 1fr;
+  min-height: 100vh;
+}
+
+[dir="rtl"] .workspace {
+  grid-template-columns: 1fr minmax(14rem, 20rem);
+}
+
+.rail {
+  background: var(--pa-color-brand-deep);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pa-space-8);
+  padding-block: var(--pa-space-8);
+  padding-inline: var(--pa-space-6);
+}
+
+[dir="rtl"] .rail {
+  grid-column: 2;
+}
+
+.rail a {
+  color: #ffedd5;
+}
+
+.content {
+  align-self: center;
+  max-inline-size: 52rem;
+  padding-block: var(--pa-space-12);
+  padding-inline: clamp(1.5rem, 6vw, 6rem);
+}
+
+[dir="rtl"] .content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.eyebrow {
+  color: var(--pa-color-action);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[dir="rtl"] .eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+h1 {
+  color: var(--pa-color-brand-deep);
+  font-size: clamp(2.25rem, 5vw, 5rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+  margin-block: var(--pa-space-4) var(--pa-space-6);
+}
+
+[dir="rtl"] h1 {
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+@media (max-width: 700px) {
+  .workspace,
+  [dir="rtl"] .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .rail,
+  [dir="rtl"] .rail {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .content,
+  [dir="rtl"] .content {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

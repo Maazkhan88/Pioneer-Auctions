@@ -1,0 +1,86 @@
+@import "@pioneer/design-tokens/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--pa-color-background);
+  color: var(--pa-color-text);
+  font-family: Inter, "IBM Plex Sans Arabic", Tajawal, system-ui, sans-serif;
+}
+
+.locale-shell {
+  min-height: 100vh;
+}
+
+.hero {
+  display: grid;
+  min-height: 100vh;
+  padding-block: var(--pa-space-6) var(--pa-space-16);
+  padding-inline: clamp(1.5rem, 5vw, 5rem);
+}
+
+.navigation {
+  align-items: center;
+  display: flex;
+  gap: var(--pa-space-6);
+  justify-content: space-between;
+}
+
+.brand {
+  color: var(--pa-color-brand);
+  font-size: 1.25rem;
+}
+
+.locale-switch {
+  border: 1px solid var(--pa-color-border);
+  border-radius: 999px;
+  color: var(--pa-color-brand-interactive);
+  padding-block: 0.65rem;
+  padding-inline: 1rem;
+  text-decoration: none;
+}
+
+.hero-copy {
+  align-self: center;
+  max-inline-size: 52rem;
+}
+
+.eyebrow {
+  color: var(--pa-color-action);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[dir="rtl"] .eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+h1 {
+  color: var(--pa-color-brand-deep);
+  font-size: clamp(2.5rem, 7vw, 6.5rem);
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  margin-block: var(--pa-space-4) var(--pa-space-6);
+}
+
+[dir="rtl"] h1 {
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.status {
+  color: #475569;
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
