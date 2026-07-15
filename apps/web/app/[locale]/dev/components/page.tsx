@@ -182,7 +182,7 @@ export default function DevComponentsPage({ params }: DevComponentsPagePropertie
             <Card>
               <h3>Bid State Banners</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <BidStateBanner status="winning" message={messages.highestBidder} />
+                <BidStateBanner status="winning" message={locale === "en" ? "You’re the highest bidder" : "أنت المزايد الأعلى"} />
                 <BidStateBanner status="outbid" message={locale === "en" ? "Outbid! Place a higher bid to stay in the lead." : "تم تجاوز مزايدتك! يرجى تقديم سعر أعلى للبقاء في الصدارة."} />
               </div>
             </Card>

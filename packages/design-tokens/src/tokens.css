@@ -6,15 +6,15 @@
   --pa-color-orange-600: #EA580C;
   --pa-color-orange-500: #F97316;
   --pa-color-orange-100: #FFEDD5;
-  --pa-color-background: #F8FAFC;
+  --pa-color-background: #F9F9FB;
   --pa-color-paper: #FFFFFF;
-  --pa-color-ink: #0F172A;
-  --pa-color-muted: #64748B;
-  --pa-color-border: #E2E8F0;
-  --pa-color-brand-deep: #2E1065;
-  --pa-color-brand: #5B21B6;
-  --pa-color-brand-interactive: #6D28D9;
-  --pa-color-action: #EA580C;
+  --pa-color-ink: #1F2937;
+  --pa-color-muted: #6B7280;
+  --pa-color-border: #E5E7EB;
+  --pa-color-brand-deep: #1C0632;
+  --pa-color-brand: #500B8C;
+  --pa-color-brand-interactive: #630FB5;
+  --pa-color-action: #EF6C00;
   --pa-color-urgency: #F97316;
   --pa-color-success: #16A34A;
   --pa-color-danger: #DC2626;
@@ -57,11 +57,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --pa-color-background: #0F172A;
-    --pa-color-paper: #1E293B;
-    --pa-color-ink: #F8FAFC;
-    --pa-color-muted: #94A3B8;
-    --pa-color-border: #334155;
+    --pa-color-background: #0F031C;
+    --pa-color-paper: #1C0D2E;
+    --pa-color-ink: #F3F4F6;
+    --pa-color-muted: #9CA3AF;
+    --pa-color-border: #3D2B54;
     --pa-color-brand-deep: #EDE9FE;
     --pa-color-brand: #A78BFA;
     --pa-color-brand-interactive: #C084FC;
@@ -75,11 +75,11 @@
 }
 
 .theme-dark {
-  --pa-color-background: #0F172A;
-  --pa-color-paper: #1E293B;
-  --pa-color-ink: #F8FAFC;
-  --pa-color-muted: #94A3B8;
-  --pa-color-border: #334155;
+  --pa-color-background: #0F031C;
+  --pa-color-paper: #1C0D2E;
+  --pa-color-ink: #F3F4F6;
+  --pa-color-muted: #9CA3AF;
+  --pa-color-border: #3D2B54;
   --pa-color-brand-deep: #EDE9FE;
   --pa-color-brand: #A78BFA;
   --pa-color-brand-interactive: #C084FC;

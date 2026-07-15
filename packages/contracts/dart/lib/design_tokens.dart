@@ -24,15 +24,15 @@ class PioneerTokens {
   static const int slow_ms = 320;
 
   // Light Theme Colors
-  static const int light_background = 0xFFF8FAFC;
+  static const int light_background = 0xFFF9F9FB;
   static const int light_paper = 0xFFFFFFFF;
-  static const int light_ink = 0xFF0F172A;
-  static const int light_muted = 0xFF64748B;
-  static const int light_border = 0xFFE2E8F0;
-  static const int light_brand_deep = 0xFF2E1065;
-  static const int light_brand = 0xFF5B21B6;
-  static const int light_brand_interactive = 0xFF6D28D9;
-  static const int light_action = 0xFFEA580C;
+  static const int light_ink = 0xFF1F2937;
+  static const int light_muted = 0xFF6B7280;
+  static const int light_border = 0xFFE5E7EB;
+  static const int light_brand_deep = 0xFF1C0632;
+  static const int light_brand = 0xFF500B8C;
+  static const int light_brand_interactive = 0xFF630FB5;
+  static const int light_action = 0xFFEF6C00;
   static const int light_urgency = 0xFFF97316;
   static const int light_success = 0xFF16A34A;
   static const int light_danger = 0xFFDC2626;
@@ -40,11 +40,11 @@ class PioneerTokens {
   static const int light_info = 0xFF2563EB;
 
   // Dark Theme Colors
-  static const int dark_background = 0xFF0F172A;
-  static const int dark_paper = 0xFF1E293B;
-  static const int dark_ink = 0xFFF8FAFC;
-  static const int dark_muted = 0xFF94A3B8;
-  static const int dark_border = 0xFF334155;
+  static const int dark_background = 0xFF0F031C;
+  static const int dark_paper = 0xFF1C0D2E;
+  static const int dark_ink = 0xFFF3F4F6;
+  static const int dark_muted = 0xFF9CA3AF;
+  static const int dark_border = 0xFF3D2B54;
   static const int dark_brand_deep = 0xFFEDE9FE;
   static const int dark_brand = 0xFFA78BFA;
   static const int dark_brand_interactive = 0xFFC084FC;
