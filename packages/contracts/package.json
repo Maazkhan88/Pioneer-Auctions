@@ -4,15 +4,30 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./fixtures/v1/*": "./fixtures/v1/*",
+    "./openapi/v1.json": "./openapi/v1.json",
+    "./schemas/v1/*": "./schemas/v1/*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.build.json",
+    "check:generated": "tsx scripts/generate-artifacts.ts --check",
+    "generate": "tsx scripts/generate-artifacts.ts",
+    "lint": "eslint .",
+    "test": "vitest run && tsx scripts/generate-artifacts.ts --check",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "@pioneer/config": "workspace:*",
+    "@types/node": "26.1.1",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "9.39.5",
+    "quicktype-core": "25.0.0",
+    "tsx": "4.23.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
   }
 }

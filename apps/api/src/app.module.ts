@@ -5,12 +5,18 @@ import {
 } from "@nestjs/common";
 
 import { EnvironmentModule } from "./config/environment.module.js";
+import { ContractsModule } from "./contracts/contracts.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { CorrelationIdMiddleware } from "./observability/correlation-id.middleware.js";
 import { ObservabilityModule } from "./observability/observability.module.js";
 
 @Module({
-  imports: [EnvironmentModule, ObservabilityModule, HealthModule],
+  imports: [
+    EnvironmentModule,
+    ObservabilityModule,
+    HealthModule,
+    ContractsModule,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -1,70 +1,98 @@
-import type { IsoDateTime, Money, Uuid } from "./core.js";
+import { z } from "zod";
 
-export type LotLifecycle =
-  | "SCHEDULED"
-  | "LIVE"
-  | "PAUSED"
-  | "CLOSED"
-  | "PENDING_APPROVAL"
-  | "APPROVED"
-  | "REJECTED"
-  | "CANCELLED";
+import {
+  IsoDateTimeSchema,
+  MoneySchema,
+  NonNegativeIntegerSchema,
+  UuidSchema,
+} from "./core.js";
 
-export type ReserveStatus = "NOT_APPLICABLE" | "NOT_MET" | "MET";
+export const LotLifecycleSchema = z.enum([
+  "SCHEDULED",
+  "LIVE",
+  "PAUSED",
+  "CLOSED",
+  "PENDING_APPROVAL",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+]);
 
-export type MyBidStatus =
-  | "NOT_BIDDING"
-  | "WINNING"
-  | "OUTBID"
-  | "WON_PENDING_APPROVAL"
-  | "WON"
-  | "LOST";
+export const ReserveStatusSchema = z.enum(["NOT_APPLICABLE", "NOT_MET", "MET"]);
 
-export type EligibilityReasonCode =
-  | "KYC_REQUIRED"
-  | "KYC_PENDING"
-  | "DEPOSIT_REQUIRED"
-  | "DEPOSIT_INSUFFICIENT"
-  | "TERMS_ACCEPTANCE_REQUIRED"
-  | "ACCOUNT_RESTRICTED";
+export const MyBidStatusSchema = z.enum([
+  "NOT_BIDDING",
+  "WINNING",
+  "OUTBID",
+  "WON_PENDING_APPROVAL",
+  "WON",
+  "LOST",
+]);
 
-export interface BidEligibility {
-  readonly eligible: boolean;
-  readonly reasonCodes: readonly EligibilityReasonCode[];
-  readonly requiredDeposit?: Money;
-  readonly eligibleDeposit?: Money;
-  readonly termsVersionId?: Uuid;
-}
+export const EligibilityReasonCodeSchema = z.enum([
+  "KYC_REQUIRED",
+  "KYC_PENDING",
+  "DEPOSIT_REQUIRED",
+  "DEPOSIT_INSUFFICIENT",
+  "TERMS_ACCEPTANCE_REQUIRED",
+  "ACCOUNT_RESTRICTED",
+]);
 
-export interface SoftCloseState {
-  readonly enabled: boolean;
-  readonly windowMs: number;
-  readonly extensionMs: number;
-  readonly extensionCount: number;
-}
+export const BidEligibilitySchema = z
+  .object({
+    eligible: z.boolean(),
+    eligibleDeposit: MoneySchema.optional(),
+    reasonCodes: z.array(EligibilityReasonCodeSchema),
+    requiredDeposit: MoneySchema.optional(),
+    termsVersionId: UuidSchema.optional(),
+  })
+  .passthrough();
 
-export interface SoftClosePolicy {
-  readonly enabled: boolean;
-  readonly windowMs: number;
-  readonly extensionMs: number;
-  readonly maximumExtensions: number | null;
-}
+export const SoftCloseStateSchema = z
+  .object({
+    enabled: z.boolean(),
+    extensionCount: NonNegativeIntegerSchema,
+    extensionMs: NonNegativeIntegerSchema,
+    windowMs: NonNegativeIntegerSchema,
+  })
+  .passthrough();
 
-export interface LotPublicState {
-  readonly lifecycle: LotLifecycle;
-  readonly currentBid: Money | null;
-  readonly nextMinimumBid: Money;
-  readonly bidCount: number;
-  readonly reserveStatus: ReserveStatus;
-  readonly startsAt: IsoDateTime;
-  readonly closesAt: IsoDateTime;
-  readonly softClose: SoftCloseState;
-  readonly approximateViewerCount?: number;
-}
+export const SoftClosePolicySchema = z.strictObject({
+  enabled: z.boolean(),
+  extensionMs: NonNegativeIntegerSchema,
+  maximumExtensions: NonNegativeIntegerSchema.nullable(),
+  windowMs: NonNegativeIntegerSchema,
+});
 
-export interface MyBidState {
-  readonly status: MyBidStatus;
-  readonly myHighestVisibleBid: Money | null;
-  readonly activeProxyMaximum: Money | null;
-  readonly eligibility: BidEligibility;
-}
+export const LotPublicStateSchema = z
+  .object({
+    approximateViewerCount: NonNegativeIntegerSchema.optional(),
+    bidCount: NonNegativeIntegerSchema,
+    closesAt: IsoDateTimeSchema,
+    currentBid: MoneySchema.nullable(),
+    lifecycle: LotLifecycleSchema,
+    nextMinimumBid: MoneySchema,
+    reserveStatus: ReserveStatusSchema,
+    softClose: SoftCloseStateSchema,
+    startsAt: IsoDateTimeSchema,
+  })
+  .passthrough();
+
+export const MyBidStateSchema = z
+  .object({
+    activeProxyMaximum: MoneySchema.nullable(),
+    eligibility: BidEligibilitySchema,
+    myHighestVisibleBid: MoneySchema.nullable(),
+    status: MyBidStatusSchema,
+  })
+  .passthrough();
+
+export type LotLifecycle = z.infer<typeof LotLifecycleSchema>;
+export type ReserveStatus = z.infer<typeof ReserveStatusSchema>;
+export type MyBidStatus = z.infer<typeof MyBidStatusSchema>;
+export type EligibilityReasonCode = z.infer<typeof EligibilityReasonCodeSchema>;
+export type BidEligibility = z.infer<typeof BidEligibilitySchema>;
+export type SoftCloseState = z.infer<typeof SoftCloseStateSchema>;
+export type SoftClosePolicy = z.infer<typeof SoftClosePolicySchema>;
+export type LotPublicState = z.infer<typeof LotPublicStateSchema>;
+export type MyBidState = z.infer<typeof MyBidStateSchema>;

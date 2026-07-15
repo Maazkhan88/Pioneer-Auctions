@@ -1,0 +1,2346 @@
+{
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "AUTH_REQUIRED",
+                  "AUTH_FORBIDDEN",
+                  "ACCOUNT_RESTRICTED",
+                  "KYC_REQUIRED",
+                  "KYC_PENDING",
+                  "DEPOSIT_REQUIRED",
+                  "DEPOSIT_INSUFFICIENT",
+                  "TERMS_ACCEPTANCE_REQUIRED",
+                  "AUCTION_NOT_LIVE",
+                  "AUCTION_PAUSED",
+                  "AUCTION_CLOSED",
+                  "LOT_NOT_FOUND",
+                  "LOT_NOT_BIDDABLE",
+                  "BID_TOO_LOW",
+                  "BID_AMOUNT_INVALID",
+                  "PROXY_MAX_TOO_LOW",
+                  "OFFER_NOT_ALLOWED",
+                  "COMMAND_CONFLICT",
+                  "RATE_LIMITED",
+                  "PROVIDER_UNAVAILABLE",
+                  "VALIDATION_FAILED",
+                  "INTERNAL_ERROR"
+                ]
+              },
+              "correlationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "fieldErrors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "field": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "field",
+                    "message"
+                  ],
+                  "additionalProperties": {}
+                }
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "retryAfterMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "code",
+              "correlationId",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "contractVersion",
+          "error"
+        ],
+        "additionalProperties": {}
+      },
+      "BidCommandAck": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "contractVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "correlationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "closesAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "currentBid": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "extended": {
+                    "type": "boolean"
+                  },
+                  "lotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "myBidStatus": {
+                    "type": "string",
+                    "enum": [
+                      "WINNING",
+                      "OUTBID"
+                    ]
+                  },
+                  "nextMinimumBid": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "reserveStatus": {
+                    "type": "string",
+                    "enum": [
+                      "NOT_APPLICABLE",
+                      "NOT_MET",
+                      "MET"
+                    ]
+                  },
+                  "sequence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "closesAt",
+                  "currentBid",
+                  "extended",
+                  "lotId",
+                  "myBidStatus",
+                  "nextMinimumBid",
+                  "reserveStatus",
+                  "sequence"
+                ],
+                "additionalProperties": {}
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": {
+                "type": "string",
+                "const": "ACCEPTED"
+              }
+            },
+            "required": [
+              "commandId",
+              "contractVersion",
+              "correlationId",
+              "result",
+              "serverTime",
+              "status"
+            ],
+            "additionalProperties": {}
+          },
+          {
+            "type": "object",
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "contractVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "correlationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "AUTH_REQUIRED",
+                      "AUTH_FORBIDDEN",
+                      "ACCOUNT_RESTRICTED",
+                      "KYC_REQUIRED",
+                      "KYC_PENDING",
+                      "DEPOSIT_REQUIRED",
+                      "DEPOSIT_INSUFFICIENT",
+                      "TERMS_ACCEPTANCE_REQUIRED",
+                      "AUCTION_NOT_LIVE",
+                      "AUCTION_PAUSED",
+                      "AUCTION_CLOSED",
+                      "LOT_NOT_FOUND",
+                      "LOT_NOT_BIDDABLE",
+                      "BID_TOO_LOW",
+                      "BID_AMOUNT_INVALID",
+                      "PROXY_MAX_TOO_LOW",
+                      "OFFER_NOT_ALLOWED",
+                      "COMMAND_CONFLICT",
+                      "RATE_LIMITED",
+                      "PROVIDER_UNAVAILABLE",
+                      "VALIDATION_FAILED",
+                      "INTERNAL_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "retryAfterMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "additionalProperties": {}
+              },
+              "latest": {
+                "type": "object",
+                "properties": {
+                  "closesAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                  },
+                  "currentBid": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "lotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "nextMinimumBid": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sequence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "closesAt",
+                  "currentBid",
+                  "lotId",
+                  "nextMinimumBid",
+                  "sequence"
+                ],
+                "additionalProperties": {}
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "status": {
+                "type": "string",
+                "const": "REJECTED"
+              }
+            },
+            "required": [
+              "commandId",
+              "contractVersion",
+              "correlationId",
+              "error",
+              "serverTime",
+              "status"
+            ],
+            "additionalProperties": {}
+          }
+        ]
+      },
+      "BidLatestState": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "closesAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "currentBid": {
+            "type": "object",
+            "properties": {
+              "amountFils": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "currency": {
+                "type": "string",
+                "const": "AED"
+              }
+            },
+            "required": [
+              "amountFils",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "nextMinimumBid": {
+            "type": "object",
+            "properties": {
+              "amountFils": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "currency": {
+                "type": "string",
+                "const": "AED"
+              }
+            },
+            "required": [
+              "amountFils",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "closesAt",
+          "currentBid",
+          "lotId",
+          "nextMinimumBid",
+          "sequence"
+        ],
+        "additionalProperties": {}
+      },
+      "LotPublicState": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "approximateViewerCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "bidCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "currentBid": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "amountFils": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "currency": {
+                    "type": "string",
+                    "const": "AED"
+                  }
+                },
+                "required": [
+                  "amountFils",
+                  "currency"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "LIVE",
+              "PAUSED",
+              "CLOSED",
+              "PENDING_APPROVAL",
+              "APPROVED",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "nextMinimumBid": {
+            "type": "object",
+            "properties": {
+              "amountFils": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "currency": {
+                "type": "string",
+                "const": "AED"
+              }
+            },
+            "required": [
+              "amountFils",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "reserveStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_APPLICABLE",
+              "NOT_MET",
+              "MET"
+            ]
+          },
+          "softClose": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "extensionCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "extensionMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "windowMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "enabled",
+              "extensionCount",
+              "extensionMs",
+              "windowMs"
+            ],
+            "additionalProperties": {}
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        },
+        "required": [
+          "bidCount",
+          "closesAt",
+          "currentBid",
+          "lifecycle",
+          "nextMinimumBid",
+          "reserveStatus",
+          "softClose",
+          "startsAt"
+        ],
+        "additionalProperties": {}
+      },
+      "LotSnapshot": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "auctionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "event": {
+            "type": "string",
+            "const": "lot:snapshot"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "myBidState": {
+            "type": "object",
+            "properties": {
+              "activeProxyMaximum": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "eligibility": {
+                "type": "object",
+                "properties": {
+                  "eligible": {
+                    "type": "boolean"
+                  },
+                  "eligibleDeposit": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "reasonCodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "KYC_REQUIRED",
+                        "KYC_PENDING",
+                        "DEPOSIT_REQUIRED",
+                        "DEPOSIT_INSUFFICIENT",
+                        "TERMS_ACCEPTANCE_REQUIRED",
+                        "ACCOUNT_RESTRICTED"
+                      ]
+                    }
+                  },
+                  "requiredDeposit": {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "termsVersionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "required": [
+                  "eligible",
+                  "reasonCodes"
+                ],
+                "additionalProperties": {}
+              },
+              "myHighestVisibleBid": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "NOT_BIDDING",
+                  "WINNING",
+                  "OUTBID",
+                  "WON_PENDING_APPROVAL",
+                  "WON",
+                  "LOST"
+                ]
+              }
+            },
+            "required": [
+              "activeProxyMaximum",
+              "eligibility",
+              "myHighestVisibleBid",
+              "status"
+            ],
+            "additionalProperties": {}
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "object",
+            "properties": {
+              "approximateViewerCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "bidCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "closesAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              },
+              "currentBid": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "amountFils": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "currency": {
+                        "type": "string",
+                        "const": "AED"
+                      }
+                    },
+                    "required": [
+                      "amountFils",
+                      "currency"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lifecycle": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "LIVE",
+                  "PAUSED",
+                  "CLOSED",
+                  "PENDING_APPROVAL",
+                  "APPROVED",
+                  "REJECTED",
+                  "CANCELLED"
+                ]
+              },
+              "nextMinimumBid": {
+                "type": "object",
+                "properties": {
+                  "amountFils": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "currency": {
+                    "type": "string",
+                    "const": "AED"
+                  }
+                },
+                "required": [
+                  "amountFils",
+                  "currency"
+                ],
+                "additionalProperties": false
+              },
+              "reserveStatus": {
+                "type": "string",
+                "enum": [
+                  "NOT_APPLICABLE",
+                  "NOT_MET",
+                  "MET"
+                ]
+              },
+              "softClose": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "extensionCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "extensionMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "windowMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "extensionCount",
+                  "extensionMs",
+                  "windowMs"
+                ],
+                "additionalProperties": {}
+              },
+              "startsAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            },
+            "required": [
+              "bidCount",
+              "closesAt",
+              "currentBid",
+              "lifecycle",
+              "nextMinimumBid",
+              "reserveStatus",
+              "softClose",
+              "startsAt"
+            ],
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "auctionId",
+          "contractVersion",
+          "event",
+          "generatedAt",
+          "lotId",
+          "sequence",
+          "state"
+        ],
+        "additionalProperties": {}
+      },
+      "Money": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "amountFils": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "const": "AED"
+          }
+        },
+        "required": [
+          "amountFils",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceBidRestRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "object",
+            "properties": {
+              "amountFils": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "currency": {
+                "type": "string",
+                "const": "AED"
+              }
+            },
+            "required": [
+              "amountFils",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "expectedSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "amount",
+          "expectedSequence",
+          "termsVersionId"
+        ],
+        "additionalProperties": false
+      },
+      "SetProxyBidRestRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expectedSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maximum": {
+            "type": "object",
+            "properties": {
+              "amountFils": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "currency": {
+                "type": "string",
+                "const": "AED"
+              }
+            },
+            "required": [
+              "amountFils",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "termsVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "expectedSequence",
+          "maximum",
+          "termsVersionId"
+        ],
+        "additionalProperties": false
+      },
+      "Uuid": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    }
+  },
+  "info": {
+    "title": "Pioneer Auctions API",
+    "version": "1.0.0"
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "3.1.0",
+  "paths": {
+    "/auth/uae-pass/start": {
+      "post": {
+        "operationId": "post_authUae_passStart",
+        "parameters": [],
+        "summary": "Start UAE PASS authorization",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auth/uae-pass/callback": {
+      "get": {
+        "operationId": "get_authUae_passCallback",
+        "parameters": [],
+        "summary": "Handle UAE PASS callback",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auth/otp/request": {
+      "post": {
+        "operationId": "post_authOtpRequest",
+        "parameters": [],
+        "summary": "Request fallback OTP",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auth/otp/verify": {
+      "post": {
+        "operationId": "post_authOtpVerify",
+        "parameters": [],
+        "summary": "Verify fallback OTP",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "post_authRefresh",
+        "parameters": [],
+        "summary": "Rotate refresh session",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "post_authLogout",
+        "parameters": [],
+        "summary": "Revoke current refresh session",
+        "tags": [
+          "auth"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "get_me",
+        "parameters": [],
+        "summary": "Get current profile",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/preferences": {
+      "patch": {
+        "operationId": "patch_mePreferences",
+        "parameters": [],
+        "summary": "Update profile preferences",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/kyc": {
+      "get": {
+        "operationId": "get_meKyc",
+        "parameters": [],
+        "summary": "Get KYC status",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/kyc/sessions": {
+      "post": {
+        "operationId": "post_meKycSessions",
+        "parameters": [],
+        "summary": "Start fallback KYC session",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "get_categories",
+        "parameters": [],
+        "summary": "List localized categories",
+        "tags": [
+          "categories"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auctions": {
+      "get": {
+        "operationId": "get_auctions",
+        "parameters": [],
+        "summary": "List auctions",
+        "tags": [
+          "auctions"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auctions/{auctionId}": {
+      "get": {
+        "operationId": "get_auctionsAuctionId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "auctionId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get auction",
+        "tags": [
+          "auctions"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/auctions/{auctionId}/lots": {
+      "get": {
+        "operationId": "get_auctionsAuctionIdLots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "auctionId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "List auction lots",
+        "tags": [
+          "auctions"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots": {
+      "get": {
+        "operationId": "get_lots",
+        "parameters": [],
+        "summary": "Search lots",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}": {
+      "get": {
+        "operationId": "get_lotsLotId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get lot details",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/bids": {
+      "get": {
+        "operationId": "get_lotsLotIdBids",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get public bid history",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_lotsLotIdBids",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Place bid",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "contracted",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceBidRestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidCommandAck"
+                }
+              }
+            },
+            "description": "Replay of an existing command result"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidCommandAck"
+                }
+              }
+            },
+            "description": "Command evaluated"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authentication, authorization, or validation error"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/snapshot": {
+      "get": {
+        "operationId": "get_lotsLotIdSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get authoritative lot snapshot",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "contracted",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotSnapshot"
+                }
+              }
+            },
+            "description": "Authoritative snapshot"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/watch": {
+      "post": {
+        "operationId": "post_lotsLotIdWatch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Watch lot",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_lotsLotIdWatch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Unwatch lot",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/terms-acceptances": {
+      "post": {
+        "operationId": "post_lotsLotIdTerms_acceptances",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Accept lot terms",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/eligibility": {
+      "get": {
+        "operationId": "get_meEligibility",
+        "parameters": [],
+        "summary": "Explain bidding eligibility",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/deposits": {
+      "get": {
+        "operationId": "get_meDeposits",
+        "parameters": [],
+        "summary": "List deposit balances and holds",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/transactions": {
+      "get": {
+        "operationId": "get_meTransactions",
+        "parameters": [],
+        "summary": "List account transactions",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/deposit-payment-intents": {
+      "post": {
+        "operationId": "post_deposit_payment_intents",
+        "parameters": [],
+        "summary": "Create deposit payment intent",
+        "tags": [
+          "deposit-payment-intents"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/deposit-payment-intents/{id}": {
+      "get": {
+        "operationId": "get_deposit_payment_intentsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get deposit payment intent",
+        "tags": [
+          "deposit-payment-intents"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/deposit-refund-requests": {
+      "post": {
+        "operationId": "post_deposit_refund_requests",
+        "parameters": [],
+        "summary": "Request deposit refund",
+        "tags": [
+          "deposit-refund-requests"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/invoices": {
+      "get": {
+        "operationId": "get_meInvoices",
+        "parameters": [],
+        "summary": "List invoices and receipts",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/proxy-bid": {
+      "put": {
+        "operationId": "put_lotsLotIdProxy_bid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Set proxy maximum",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "contracted",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetProxyBidRestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidCommandAck"
+                }
+              }
+            },
+            "description": "Replay of an existing command result"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidCommandAck"
+                }
+              }
+            },
+            "description": "Command evaluated"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authentication, authorization, or validation error"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_lotsLotIdProxy_bid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Cancel proxy maximum",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/my-proxy-bid": {
+      "get": {
+        "operationId": "get_lotsLotIdMy_proxy_bid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Get private proxy status",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/lots/{lotId}/offers": {
+      "post": {
+        "operationId": "post_lotsLotIdOffers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lotId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Submit offer",
+        "tags": [
+          "lots"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/bids": {
+      "get": {
+        "operationId": "get_meBids",
+        "parameters": [],
+        "summary": "List bidding activity",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/offers": {
+      "get": {
+        "operationId": "get_meOffers",
+        "parameters": [],
+        "summary": "List offers",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/watchlist": {
+      "get": {
+        "operationId": "get_meWatchlist",
+        "parameters": [],
+        "summary": "List watched lots",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/me/notifications": {
+      "get": {
+        "operationId": "get_meNotifications",
+        "parameters": [],
+        "summary": "List notifications",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/seller/listings": {
+      "post": {
+        "operationId": "post_sellerListings",
+        "parameters": [],
+        "summary": "Create seller listing draft",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_sellerListings",
+        "parameters": [],
+        "summary": "List seller listings",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/seller/listings/{id}": {
+      "patch": {
+        "operationId": "patch_sellerListingsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Update seller listing draft",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/seller/listings/{id}/media": {
+      "post": {
+        "operationId": "post_sellerListingsIdMedia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Create listing media upload",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/seller/listings/{id}/submit": {
+      "post": {
+        "operationId": "post_sellerListingsIdSubmit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Submit listing for review",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/seller/sales": {
+      "get": {
+        "operationId": "get_sellerSales",
+        "parameters": [],
+        "summary": "List seller sales",
+        "tags": [
+          "seller"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/lots": {
+      "get": {
+        "operationId": "get_adminLots",
+        "parameters": [],
+        "summary": "List admin lots",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_adminLots",
+        "parameters": [],
+        "summary": "Create admin lot",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/lots/{id}": {
+      "patch": {
+        "operationId": "patch_adminLotsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Update admin lot",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/auctions": {
+      "get": {
+        "operationId": "get_adminAuctions",
+        "parameters": [],
+        "summary": "List admin auctions",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_adminAuctions",
+        "parameters": [],
+        "summary": "Create admin auction",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/auctions/{id}": {
+      "patch": {
+        "operationId": "patch_adminAuctionsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Update admin auction",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/auctions/{id}/pause": {
+      "post": {
+        "operationId": "post_adminAuctionsIdPause",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Pause auction",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/auctions/{id}/resume": {
+      "post": {
+        "operationId": "post_adminAuctionsIdResume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Resume auction",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/auctions/{id}/cancel": {
+      "post": {
+        "operationId": "post_adminAuctionsIdCancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Cancel auction",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/final-bid-approvals": {
+      "get": {
+        "operationId": "get_adminFinal_bid_approvals",
+        "parameters": [],
+        "summary": "List final-bid approvals",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/final-bid-approvals/{id}/approve": {
+      "post": {
+        "operationId": "post_adminFinal_bid_approvalsIdApprove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Approve final bid",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/final-bid-approvals/{id}/reject": {
+      "post": {
+        "operationId": "post_adminFinal_bid_approvalsIdReject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Reject final bid",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/offer-decisions": {
+      "get": {
+        "operationId": "get_adminOffer_decisions",
+        "parameters": [],
+        "summary": "List offer decisions",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/offer-decisions/{id}": {
+      "post": {
+        "operationId": "post_adminOffer_decisionsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Decide offer",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/consignment-reviews": {
+      "get": {
+        "operationId": "get_adminConsignment_reviews",
+        "parameters": [],
+        "summary": "List consignment reviews",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/consignment-reviews/{id}": {
+      "post": {
+        "operationId": "post_adminConsignment_reviewsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Decide consignment review",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/deposit-actions": {
+      "get": {
+        "operationId": "get_adminDeposit_actions",
+        "parameters": [],
+        "summary": "List deposit actions",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/deposit-actions/{id}": {
+      "post": {
+        "operationId": "post_adminDeposit_actionsId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Apply deposit action",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/audit-events": {
+      "get": {
+        "operationId": "get_adminAudit_events",
+        "parameters": [],
+        "summary": "List immutable audit events",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "x-contract-version": 1
+}

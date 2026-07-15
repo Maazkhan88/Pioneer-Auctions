@@ -9,10 +9,12 @@
     "lint": "eslint .",
     "start": "node dist/main.js",
     "test": "vitest run",
+    "test:contract": "vitest run test/contracts.spec.ts",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pioneer/contracts": "workspace:*",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
     "@nestjs/platform-express": "11.1.28",

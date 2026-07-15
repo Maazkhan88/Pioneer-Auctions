@@ -1,0 +1,281 @@
+{
+  "commands": {
+    "bid:place": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "amount": { "currency": "AED", "amountFils": 5200000 },
+      "expectedSequence": 41,
+      "termsVersionId": "44444444-4444-4444-8444-444444444444"
+    },
+    "lot:subscribe": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "afterSequence": 40
+    },
+    "lot:sync": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "afterSequence": 40
+    },
+    "lot:unsubscribe": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111"
+    },
+    "presence:update": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "state": "VIEWING"
+    },
+    "proxy-bid:set": {
+      "contractVersion": 1,
+      "commandId": "33333333-3333-4333-8333-333333333333",
+      "sentAt": "2026-07-15T08:00:00.000Z",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "maximum": { "currency": "AED", "amountFils": 6000000 },
+      "expectedSequence": 41,
+      "termsVersionId": "44444444-4444-4444-8444-444444444444"
+    }
+  },
+  "events": {
+    "approval:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "approval:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-approval",
+      "data": {
+        "lotId": "11111111-1111-4111-8111-111111111111",
+        "auctionId": "22222222-2222-4222-8222-222222222222",
+        "outcome": "PENDING",
+        "hammerPrice": { "currency": "AED", "amountFils": 5200000 },
+        "approvalSlaDueAt": "2026-07-16T08:00:00.000Z",
+        "deepLink": "/lots/11111111-1111-4111-8111-111111111111"
+      }
+    },
+    "auction:extended": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "auction:extended",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 43,
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-extended",
+      "data": {
+        "previousClosesAt": "2026-07-15T08:02:00.000Z",
+        "closesAt": "2026-07-15T08:04:00.000Z",
+        "extensionMs": 120000,
+        "extensionCount": 1,
+        "reason": "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW"
+      }
+    },
+    "auction:state-changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "auction:state-changed",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 44,
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-state",
+      "data": {
+        "previousLifecycle": "LIVE",
+        "lifecycle": "PAUSED",
+        "closesAt": "2026-07-15T08:04:00.000Z",
+        "reasonCode": "OPERATOR_PAUSE"
+      }
+    },
+    "bid:accepted": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "bid:accepted",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 42,
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-bid",
+      "data": {
+        "bidId": "66666666-6666-4666-8666-666666666666",
+        "amount": { "currency": "AED", "amountFils": 5200000 },
+        "bidderAlias": "Bidder 027",
+        "bidKind": "MANUAL",
+        "currentBid": { "currency": "AED", "amountFils": 5200000 },
+        "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+        "bidCount": 12,
+        "reserveStatus": "MET"
+      }
+    },
+    "bid:status-changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "bid:status-changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-my-bid",
+      "data": {
+        "lotId": "11111111-1111-4111-8111-111111111111",
+        "auctionId": "22222222-2222-4222-8222-222222222222",
+        "lotSequence": 42,
+        "status": "WINNING",
+        "currentBid": { "currency": "AED", "amountFils": 5200000 },
+        "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+        "activeProxyMaximum": null,
+        "closesAt": "2026-07-15T08:04:00.000Z"
+      }
+    },
+    "deposit:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "deposit:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-deposit",
+      "data": {
+        "depositId": "77777777-7777-4777-8777-777777777777",
+        "state": "HELD",
+        "displayAmount": { "currency": "AED", "amountFils": 500000 },
+        "changedAt": "2026-07-15T08:00:01.000Z",
+        "deepLink": "/wallet/deposits"
+      }
+    },
+    "eligibility:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "eligibility:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-eligibility",
+      "data": {
+        "lotId": "11111111-1111-4111-8111-111111111111",
+        "eligibility": {
+          "eligible": true,
+          "reasonCodes": [],
+          "eligibleDeposit": { "currency": "AED", "amountFils": 500000 },
+          "termsVersionId": "44444444-4444-4444-8444-444444444444"
+        }
+      }
+    },
+    "lot:presence-changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "lot:presence-changed",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 45,
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-presence",
+      "data": { "approximateViewerCount": 84 }
+    },
+    "lot:snapshot": {
+      "contractVersion": 1,
+      "event": "lot:snapshot",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 42,
+      "generatedAt": "2026-07-15T08:00:01.000Z",
+      "state": {
+        "lifecycle": "LIVE",
+        "currentBid": { "currency": "AED", "amountFils": 5200000 },
+        "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+        "bidCount": 12,
+        "reserveStatus": "MET",
+        "startsAt": "2026-07-15T07:00:00.000Z",
+        "closesAt": "2026-07-15T08:04:00.000Z",
+        "softClose": {
+          "enabled": true,
+          "windowMs": 120000,
+          "extensionMs": 120000,
+          "extensionCount": 1
+        },
+        "approximateViewerCount": 84
+      },
+      "myBidState": {
+        "status": "WINNING",
+        "myHighestVisibleBid": { "currency": "AED", "amountFils": 5200000 },
+        "activeProxyMaximum": null,
+        "eligibility": { "eligible": true, "reasonCodes": [] }
+      }
+    },
+    "notification:created": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "notification:created",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-notification",
+      "data": {
+        "notificationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "state": "UNREAD",
+        "changedAt": "2026-07-15T08:00:01.000Z",
+        "deepLink": "/notifications"
+      }
+    },
+    "offer:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "offer:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-offer",
+      "data": {
+        "offerId": "99999999-9999-4999-8999-999999999999",
+        "state": "PENDING",
+        "displayAmount": { "currency": "AED", "amountFils": 5000000 },
+        "changedAt": "2026-07-15T08:00:01.000Z",
+        "deepLink": "/activity/offers"
+      }
+    },
+    "payment:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "payment:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-payment",
+      "data": {
+        "paymentId": "88888888-8888-4888-8888-888888888888",
+        "state": "PENDING",
+        "displayAmount": { "currency": "AED", "amountFils": 5200000 },
+        "changedAt": "2026-07-15T08:00:01.000Z",
+        "deepLink": "/wallet/transactions"
+      }
+    },
+    "proxy-bid:changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "proxy-bid:changed",
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-proxy",
+      "data": {
+        "lotId": "11111111-1111-4111-8111-111111111111",
+        "lotSequence": 42,
+        "activeProxyMaximum": { "currency": "AED", "amountFils": 6000000 },
+        "status": "ACTIVE",
+        "currentBid": { "currency": "AED", "amountFils": 5200000 },
+        "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 }
+      }
+    },
+    "reserve:status-changed": {
+      "contractVersion": 1,
+      "eventId": "55555555-5555-4555-8555-555555555555",
+      "event": "reserve:status-changed",
+      "lotId": "11111111-1111-4111-8111-111111111111",
+      "auctionId": "22222222-2222-4222-8222-222222222222",
+      "sequence": 42,
+      "occurredAt": "2026-07-15T08:00:01.000Z",
+      "correlationId": "corr-reserve",
+      "data": { "reserveStatus": "MET" }
+    },
+    "server:hello": {
+      "contractVersion": 1,
+      "connectionId": "socket-connection-1",
+      "serverTime": "2026-07-15T08:00:00.000Z",
+      "heartbeatIntervalMs": 25000,
+      "maxCommandSkewSequence": 20
+    }
+  }
+}

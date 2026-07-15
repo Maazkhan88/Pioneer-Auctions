@@ -1,0 +1,77 @@
+{
+  "commands": {
+    "bid:place": {
+      "contractVersion": 1,
+      "amount": { "currency": "USD", "amountFils": 1 }
+    },
+    "lot:subscribe": { "contractVersion": 1, "lotId": "not-a-uuid" },
+    "lot:sync": { "contractVersion": 1, "afterSequence": -1 },
+    "lot:unsubscribe": { "contractVersion": 2 },
+    "presence:update": { "contractVersion": 1, "state": "AWAY" },
+    "proxy-bid:set": {
+      "contractVersion": 1,
+      "maximum": { "currency": "AED", "amountFils": 1.5 }
+    }
+  },
+  "events": {
+    "approval:changed": {
+      "event": "approval:changed",
+      "data": { "outcome": "COUNTERED" }
+    },
+    "auction:extended": {
+      "event": "auction:extended",
+      "data": { "reason": "MANUAL" }
+    },
+    "auction:state-changed": {
+      "event": "auction:state-changed",
+      "data": { "lifecycle": "UNKNOWN" }
+    },
+    "bid:accepted": { "event": "bid:accepted", "eventId": "not-a-uuid" },
+    "bid:status-changed": {
+      "event": "bid:status-changed",
+      "data": { "status": "UNKNOWN" }
+    },
+    "deposit:changed": {
+      "event": "deposit:changed",
+      "data": { "depositId": "not-a-uuid" }
+    },
+    "eligibility:changed": {
+      "event": "eligibility:changed",
+      "data": {
+        "eligibility": { "eligible": false, "reasonCodes": ["UNKNOWN"] }
+      }
+    },
+    "lot:presence-changed": {
+      "event": "lot:presence-changed",
+      "data": { "approximateViewerCount": -1 }
+    },
+    "lot:snapshot": {
+      "event": "lot:snapshot",
+      "state": { "lifecycle": "UNKNOWN" }
+    },
+    "notification:created": {
+      "event": "notification:created",
+      "data": { "notificationId": "not-a-uuid" }
+    },
+    "offer:changed": {
+      "event": "offer:changed",
+      "data": { "offerId": "not-a-uuid" }
+    },
+    "payment:changed": {
+      "event": "payment:changed",
+      "data": { "paymentId": "not-a-uuid" }
+    },
+    "proxy-bid:changed": {
+      "event": "proxy-bid:changed",
+      "data": { "status": "UNKNOWN" }
+    },
+    "reserve:status-changed": {
+      "event": "reserve:status-changed",
+      "data": { "reserveStatus": "NOT_MET" }
+    },
+    "server:hello": {
+      "contractVersion": 1,
+      "serverTime": "2026-07-15T12:00:00+04:00"
+    }
+  }
+}
