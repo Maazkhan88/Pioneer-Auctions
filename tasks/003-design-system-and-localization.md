@@ -2,6 +2,8 @@
 
 Recommended owner: Codex for tokens/web primitives; one designated Flutter owner for Dart primitives
 
+Status: In progress on `agent/task-003-design-system` (started 2026-07-15). Codex owns both token/web work and the bounded Flutter primitives for consistency.
+
 ## Goal
 
 Create accessible, themeable English/Arabic primitives that keep visual and semantic behavior consistent across web, admin, and Flutter.

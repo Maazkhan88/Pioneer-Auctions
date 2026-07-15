@@ -12,7 +12,7 @@ Deliver one trustworthy auction platform across Flutter mobile, Next.js web bidd
 
 ## Current phase
 
-Phase 0: foundation and contract definition are implemented on draft branches; design-system implementation is next. Neither completed task is on `main` until its draft PR is reviewed and merged.
+Phase 0: foundation and contract definition are implemented on draft branches; cross-platform design-system implementation is active. None of these tasks are on `main` until their stacked draft PRs are reviewed and merged.
 
 ## Delivery status
 
@@ -50,13 +50,13 @@ Phase 0: foundation and contract definition are implemented on draft branches; d
 
 ## Active task
 
-No implementation task is currently active. Tasks 001 and 002 are complete on their branches and awaiting review in draft PRs #1 and #2.
+Task 003 is active. Owner: Codex. Branch: `agent/task-003-design-system`. Started: 2026-07-15. It is stacked on the completed Task 002 branch.
 
 | Task                   | Owner      | Branch                             | Status             | Notes                                     |
 | ---------------------- | ---------- | ---------------------------------- | ------------------ | ----------------------------------------- |
 | 001 Foundation         | Codex      | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
 | 002 Contracts          | Codex      | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
-| 003 Design system      | Unassigned | —                                  | Ready after 001    | EN/AR primitives                          |
+| 003 Design system      | Codex      | `agent/task-003-design-system`     | In progress        | EN/AR web and Flutter primitives          |
 | 004 Bidding engine     | Unassigned | —                                  | Ready after 002    | Product rulings still gate production     |
 | 005 Web buyer loop     | Unassigned | —                                  | Blocked by 002–004 | Full bidding client                       |
 | 006 Mobile buyer loop  | Unassigned | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
@@ -94,7 +94,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Review and merge PR #1, then retarget/rebase and merge PR #2. Afterward, claim `tasks/003-design-system-and-localization.md` for the shared EN/AR visual primitives, or `tasks/004-bidding-engine.md` for the next backend critical path after confirming its open product defaults.
+Complete `tasks/003-design-system-and-localization.md` without building a finished product screen or connecting live data. Preserve the stacked merge order: PR #1, PR #2, then Task 003.
 
 ## Last validation
 
