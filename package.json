@@ -13,13 +13,16 @@
     "dev": "corepack pnpm -r --parallel --if-present dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "infra:config": "node scripts/validate-compose.mjs",
     "lint": "corepack pnpm -r --if-present lint",
+    "security:audit": "corepack pnpm audit --prod --audit-level=high",
     "test": "corepack pnpm -r --if-present test",
     "typecheck": "corepack pnpm -r --if-present typecheck"
   },
   "devDependencies": {
-    "prettier": "3.6.2",
-    "turbo": "2.5.5",
-    "typescript": "5.8.3"
+    "prettier": "3.9.0",
+    "turbo": "2.10.5",
+    "typescript": "5.9.3",
+    "yaml": "2.8.2"
   }
 }
