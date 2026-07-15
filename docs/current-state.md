@@ -12,7 +12,13 @@ Deliver one trustworthy auction platform across Flutter mobile, Next.js web bidd
 
 ## Current phase
 
-Phase 0: foundation and contract definition.
+Phase 0: foundation and contract definition are implemented on draft branches; design-system implementation is next. Neither completed task is on `main` until its draft PR is reviewed and merged.
+
+## Delivery status
+
+- [PR #1 — Task 001 foundation](https://github.com/Maazkhan88/Pioneer-Auctions/pull/1) is an open draft targeting `main`; both CI jobs pass. Merge this first.
+- [PR #2 — Task 002 executable contracts](https://github.com/Maazkhan88/Pioneer-Auctions/pull/2) is an open stacked draft targeting `agent/task-001-foundation`; both CI jobs pass. Its latest commit is `6578a07`.
+- After PR #1 merges, retarget/rebase PR #2 onto `main`, rerun CI, then merge PR #2 before starting work that depends on runtime contracts.
 
 ## What exists
 
@@ -44,7 +50,7 @@ Phase 0: foundation and contract definition.
 
 ## Active task
 
-No task is currently active. Task 002 is complete on `agent/task-002-runtime-contracts` and awaiting review as a stacked draft pull request.
+No implementation task is currently active. Tasks 001 and 002 are complete on their branches and awaiting review in draft PRs #1 and #2.
 
 | Task                   | Owner      | Branch                             | Status             | Notes                                     |
 | ---------------------- | ---------- | ---------------------------------- | ------------------ | ----------------------------------------- |
@@ -88,7 +94,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Claim `tasks/003-design-system-and-localization.md` for the shared EN/AR visual primitives, or `tasks/004-bidding-engine.md` for the next backend critical path after confirming its open product defaults.
+Review and merge PR #1, then retarget/rebase and merge PR #2. Afterward, claim `tasks/003-design-system-and-localization.md` for the shared EN/AR visual primitives, or `tasks/004-bidding-engine.md` for the next backend critical path after confirming its open product defaults.
 
 ## Last validation
 
@@ -97,6 +103,7 @@ Claim `tasks/003-design-system-and-localization.md` for the shared EN/AR visual 
 - Dart SDK 3.12.2 reported no analysis issues and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
 - `corepack pnpm build` compiled the API, contracts, design tokens, and both localized Next.js production surfaces.
 - `corepack pnpm security:audit` reported no known production dependency vulnerabilities.
+- GitHub Actions passed both `Install, check, and build` and `Secrets and dependency audit` on draft PRs #1 and #2 on 2026-07-15.
 - Runtime smoke tests returned HTTP 200 from API liveness, Arabic customer web, and English admin routes.
 - Production dependency audit reports no known vulnerabilities after the PostCSS security override.
 - Docker is not installed in the current Windows environment. Compose YAML and required health/volume structure were validated, but container startup, readiness degradation, and recovery must be exercised on the first Docker-enabled machine or CI runner.
