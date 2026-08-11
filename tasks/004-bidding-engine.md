@@ -2,6 +2,8 @@
 
 Recommended owner: Claude Code
 
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Codex is implementing the backend Week 1 foundation before the bid decision function.
+
 ## Goal
 
 Implement the server-authoritative manual/proxy bidding engine, durable ordered ledger, idempotency, soft-close, event outbox, and close worker behind the v1 contract.
@@ -10,6 +12,7 @@ Implement the server-authoritative manual/proxy bidding engine, durable ordered 
 
 - Tasks 001 and 002 complete.
 - Proxy tie rule, custom amount alignment, proxy cancellation, and soft-close formula recorded as accepted decisions for MVP.
+- Local/MVP testing will use a dummy payment gateway provider; real gateway integration is deferred behind the payment-provider interface.
 
 ## Scope
 

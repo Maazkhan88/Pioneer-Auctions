@@ -101,3 +101,9 @@ Record durable product and architecture decisions here. New entries are append-o
   4. **Networking:** `dio` (robust networking client with interceptors for attaching correlation headers).
 - Why: Provides maximum architectural parity with the web interfaces, enforces strict separation of concerns, and accelerates onboarding of parallel contributors without framework styling conflicts.
 
+## DEC-013 — Dummy payment provider for testing
+
+- Date: 2026-08-11
+- Status: accepted for local/MVP test environments only
+- Decision: Use a dummy payment gateway provider during backend and UI testing. The payment module must still expose a provider interface and ledger-safe state transitions so Network International, Telr, or Checkout.com can replace the dummy provider without changing auction/deposit domain rules.
+- Why: External payment onboarding is not needed to test deposits, eligibility, invoices, and buyer flows. A dummy provider keeps development moving while avoiding any dependency on real cards or live gateway credentials.

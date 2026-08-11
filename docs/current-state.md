@@ -51,14 +51,14 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 
 ## Active task
 
-None. Task 003 was completed on 2026-07-15. The next owner should claim Task 004.
+Task 004 / backend Week 1 is active. Owner: Codex. Branch: `agent/task-004-backend-week1`. Started: 2026-08-11.
 
 | Task                   | Owner       | Branch                             | Status             | Notes                                     |
 | ---------------------- | ----------- | ---------------------------------- | ------------------ | ----------------------------------------- |
 | 001 Foundation         | Codex       | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
 | 002 Contracts          | Codex       | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
 | 003 Design system      | Antigravity | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens |
-| 004 Bidding engine     | Unassigned  | —                                  | Ready after 002    | Product rulings still gate production     |
+| 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 schema/auth/RBAC/audit foundation  |
 | 005 Web buyer loop     | Unassigned  | —                                  | Blocked by 002–004 | Full bidding client                       |
 | 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
 | 007 Admin core         | Unassigned  | —                                  | Ready after 002    | Lots, auctions, approval queues           |
@@ -82,6 +82,7 @@ None. Task 003 was completed on 2026-07-15. The next owner should claim Task 004
 - Primary infrastructure target: AWS, with provider abstractions for local development.
 - Contracts: Zod is the executable transport source; OpenAPI 3.1 and Dart models are generated, fixtures are shared across languages, and CI rejects artifact drift.
 - Compatibility: v1 tolerates additive object fields but rejects unknown event names and required enum values; breaking changes require a new REST base path and Socket.IO namespace with an overlap rollout.
+- Payments: local/MVP testing uses a dummy gateway provider behind the future payment-provider interface; no real card gateway is required for backend development until integration hardening.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -96,7 +97,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Execute `tasks/004-bidding-engine.md`. Before implementing, read `docs/legacy-analysis/06-bidding-engine.md`, `docs/legacy-analysis/18-security-review.md`, and `docs/legacy-analysis/20-open-questions.md` so the new engine deliberately closes the legacy correctness and security gaps.
+Continue Task 004 Week 1 by adding migration execution wiring and then seed/admin CRUD endpoints. Keep bidding price/winner/close-time behavior behind explicit Task 004 decisions before implementing the bid decision function.
 
 ## Last validation
 
@@ -104,6 +105,12 @@ Execute `tasks/004-bidding-engine.md`. Before implementing, read `docs/legacy-an
 - Added `formatMoney` utility unit tests under `packages/contracts` for English/Arabic.
 - Added pseudolocalizer validation tests under `apps/web` and `apps/admin` to prevent hardcoded content.
 - `docs/legacy-analysis/*.md` were copied into the rebuild repo on 2026-08-11. This was a documentation-only import; the full app test suite was not rerun for the docs-only change.
+- Week 1 backend foundation started on 2026-08-11: added the initial PostgreSQL migration for accounts, RBAC, auctions/lots, terms, bid command idempotency, proxy registrations, append-only bid/deposit ledgers, audit events, and outbox events; added shared database, identity, and audit services.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 4 files / 8 tests on 2026-08-11.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
