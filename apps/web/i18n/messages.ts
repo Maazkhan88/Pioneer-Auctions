@@ -2,187 +2,199 @@ export const locales = ["en", "ar"] as const;
 export type Locale = (typeof locales)[number];
 
 export interface PreviewLot {
+  readonly badge: string;
+  readonly bids: string;
   readonly category: string;
+  readonly closesIn: string;
   readonly imageClass: string;
+  readonly increment: string;
   readonly lotNumber: string;
   readonly price: string;
-  readonly time: string;
+  readonly reserve: string;
+  readonly status: "winning" | "outbid" | "neutral";
   readonly title: string;
-  readonly bids: number;
-  readonly increment: string;
 }
 
 export interface Messages {
+  readonly activeLots: string;
+  readonly adminPreview: string;
   readonly auctionNumber: string;
+  readonly bidNow: string;
   readonly bidAction: string;
-  readonly brand: string;
-  readonly brandArabic: string;
-  readonly categories: string;
-  readonly regions: string;
+  readonly browseAll: string;
+  readonly categories: readonly string[];
   readonly currentBid: string;
-  readonly endingSoon: string;
-  readonly endsIn: string;
+  readonly depositReady: string;
   readonly eyebrow: string;
+  readonly featured: string;
   readonly heading: string;
-  readonly subtitle: string;
-  readonly searchPlaceholder: string;
-  readonly signin: string;
-  readonly contact: string;
-  readonly minIncrement: string;
-  readonly lotNumberLabel: string;
-  readonly phoneLabel: string;
-  readonly addressLabel: string;
-  readonly aboutUs: string;
-  readonly sell: string;
-  readonly quickLinks: string;
-  readonly followUs: string;
-  readonly downloadApp: string;
-  readonly copyright: string;
+  readonly heroCta: string;
+  readonly heroSecondary: string;
   readonly localeSwitch: string;
   readonly localeSwitchHref: string;
+  readonly lotDetail: string;
   readonly lots: readonly PreviewLot[];
+  readonly navCalendar: string;
+  readonly navSell: string;
+  readonly nextBid: string;
+  readonly reserveMet: string;
+  readonly searchPlaceholder: string;
+  readonly softClose: string;
+  readonly subtitle: string;
+  readonly trustedStats: readonly {
+    readonly label: string;
+    readonly value: string;
+  }[];
+  readonly watchlist: string;
 }
 
 const messages: Record<Locale, Messages> = {
   ar: {
+    activeLots: "مزادات نشطة",
+    adminPreview: "معاينة لوحة الإدارة",
     auctionNumber: "مزاد #AU-2048",
+    bidNow: "زايد الآن",
     bidAction: "زايد الآن",
-    brand: "بايونير للمزادات",
-    brandArabic: "بايونير للمزادات",
-    categories: "الفئات",
-    regions: "المناطق",
+    browseAll: "تصفح الكل",
+    categories: ["الكل", "سيارات", "معدات", "عقارات", "بحري"],
     currentBid: "المزايدة الحالية",
-    endingSoon: "ينتهي قريباً",
-    endsIn: "ينتهي خلال",
-    eyebrow: "وجهة المزايدات الموثوقة في الإمارات",
-    heading: "بوابتك الموثوقة للمزادات في الإمارات",
-    subtitle: "هاتف: 8007466337 • شارع المطار، دبي",
-    searchPlaceholder: "البحث في المركبات والمعدات...",
-    signin: "تسجيل الدخول",
-    contact: "اتصل بنا",
-    minIncrement: "الحد الأدنى للزيادة",
-    lotNumberLabel: "قطعة #",
-    phoneLabel: "8007466337",
-    addressLabel: "شارع المطار، دبي",
-    aboutUs: "من نحن",
-    sell: "بيع",
-    quickLinks: "روابط سريعة",
-    followUs: "تابعنا على",
-    downloadApp: "تحميل التطبيق الخاص بنا",
-    copyright: "حقوق الطبع والنشر © 2026 بايونير للمزادات. جميع الحقوق محفوظة.",
+    depositReady: "وديعتك جاهزة للمزايدة",
+    eyebrow: "منصة مزادات إماراتية فورية وشفافة",
+    featured: "مختارات مباشرة",
+    heading: "مزادات فاخرة بسرعة Material 3 ووضوح مالي كامل.",
+    heroCta: "ابدأ المزايدة",
+    heroSecondary: "شاهد التفاصيل",
     localeSwitch: "English",
     localeSwitchHref: "/en",
+    lotDetail: "تفاصيل القطعة",
+    nextBid: "المزايدة التالية",
+    navCalendar: "تقويم المزادات",
+    navSell: "بيع",
+    reserveMet: "تم بلوغ السعر الاحتياطي",
+    searchPlaceholder: "ابحث عن سيارة، معدة، عقار أو رقم قطعة",
+    softClose: "إغلاق مرن: أي مزايدة في آخر دقيقتين تمدد الوقت للجميع.",
+    subtitle:
+      "واجهة جديدة تضع الصور الكبيرة، أرقام الدرهم، حالة الاحتياطي، والزر التالي في المقدمة بدون ازدحام.",
+    trustedStats: [
+      { label: "تأكيد المزايدة", value: "< 500ms" },
+      { label: "عملة المنصة", value: "AED" },
+      { label: "دعم اللغة", value: "EN / AR" },
+    ],
+    watchlist: "المفضلة",
     lots: [
       {
+        badge: "مباشر",
+        bids: "42 مزايدة",
         category: "سيارات",
-        imageClass: "lot-image-car",
-        lotNumber: "564886",
-        price: "5,000 د.إ",
-        time: "6 أيام : 5 ساعات",
-        title: "مرسيدس بنتلي جي تي • 2023",
-        bids: 12,
-        increment: "500 د.إ",
+        closesIn: "00:08:41",
+        imageClass: "m3-lot-car",
+        increment: "AED 1,000",
+        lotNumber: "Lot #564458",
+        price: "AED 3,500,000",
+        reserve: "تم بلوغ الاحتياطي",
+        status: "winning",
+        title: "Ferrari LaFerrari 2025",
       },
       {
-        category: "قطع غيار ومواد عامة",
-        imageClass: "lot-image-equipment",
-        lotNumber: "563567",
-        price: "25,000 د.إ",
-        time: "6 ساعات",
-        title: "صمام ومشبك مقاوم للحريق",
-        bids: 6,
-        increment: "500 د.إ",
-      },
-      {
+        badge: "ينتهي قريباً",
+        bids: "18 مزايدة",
         category: "معدات ثقيلة",
-        imageClass: "lot-image-caterpillar",
-        lotNumber: "566785",
-        price: "1,250,000 د.إ",
-        time: "4 أيام : ساعتان",
-        title: "حفار كتربيلر 214BFT موديل 1998",
-        bids: 42,
-        increment: "500 د.إ",
+        closesIn: "00:21:03",
+        imageClass: "m3-lot-equipment",
+        increment: "AED 500",
+        lotNumber: "Lot #566785",
+        price: "AED 1,250,000",
+        reserve: "لم يبلغ الاحتياطي",
+        status: "outbid",
+        title: "Caterpillar 214BFT 1998",
       },
       {
-        category: "سيارات",
-        imageClass: "lot-image-ferrari",
-        lotNumber: "564458",
-        price: "3,500,000 د.إ",
-        time: "6 أيام : 5 ساعات",
-        title: "فيراري لافيراري موديل 2025",
-        bids: 18,
-        increment: "1,000 د.إ",
+        badge: "جديد",
+        bids: "6 مزايدات",
+        category: "مواد عامة",
+        closesIn: "06:04:19",
+        imageClass: "m3-lot-material",
+        increment: "AED 250",
+        lotNumber: "Lot #563567",
+        price: "AED 25,000",
+        reserve: "بدون احتياطي",
+        status: "neutral",
+        title: "Fire-rated spare parts package",
       },
     ],
   },
   en: {
+    activeLots: "Active lots",
+    adminPreview: "Admin preview",
     auctionNumber: "Auction #AU-2048",
+    bidNow: "Bid now",
     bidAction: "Bid now",
-    brand: "Pioneer Auctions",
-    brandArabic: "بايونير للمزادات",
-    categories: "Categories",
-    regions: "Regions",
-    currentBid: "Current Bid",
-    endingSoon: "Ending soon",
-    endsIn: "Ends in",
-    eyebrow: "UAE's Trusted Auction Destination.",
-    heading: "UAE's Trusted Auction Destination.",
-    subtitle: "8007466337 • Airport Rd. Dubai",
-    searchPlaceholder: "Search in Vehicles and Machinery",
-    signin: "Sign In",
-    contact: "Contact",
-    minIncrement: "Minimum bid increment",
-    lotNumberLabel: "Lot # ",
-    phoneLabel: "8007466337",
-    addressLabel: "Airport Rd. Dubai",
-    aboutUs: "About Us",
-    sell: "Sell",
-    quickLinks: "Quick Links",
-    followUs: "Follow Us",
-    downloadApp: "Download Our App",
-    copyright: "© 2026 Pioneer Auctions. All rights reserved.",
+    browseAll: "Browse all",
+    categories: ["All", "Cars", "Equipment", "Real Estate", "Marine"],
+    currentBid: "Current bid",
+    depositReady: "Deposit ready to bid",
+    eyebrow: "Real-time UAE auction platform",
+    featured: "Live featured lots",
+    heading: "Premium auctions with Material 3 speed and financial clarity.",
+    heroCta: "Start bidding",
+    heroSecondary: "View lot detail",
     localeSwitch: "العربية",
     localeSwitchHref: "/ar",
+    lotDetail: "Lot detail",
+    nextBid: "Next valid bid",
+    navCalendar: "Auction calendar",
+    navSell: "Sell",
+    reserveMet: "Reserve met",
+    searchPlaceholder: "Search cars, equipment, property or lot number",
+    softClose:
+      "Soft close: any bid in the final 2 minutes extends time for everyone.",
+    subtitle:
+      "A new expressive interface with big photography, AED-first numerals, transparent reserve state, and one clear next bid action.",
+    trustedStats: [
+      { label: "Bid confirmation", value: "< 500ms" },
+      { label: "Currency", value: "AED" },
+      { label: "Language", value: "EN / AR" },
+    ],
+    watchlist: "Watchlist",
     lots: [
       {
+        badge: "Live",
+        bids: "42 bids",
         category: "Automotive",
-        imageClass: "lot-image-car",
-        lotNumber: "564886",
-        price: "AED 5,000",
-        time: "6D : 5H",
-        title: "Car Name XYZ",
-        bids: 12,
-        increment: "AED 500",
-      },
-      {
-        category: "General Material",
-        imageClass: "lot-image-equipment",
-        lotNumber: "563567",
-        price: "AED 25,000",
-        time: "6H",
-        title: "Fire Rated Spare Parts",
-        bids: 6,
-        increment: "AED 500",
-      },
-      {
-        category: "Heavy equipment",
-        imageClass: "lot-image-caterpillar",
-        lotNumber: "566785",
-        price: "AED 1,250,000",
-        time: "4D : 2H",
-        title: "Caterpillar 214BFT 1998",
-        bids: 42,
-        increment: "AED 500",
-      },
-      {
-        category: "Automotive",
-        imageClass: "lot-image-ferrari",
-        lotNumber: "564458",
-        price: "AED 3,500,000",
-        time: "6D : 5H",
-        title: "Ferrari 2025",
-        bids: 18,
+        closesIn: "00:08:41",
+        imageClass: "m3-lot-car",
         increment: "AED 1,000",
+        lotNumber: "Lot #564458",
+        price: "AED 3,500,000",
+        reserve: "Reserve met",
+        status: "winning",
+        title: "Ferrari LaFerrari 2025",
+      },
+      {
+        badge: "Ending soon",
+        bids: "18 bids",
+        category: "Heavy equipment",
+        closesIn: "00:21:03",
+        imageClass: "m3-lot-equipment",
+        increment: "AED 500",
+        lotNumber: "Lot #566785",
+        price: "AED 1,250,000",
+        reserve: "Reserve not met",
+        status: "outbid",
+        title: "Caterpillar 214BFT 1998",
+      },
+      {
+        badge: "New",
+        bids: "6 bids",
+        category: "General material",
+        closesIn: "06:04:19",
+        imageClass: "m3-lot-material",
+        increment: "AED 250",
+        lotNumber: "Lot #563567",
+        price: "AED 25,000",
+        reserve: "No reserve",
+        status: "neutral",
+        title: "Fire-rated spare parts package",
       },
     ],
   },
