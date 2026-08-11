@@ -97,7 +97,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 Week 1 by adding migration execution wiring and then seed/admin CRUD endpoints. Keep bidding price/winner/close-time behavior behind explicit Task 004 decisions before implementing the bid decision function.
+Continue Task 004 Week 1 by adding lot repository/admin endpoints and an auth/session service skeleton. Keep bidding price/winner/close-time behavior behind explicit Task 004 decisions before implementing the bid decision function.
 
 ## Last validation
 
@@ -111,6 +111,12 @@ Continue Task 004 Week 1 by adding migration execution wiring and then seed/admi
 - `corepack pnpm --filter @pioneer/api typecheck` passed on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 4 files / 8 tests on 2026-08-11.
+- Continued Week 1 on 2026-08-11: added idempotent migration runner scripts, development seed script for roles/permissions/test accounts, an admin permission decorator/guard, and `/api/v1/admin/auctions` list/create foundation endpoints with audit recording.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed again on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed 2 files / 7 tests on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed again on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed again on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 5 files / 12 tests on 2026-08-11.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

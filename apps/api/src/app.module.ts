@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 
 import { AuditModule } from "./audit/audit.module.js";
+import { AuctionsModule } from "./auctions/auctions.module.js";
 import { EnvironmentModule } from "./config/environment.module.js";
 import { ContractsModule } from "./contracts/contracts.module.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -20,6 +21,7 @@ import { ObservabilityModule } from "./observability/observability.module.js";
     DatabaseModule,
     IdentityModule,
     AuditModule,
+    AuctionsModule,
     HealthModule,
     ContractsModule,
   ],

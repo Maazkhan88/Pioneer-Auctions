@@ -14,6 +14,10 @@ const migrationSql = readFileSync(
   ),
   "utf8",
 );
+const devSeedSql = readFileSync(
+  fileURLToPath(new URL("../src/database/dev-seed.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("week 1 backend foundation", () => {
   it("stores money as integer fils, not floating point", () => {
@@ -29,6 +33,13 @@ describe("week 1 backend foundation", () => {
     expect(migrationSql).toContain("CREATE TABLE audit_events");
     expect(migrationSql).toContain("CREATE TABLE outbox_events");
     expect(migrationSql).not.toMatch(/\bDELETE\s+FROM\s+bid_ledger\b/i);
+  });
+
+  it("has idempotent migration and development seed commands", () => {
+    expect(migrationSql).toContain("CREATE TABLE");
+    expect(devSeedSql).toContain("ON CONFLICT (code) DO UPDATE");
+    expect(devSeedSql).toContain("admin.test@pioneer.local");
+    expect(devSeedSql).toContain("buyer.test@pioneer.local");
   });
 
   it("requires active account status for permission checks", () => {

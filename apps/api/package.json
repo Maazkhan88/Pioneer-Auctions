@@ -8,9 +8,11 @@
     "dev": "tsx watch src/main.ts",
     "lint": "eslint .",
     "migrate:check": "tsx src/database/check-migrations.ts",
+    "migrate:up": "tsx src/database/run-migrations.ts",
+    "seed:dev": "tsx src/database/seed-dev.ts",
     "start": "node dist/main.js",
     "test": "vitest run",
-    "test:foundation": "vitest run test/foundation.spec.ts",
+    "test:foundation": "vitest run test/foundation.spec.ts test/admin-auctions.spec.ts",
     "test:contract": "vitest run test/contracts.spec.ts",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
