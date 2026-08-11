@@ -88,6 +88,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Bid increments: admin can derive a lot's resolved minimum increment from a percentage of starting price or set a custom per-lot increment; the engine evaluates the resolved integer-fils value.
 - Bidding persistence: MVP manual bidding uses a PostgreSQL transaction with `FOR UPDATE OF lots` as the authoritative per-lot serialization boundary. Accepted bids write the bid ledger, lot state, bid command idempotency result, and outbox event before acknowledgement.
 - Proxy bidding: `PUT /api/v1/lots/:lotId/proxy-bid` now supports raise-only proxy maximum registration. If the bidder is not already leading, the service records the proxy maximum and creates the minimum visible proxy bid needed to lead. Full competing-proxy auto-resolution remains next.
+- Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -101,7 +102,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by implementing full competing-proxy auto-resolution, then add real database integration/race tests for manual/proxy bids.
+Continue Task 004 by implementing full competing-proxy auto-resolution, then add real database integration/race tests for manual/proxy bids. UI preview work can continue against the deployed Cloudflare buyer web shell.
 
 ## Last validation
 
@@ -150,6 +151,9 @@ Continue Task 004 by implementing full competing-proxy auto-resolution, then add
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after proxy registration on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed after proxy registration on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 8 files / 27 tests on 2026-08-11.
+- Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
+- `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
+- `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

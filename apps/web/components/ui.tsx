@@ -1,13 +1,37 @@
-import type { ReactNode } from "react";
-import { formatMoney } from "@pioneer/contracts";
+import type { CSSProperties, ReactNode } from "react";
+
+function formatMoney(amountFils: number, locale: "en" | "ar"): string {
+  return new Intl.NumberFormat(locale === "ar" ? "ar-AE" : "en-AE", {
+    currency: "AED",
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    style: "currency",
+  }).format(amountFils / 100);
+}
 
 // Icon Component
 function Icon({
   name,
   className = "",
+  style,
 }: {
-  readonly name: "gavel" | "clock" | "share" | "search" | "grid" | "list" | "phone" | "pin" | "bookmark" | "facebook" | "twitter" | "instagram" | "linkedin" | "chevron-right";
+  readonly name:
+    | "gavel"
+    | "clock"
+    | "share"
+    | "search"
+    | "grid"
+    | "list"
+    | "phone"
+    | "pin"
+    | "bookmark"
+    | "facebook"
+    | "twitter"
+    | "instagram"
+    | "linkedin"
+    | "chevron-right";
   readonly className?: string;
+  readonly style?: CSSProperties;
 }) {
   const paths = {
     gavel: (
@@ -22,7 +46,9 @@ function Icon({
         <path d="M12 7v5l3 2" />
       </>
     ),
-    share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />,
+    share: (
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
+    ),
     search: (
       <>
         <circle cx="11" cy="11" r="8" />
@@ -44,7 +70,9 @@ function Icon({
         <line x1="3" x2="21" y1="18" y2="18" />
       </>
     ),
-    phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
+    phone: (
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    ),
     pin: (
       <>
         <path d="M20 10c0 4.42-8 11-8 11s-8-6.58-8-11a8 8 0 1 1 16 0z" />
@@ -52,8 +80,12 @@ function Icon({
       </>
     ),
     bookmark: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />,
-    facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
-    twitter: <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />,
+    facebook: (
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    ),
+    twitter: (
+      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+    ),
     instagram: (
       <>
         <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -71,7 +103,17 @@ function Icon({
   } as const;
 
   return (
-    <svg className={`icon icon-${name} ${className}`} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={`icon icon-${name} ${className}`}
+      style={style}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {paths[name]}
     </svg>
   );
@@ -103,8 +145,26 @@ export function Button({
       aria-label={ariaLabel}
       style={
         variant === "primary"
-          ? { background: "var(--pa-color-brand-purple)", color: "#fff", border: "0", borderRadius: "8px", height: "46px", paddingInline: "1.5rem", fontWeight: "600", cursor: "pointer" }
-          : { background: "transparent", border: "1px solid var(--pa-color-card-border)", color: "var(--pa-color-text-dark)", borderRadius: "8px", height: "46px", paddingInline: "1.5rem", fontWeight: "600", cursor: "pointer" }
+          ? {
+              background: "var(--pa-color-brand-purple)",
+              color: "#fff",
+              border: "0",
+              borderRadius: "8px",
+              height: "46px",
+              paddingInline: "1.5rem",
+              fontWeight: "600",
+              cursor: "pointer",
+            }
+          : {
+              background: "transparent",
+              border: "1px solid var(--pa-color-card-border)",
+              color: "var(--pa-color-text-dark)",
+              borderRadius: "8px",
+              height: "46px",
+              paddingInline: "1.5rem",
+              fontWeight: "600",
+              cursor: "pointer",
+            }
       }
     >
       {children}
@@ -156,8 +216,20 @@ export function Field({
   readonly id: string;
 }) {
   return (
-    <div className={`field-container ${error ? "has-error" : ""}`} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-      <label htmlFor={id} style={{ fontSize: "0.88rem", fontWeight: "600", color: "var(--pa-color-text-dark)" }}>{label}</label>
+    <div
+      className={`field-container ${error ? "has-error" : ""}`}
+      style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+    >
+      <label
+        htmlFor={id}
+        style={{
+          fontSize: "0.88rem",
+          fontWeight: "600",
+          color: "var(--pa-color-text-dark)",
+        }}
+      >
+        {label}
+      </label>
       <input
         id={id}
         type="text"
@@ -167,10 +239,22 @@ export function Field({
         disabled={disabled}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
-        style={{ height: "42px", borderRadius: "8px", border: "1px solid var(--pa-color-card-border)", paddingInline: "1rem", outline: "none", fontSize: "0.92rem" }}
+        style={{
+          height: "42px",
+          borderRadius: "8px",
+          border: "1px solid var(--pa-color-card-border)",
+          paddingInline: "1rem",
+          outline: "none",
+          fontSize: "0.92rem",
+        }}
       />
       {error && (
-        <span className="field-error" id={`${id}-error`} role="alert" style={{ fontSize: "0.75rem", color: "red", fontWeight: "500" }}>
+        <span
+          className="field-error"
+          id={`${id}-error`}
+          role="alert"
+          style={{ fontSize: "0.75rem", color: "red", fontWeight: "500" }}
+        >
           {error}
         </span>
       )}
@@ -207,7 +291,11 @@ export function CountdownDisplay({
 }) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <bdi className={`countdown-display ${className}`} dir="ltr" style={{ fontWeight: "700" }}>
+    <bdi
+      className={`countdown-display ${className}`}
+      dir="ltr"
+      style={{ fontWeight: "700" }}
+    >
       {pad(hours)} : {pad(minutes)} : {pad(seconds)}
     </bdi>
   );
@@ -252,9 +340,11 @@ export function StatusBadge({
 export function Card({
   children,
   className = "",
+  style,
 }: {
   readonly children: ReactNode;
   readonly className?: string;
+  readonly style?: CSSProperties;
 }) {
   return (
     <div
@@ -265,6 +355,7 @@ export function Card({
         borderRadius: "12px",
         padding: "1.5rem",
         boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+        ...style,
       }}
     >
       {children}
@@ -274,20 +365,24 @@ export function Card({
 
 export function Skeleton({
   className = "",
+  style,
 }: {
   readonly className?: string;
+  readonly style?: CSSProperties;
 }) {
   return (
     <div
       className={`skeleton ${className}`}
       aria-hidden="true"
       style={{
-        background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
+        background:
+          "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
         backgroundSize: "200% 100%",
         animation: "shimmer 1.5s infinite",
         borderRadius: "8px",
         height: "20px",
         width: "100%",
+        ...style,
       }}
     />
   );
@@ -316,7 +411,11 @@ export function LotCard({
     <article className="ref-lot-card">
       <div className={`lot-card-media ${imageClass}`}>
         <span className="category-tag">{category}</span>
-        <button className="favorite-btn" type="button" aria-label="Add to Watchlist">
+        <button
+          className="favorite-btn"
+          type="button"
+          aria-label="Add to Watchlist"
+        >
           <Icon name="bookmark" />
         </button>
       </div>
@@ -344,7 +443,9 @@ export function LotCard({
         </div>
         <div className="lot-card-footer">
           <div className="price-col">
-            <span className="price-label">{locale === "en" ? "Current Bid" : "المزايدة الحالية"}</span>
+            <span className="price-label">
+              {locale === "en" ? "Current Bid" : "المزايدة الحالية"}
+            </span>
             <span className="price-val">
               <MoneyDisplay amountFils={priceFils} locale={locale} />
             </span>
@@ -392,7 +493,14 @@ export function BidStateBanner({
         {status === "winning" ? (
           <Icon name="gavel" />
         ) : (
-          <svg className="icon" style={{ height: "18px", width: "18px" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            className="icon"
+            style={{ height: "18px", width: "18px" }}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         )}
@@ -418,31 +526,101 @@ export function BidCTA({
   readonly bidText?: string;
 }) {
   return (
-    <div className="bid-cta-container" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      
+    <div
+      className="bid-cta-container"
+      style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+    >
       {/* Bid Details Card mimicking Reference Mockup 02 */}
-      <div className="ref-bid-card" style={{ border: "1px solid var(--pa-color-card-border)", borderRadius: "12px", padding: "1.5rem", background: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+      <div
+        className="ref-bid-card"
+        style={{
+          border: "1px solid var(--pa-color-card-border)",
+          borderRadius: "12px",
+          padding: "1.5rem",
+          background: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "1.5rem",
+          }}
+        >
           <div>
-            <div style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--pa-color-text-muted)" }}>Time remaining</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: "800", color: "var(--pa-color-text-dark)", marginTop: "0.25rem" }}>6D, 12H</div>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: "600",
+                color: "var(--pa-color-text-muted)",
+              }}
+            >
+              Time remaining
+            </div>
+            <div
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "800",
+                color: "var(--pa-color-text-dark)",
+                marginTop: "0.25rem",
+              }}
+            >
+              6D, 12H
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--pa-color-text-muted)", display: "flex", alignItems: "center", gap: "0.25rem", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: "600",
+                color: "var(--pa-color-text-muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.25rem",
+                justifyContent: "flex-end",
+              }}
+            >
               <span>Total Bids</span>
               <Icon name="gavel" style={{ height: "14px", width: "14px" }} />
             </div>
-            <div style={{ fontSize: "1.25rem", fontWeight: "800", color: "var(--pa-color-text-dark)", marginTop: "0.25rem" }}>12</div>
+            <div
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "800",
+                color: "var(--pa-color-text-dark)",
+                marginTop: "0.25rem",
+              }}
+            >
+              12
+            </div>
           </div>
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontSize: "2.2rem", fontWeight: "800", color: "var(--pa-color-text-dark)", display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
+          <div
+            style={{
+              fontSize: "2.2rem",
+              fontWeight: "800",
+              color: "var(--pa-color-text-dark)",
+              display: "flex",
+              alignItems: "baseline",
+              gap: "0.5rem",
+            }}
+          >
             <span style={{ fontSize: "1.5rem", fontWeight: "700" }}>AED</span>
             <span>{(nextBidFils / 100).toLocaleString()}</span>
           </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--pa-color-text-muted)", marginTop: "0.25rem" }}>
-            + 3.00% -5.00% Buyer Fee <span style={{ textDecoration: "underline", cursor: "pointer" }}>Buyer's T&C</span>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--pa-color-text-muted)",
+              marginTop: "0.25rem",
+            }}
+          >
+            + 3.00% -5.00% Buyer Fee{" "}
+            <span style={{ textDecoration: "underline", cursor: "pointer" }}>
+              Buyer's T&C
+            </span>
           </div>
         </div>
 
@@ -451,30 +629,126 @@ export function BidCTA({
           onClick={onClick}
           disabled={disabled}
           type="button"
-          style={{ width: "100%", height: "50px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
+          style={{
+            width: "100%",
+            height: "50px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          <span style={{ fontSize: "0.95rem", fontWeight: "700" }}>{bidText} Now</span>
+          <span style={{ fontSize: "0.95rem", fontWeight: "700" }}>
+            {bidText} Now
+          </span>
           <span className="btn-subtext" style={{ fontSize: "0.68rem" }}>
             Minimum bid increment AED {(incrementFils / 100).toLocaleString()}
           </span>
         </button>
 
         {/* Auto Bid Input Section */}
-        <div style={{ borderTop: "1px solid #f3f4f6", marginTop: "1.5rem", paddingTop: "1.5rem" }}>
-          <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--pa-color-text-dark)", marginBottom: "0.75rem" }}>Auto Bid Placement</div>
-          <div style={{ display: "flex", border: "1px solid var(--pa-color-card-border)", borderRadius: "8px", overflow: "hidden", height: "42px", background: "#f9fafb", marginBottom: "0.75rem" }}>
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingInline: "0.85rem", borderRight: "1px solid var(--pa-color-card-border)", fontSize: "0.9rem", fontWeight: "bold" }}>AED</span>
-            <input type="number" placeholder="Enter max bid amount" style={{ flex: "1", border: "0", background: "transparent", paddingInline: "0.75rem", fontSize: "0.9rem", outline: "none" }} />
+        <div
+          style={{
+            borderTop: "1px solid #f3f4f6",
+            marginTop: "1.5rem",
+            paddingTop: "1.5rem",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: "700",
+              color: "var(--pa-color-text-dark)",
+              marginBottom: "0.75rem",
+            }}
+          >
+            Auto Bid Placement
           </div>
-          <button type="button" style={{ width: "100%", height: "42px", background: "var(--pa-color-brand-orange)", border: "0", borderRadius: "8px", color: "#fff", fontWeight: "700", fontSize: "0.9rem", cursor: "pointer" }}>Auto Bid</button>
+          <div
+            style={{
+              display: "flex",
+              border: "1px solid var(--pa-color-card-border)",
+              borderRadius: "8px",
+              overflow: "hidden",
+              height: "42px",
+              background: "#f9fafb",
+              marginBottom: "0.75rem",
+            }}
+          >
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                paddingInline: "0.85rem",
+                borderRight: "1px solid var(--pa-color-card-border)",
+                fontSize: "0.9rem",
+                fontWeight: "bold",
+              }}
+            >
+              AED
+            </span>
+            <input
+              type="number"
+              placeholder="Enter max bid amount"
+              style={{
+                flex: "1",
+                border: "0",
+                background: "transparent",
+                paddingInline: "0.75rem",
+                fontSize: "0.9rem",
+                outline: "none",
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            style={{
+              width: "100%",
+              height: "42px",
+              background: "var(--pa-color-brand-orange)",
+              border: "0",
+              borderRadius: "8px",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+            }}
+          >
+            Auto Bid
+          </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginVertical: "1rem", color: "var(--pa-color-text-muted)", fontSize: "0.75rem", margin: "1rem 0" }}>Or</div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBlock: "1rem",
+            color: "var(--pa-color-text-muted)",
+            fontSize: "0.75rem",
+          }}
+        >
+          Or
+        </div>
 
-        <button type="button" style={{ width: "100%", height: "42px", background: "transparent", border: "1px solid var(--pa-color-card-border)", borderRadius: "8px", color: "var(--pa-color-text-dark)", fontWeight: "700", fontSize: "0.9rem", cursor: "pointer" }}>Make an Offer</button>
-
+        <button
+          type="button"
+          style={{
+            width: "100%",
+            height: "42px",
+            background: "transparent",
+            border: "1px solid var(--pa-color-card-border)",
+            borderRadius: "8px",
+            color: "var(--pa-color-text-dark)",
+            fontWeight: "700",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+          }}
+        >
+          Make an Offer
+        </button>
       </div>
-
     </div>
   );
 }
@@ -504,7 +778,15 @@ export function DepositChip({
         border: `1px solid ${eligible ? "#BBF7D0" : "#FDE68A"}`,
       }}
     >
-      <span className="dot" style={{ height: "8px", width: "8px", borderRadius: "50%", background: "currentColor" }} />
+      <span
+        className="dot"
+        style={{
+          height: "8px",
+          width: "8px",
+          borderRadius: "50%",
+          background: "currentColor",
+        }}
+      />
       <span>
         {locale === "en"
           ? eligible
@@ -513,7 +795,9 @@ export function DepositChip({
           : eligible
             ? "مؤهل للمزايدة"
             : `الضمان المطلوب: `}
-        {!eligible && <MoneyDisplay amountFils={depositAmountFils} locale={locale} />}
+        {!eligible && (
+          <MoneyDisplay amountFils={depositAmountFils} locale={locale} />
+        )}
       </span>
     </div>
   );
@@ -532,25 +816,75 @@ export function FeeBreakdown({
 }) {
   const totalFils = hammerPriceFils + buyerPremiumFils + vatFils;
   const labels = {
-    en: { hammer: "Hammer Price", premium: "Buyer Premium (10%)", vat: "VAT (5%)", total: "Total Amount" },
-    ar: { hammer: "سعر المطرقة", premium: "عمولة المشتري (10%)", vat: "ضريبة القيمة المضافة (5%)", total: "المبلغ الإجمالي" },
+    en: {
+      hammer: "Hammer Price",
+      premium: "Buyer Premium (10%)",
+      vat: "VAT (5%)",
+      total: "Total Amount",
+    },
+    ar: {
+      hammer: "سعر المطرقة",
+      premium: "عمولة المشتري (10%)",
+      vat: "ضريبة القيمة المضافة (5%)",
+      total: "المبلغ الإجمالي",
+    },
   }[locale];
 
   return (
-    <div className="fee-breakdown" style={{ display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.88rem" }}>
-      <div className="row" style={{ display: "flex", justifyContent: "space-between", color: "var(--pa-color-text-muted)" }}>
+    <div
+      className="fee-breakdown"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.75rem",
+        fontSize: "0.88rem",
+      }}
+    >
+      <div
+        className="row"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          color: "var(--pa-color-text-muted)",
+        }}
+      >
         <span>{labels.hammer}</span>
         <MoneyDisplay amountFils={hammerPriceFils} locale={locale} />
       </div>
-      <div className="row" style={{ display: "flex", justifyContent: "space-between", color: "var(--pa-color-text-muted)" }}>
+      <div
+        className="row"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          color: "var(--pa-color-text-muted)",
+        }}
+      >
         <span>{labels.premium}</span>
         <MoneyDisplay amountFils={buyerPremiumFils} locale={locale} />
       </div>
-      <div className="row" style={{ display: "flex", justifyContent: "space-between", color: "var(--pa-color-text-muted)" }}>
+      <div
+        className="row"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          color: "var(--pa-color-text-muted)",
+        }}
+      >
         <span>{labels.vat}</span>
         <MoneyDisplay amountFils={vatFils} locale={locale} />
       </div>
-      <div className="row total-row" style={{ display: "flex", justifyContent: "space-between", fontWeight: "800", color: "var(--pa-color-text-dark)", borderTop: "1px solid #f3f4f6", paddingTop: "0.75rem", fontSize: "1rem" }}>
+      <div
+        className="row total-row"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontWeight: "800",
+          color: "var(--pa-color-text-dark)",
+          borderTop: "1px solid #f3f4f6",
+          paddingTop: "0.75rem",
+          fontSize: "1rem",
+        }}
+      >
         <span>{labels.total}</span>
         <MoneyDisplay amountFils={totalFils} locale={locale} />
       </div>
