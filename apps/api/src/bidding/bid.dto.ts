@@ -55,7 +55,7 @@ export type PlaceBidAck =
         readonly sequence: number;
         readonly currentBid: Money;
         readonly nextMinimumBid: Money;
-        readonly myBidStatus: "WINNING";
+        readonly myBidStatus: "WINNING" | "OUTBID";
         readonly reserveStatus: string;
         readonly closesAt: string;
         readonly extended: boolean;
@@ -88,7 +88,7 @@ export type SetProxyBidAck =
         readonly activeProxyMaximum: Money;
         readonly currentBid: Money | null;
         readonly nextMinimumBid: Money;
-        readonly myBidStatus: "WINNING" | "NOT_BIDDING";
+        readonly myBidStatus: "WINNING" | "OUTBID" | "NOT_BIDDING";
         readonly reserveStatus: string;
         readonly closesAt: string;
         readonly extended: boolean;

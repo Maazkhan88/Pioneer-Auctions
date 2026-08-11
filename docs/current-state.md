@@ -87,7 +87,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Soft close: default window and extension are 2 minutes; accepted qualifying bids extend from the previous published close time; admin can override soft-close timing per lot.
 - Bid increments: admin can derive a lot's resolved minimum increment from a percentage of starting price or set a custom per-lot increment; the engine evaluates the resolved integer-fils value.
 - Bidding persistence: MVP manual bidding uses a PostgreSQL transaction with `FOR UPDATE OF lots` as the authoritative per-lot serialization boundary. Accepted bids write the bid ledger, lot state, bid command idempotency result, and outbox event before acknowledgement.
-- Proxy bidding: `PUT /api/v1/lots/:lotId/proxy-bid` now supports raise-only proxy maximum registration. If the bidder is not already leading, the service records the proxy maximum and creates the minimum visible proxy bid needed to lead. Full competing-proxy auto-resolution remains next.
+- Proxy bidding: `PUT /api/v1/lots/:lotId/proxy-bid` now supports raise-only proxy maximum registration. If the bidder is not already leading, the service records the proxy maximum and resolves the visible proxy leaderboard so the highest-priority maximum leads at the minimum required visible amount. Manual bids against an existing active proxy now append the manual bid and the automatic proxy response in order, and command acknowledgements return the final user-relative state.
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
 
 See `docs/decisions-log.md` for rationale and open decisions.
@@ -102,7 +102,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by implementing full competing-proxy auto-resolution, then add real database integration/race tests for manual/proxy bids. UI preview work can continue against the deployed Cloudflare buyer web shell.
+Continue Task 004 by adding real database integration/race tests for manual/proxy bids, then implement Socket.IO command acknowledgements, snapshots/replay, close worker fencing, and Redis rebuild/recovery checks. UI redesign work is intentionally paused until the visual direction is revisited.
 
 ## Last validation
 
@@ -151,6 +151,13 @@ Continue Task 004 by implementing full competing-proxy auto-resolution, then add
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after proxy registration on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed after proxy registration on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 8 files / 27 tests on 2026-08-11.
+- Continued Task 004 on 2026-08-12: added competing proxy resolution for manual bids and proxy maximums, including immediate proxy response to manual bids, highest-max proxy visible-price calculation, equal-maximum earlier-registration priority, multiple visible ledger rows per command, and `OUTBID` acknowledgements for accepted commands defeated by proxy priority.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 2 files / 16 tests after competing proxy resolution on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after competing proxy resolution on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after competing proxy resolution on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after competing proxy resolution on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after competing proxy resolution on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test` passed 8 files / 30 tests after competing proxy resolution on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

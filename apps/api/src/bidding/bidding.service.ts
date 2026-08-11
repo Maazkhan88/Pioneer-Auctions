@@ -66,7 +66,20 @@ interface EligibilityRow extends QueryResultRow {
 }
 
 interface ActiveProxyRow extends QueryResultRow {
+  readonly account_id: string;
   readonly maximum_fils: string;
+  readonly registered_at: Date;
+}
+
+type AcceptedBidResult = Extract<
+  ReturnType<typeof evaluateManualBid>,
+  { status: "ACCEPTED" }
+>["result"];
+
+interface VisibleBid {
+  readonly accountId: string;
+  readonly bidKind: "MANUAL" | "PROXY";
+  readonly result: AcceptedBidResult;
 }
 
 @Injectable()
@@ -129,20 +142,53 @@ export class BiddingService {
         return rejected;
       }
 
-      await this.appendAcceptedBid(
+      const visibleBids: VisibleBid[] = [
+        {
+          accountId: command.accountId,
+          bidKind: "MANUAL",
+          result: decision.result,
+        },
+      ];
+      const proxyBid = await this.resolveProxyResponseToManualBid(
         client,
         command,
-        lotRow,
+        lotState,
         decision.result,
         serverTime,
       );
-      await this.updateLot(client, command.lotId, decision.result);
-      await this.writeOutbox(
+      if (proxyBid !== null) {
+        visibleBids.push(proxyBid);
+      }
+
+      for (const visibleBid of visibleBids) {
+        await this.appendAcceptedBid(
+          client,
+          command,
+          lotRow,
+          visibleBid.result,
+          serverTime,
+          visibleBid.bidKind,
+          visibleBid.accountId,
+        );
+        await this.writeOutbox(
+          client,
+          command,
+          lotRow,
+          visibleBid.result,
+          serverTime,
+          visibleBid.bidKind,
+        );
+      }
+
+      const finalBid = visibleBids.at(-1);
+      if (finalBid === undefined) {
+        throw new Error("accepted bid command produced no visible bid");
+      }
+      await this.updateLot(
         client,
-        command,
-        lotRow,
-        decision.result,
-        serverTime,
+        command.lotId,
+        finalBid.result,
+        visibleBids.length,
       );
 
       const accepted: PlaceBidAck = {
@@ -150,14 +196,15 @@ export class BiddingService {
         contractVersion: 1,
         correlationId: command.correlationId,
         result: {
-          closesAt: decision.result.closesAt.toISOString(),
-          currentBid: money(decision.result.amountFils),
-          extended: decision.result.extended,
+          closesAt: finalBid.result.closesAt.toISOString(),
+          currentBid: money(finalBid.result.amountFils),
+          extended: visibleBids.some((bid) => bid.result.extended),
           lotId: command.lotId,
-          myBidStatus: "WINNING",
-          nextMinimumBid: money(decision.result.nextMinimumBidFils),
-          reserveStatus: decision.result.reserveStatus,
-          sequence: decision.result.sequence,
+          myBidStatus:
+            finalBid.accountId === command.accountId ? "WINNING" : "OUTBID",
+          nextMinimumBid: money(finalBid.result.nextMinimumBidFils),
+          reserveStatus: finalBid.result.reserveStatus,
+          sequence: finalBid.result.sequence,
         },
         serverTime: serverTime.toISOString(),
         status: "ACCEPTED",
@@ -289,32 +336,30 @@ export class BiddingService {
 
       const userAlreadyLeading =
         lotRow.leading_account_id === command.accountId;
-      const shouldCreateVisibleBid = !userAlreadyLeading;
-      const decision = shouldCreateVisibleBid
-        ? evaluateManualBid({
-            amountFils: lotState.nextMinimumBidFils,
-            depositEligible: true,
-            lot: lotState,
+      const proxyBid = userAlreadyLeading
+        ? null
+        : await this.resolveProxyLeaderboard(
+            client,
+            command,
+            lotState,
             serverTime,
-            termsAccepted: true,
-          })
-        : null;
-
-      if (decision?.status === "ACCEPTED") {
+          );
+      if (proxyBid !== null) {
         await this.appendAcceptedBid(
           client,
           command,
           lotRow,
-          decision.result,
+          proxyBid.result,
           serverTime,
           "PROXY",
+          proxyBid.accountId,
         );
-        await this.updateLot(client, command.lotId, decision.result);
+        await this.updateLot(client, command.lotId, proxyBid.result);
         await this.writeOutbox(
           client,
           command,
           lotRow,
-          decision.result,
+          proxyBid.result,
           serverTime,
           "PROXY",
         );
@@ -327,34 +372,32 @@ export class BiddingService {
         result: {
           activeProxyMaximum: money(command.input.maximumFils),
           closesAt:
-            decision?.status === "ACCEPTED"
-              ? decision.result.closesAt.toISOString()
+            proxyBid !== null
+              ? proxyBid.result.closesAt.toISOString()
               : lotState.closesAt.toISOString(),
           currentBid:
-            decision?.status === "ACCEPTED"
-              ? money(decision.result.amountFils)
+            proxyBid !== null
+              ? money(proxyBid.result.amountFils)
               : lotState.currentBidFils === null
                 ? null
                 : money(lotState.currentBidFils),
-          extended:
-            decision?.status === "ACCEPTED" ? decision.result.extended : false,
+          extended: proxyBid !== null ? proxyBid.result.extended : false,
           lotId: command.lotId,
-          myBidStatus:
-            shouldCreateVisibleBid || userAlreadyLeading
+          myBidStatus: userAlreadyLeading
+            ? "WINNING"
+            : proxyBid?.accountId === command.accountId
               ? "WINNING"
-              : "NOT_BIDDING",
+              : "OUTBID",
           nextMinimumBid:
-            decision?.status === "ACCEPTED"
-              ? money(decision.result.nextMinimumBidFils)
+            proxyBid !== null
+              ? money(proxyBid.result.nextMinimumBidFils)
               : money(lotState.nextMinimumBidFils),
           reserveStatus:
-            decision?.status === "ACCEPTED"
-              ? decision.result.reserveStatus
+            proxyBid !== null
+              ? proxyBid.result.reserveStatus
               : lotState.reserveStatus,
           sequence:
-            decision?.status === "ACCEPTED"
-              ? decision.result.sequence
-              : lotState.sequence,
+            proxyBid !== null ? proxyBid.result.sequence : lotState.sequence,
         },
         serverTime: serverTime.toISOString(),
         status: "ACCEPTED",
@@ -489,6 +532,103 @@ export class BiddingService {
     return result.rows[0] ?? null;
   }
 
+  private async loadActiveProxies(
+    client: PoolClient,
+    lotId: string,
+  ): Promise<readonly ActiveProxyRow[]> {
+    const result = await client.query<ActiveProxyRow>(
+      `
+        SELECT account_id::text, maximum_fils::text, registered_at
+        FROM proxy_bids
+        WHERE lot_id = $1
+          AND status = 'ACTIVE'
+        ORDER BY maximum_fils DESC, registered_at ASC, id ASC
+      `,
+      [lotId],
+    );
+    return result.rows;
+  }
+
+  private async resolveProxyResponseToManualBid(
+    client: PoolClient,
+    command: PlaceManualBidCommand,
+    originalLot: LotBidState,
+    manualResult: AcceptedBidResult,
+    serverTime: Date,
+  ): Promise<VisibleBid | null> {
+    const proxies = await this.loadActiveProxies(client, command.lotId);
+    const competingProxy = proxies.find(
+      (proxy) =>
+        proxy.account_id !== command.accountId &&
+        Number(proxy.maximum_fils) >= manualResult.nextMinimumBidFils,
+    );
+    if (competingProxy === undefined) {
+      return null;
+    }
+
+    const proxyDecision = evaluateManualBid({
+      amountFils: manualResult.nextMinimumBidFils,
+      depositEligible: true,
+      lot: lotStateAfter(originalLot, manualResult),
+      serverTime,
+      termsAccepted: true,
+    });
+    if (proxyDecision.status === "REJECTED") {
+      throw new Error(`proxy response rejected: ${proxyDecision.errorCode}`);
+    }
+    return {
+      accountId: competingProxy.account_id,
+      bidKind: "PROXY",
+      result: proxyDecision.result,
+    };
+  }
+
+  private async resolveProxyLeaderboard(
+    client: PoolClient,
+    command: SetProxyBidCommand,
+    lot: LotBidState,
+    serverTime: Date,
+  ): Promise<VisibleBid | null> {
+    const proxies = await this.loadActiveProxies(client, command.lotId);
+    const winner = proxies[0];
+    if (winner === undefined) {
+      return null;
+    }
+
+    const runner = proxies.find(
+      (proxy) => proxy.account_id !== winner.account_id,
+    );
+    const runnerMaxFils =
+      runner === undefined ? null : Number(runner.maximum_fils);
+    const winnerMaxFils = Number(winner.maximum_fils);
+    const amountFils =
+      runnerMaxFils === null
+        ? lot.nextMinimumBidFils
+        : Math.min(
+            winnerMaxFils,
+            Math.max(
+              lot.nextMinimumBidFils,
+              runnerMaxFils + lot.minimumIncrementFils,
+            ),
+          );
+
+    const decision = evaluateManualBid({
+      amountFils,
+      depositEligible: true,
+      lot,
+      serverTime,
+      termsAccepted: true,
+    });
+    if (decision.status === "REJECTED") {
+      throw new Error(`proxy leaderboard bid rejected: ${decision.errorCode}`);
+    }
+    return {
+      accountId: winner.account_id,
+      bidKind: "PROXY",
+      result: decision.result,
+    };
+  }
+
   private async upsertProxyBid(
     client: PoolClient,
     command: SetProxyBidCommand,
@@ -535,6 +675,7 @@ export class BiddingService {
     >["result"],
     serverTime: Date,
     bidKind: "MANUAL" | "PROXY" = "MANUAL",
+    accountId: string = command.accountId,
   ): Promise<void> {
     await client.query(
       `
@@ -555,7 +696,7 @@ export class BiddingService {
       [
         command.lotId,
         lot.auction_id,
-        command.accountId,
+        accountId,
         command.commandId,
         result.sequence,
         bidKind,
@@ -574,6 +715,7 @@ export class BiddingService {
       ReturnType<typeof evaluateManualBid>,
       { status: "ACCEPTED" }
     >["result"],
+    bidCountIncrement = 1,
   ): Promise<void> {
     await client.query(
       `
@@ -584,7 +726,7 @@ export class BiddingService {
           reserve_status = $4,
           closes_at = $5,
           sequence = $6,
-          bid_count = bid_count + 1,
+          bid_count = bid_count + $8,
           soft_close_extension_count = $7,
           updated_at = now()
         WHERE id = $1
@@ -597,6 +739,7 @@ export class BiddingService {
         result.closesAt,
         result.sequence,
         result.extensionCount,
+        bidCountIncrement,
       ],
     );
   }
@@ -755,5 +898,23 @@ function latestFromLot(lotId: string, lot: LotBidState): BidLatestState {
     lotId,
     nextMinimumBid: money(lot.nextMinimumBidFils),
     sequence: lot.sequence,
+  };
+}
+
+function lotStateAfter(
+  lot: LotBidState,
+  result: AcceptedBidResult,
+): LotBidState {
+  return {
+    ...lot,
+    closesAt: result.closesAt,
+    currentBidFils: result.amountFils,
+    nextMinimumBidFils: result.nextMinimumBidFils,
+    reserveStatus: result.reserveStatus,
+    sequence: result.sequence,
+    softClose: {
+      ...lot.softClose,
+      extensionCount: result.extensionCount,
+    },
   };
 }
