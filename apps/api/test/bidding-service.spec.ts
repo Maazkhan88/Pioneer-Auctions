@@ -16,6 +16,8 @@ class FakeClient {
       readonly existingResult?: unknown;
       readonly lotExists?: boolean;
       readonly depositEligible?: boolean;
+      readonly existingProxyMaximumFils?: number;
+      readonly leadingAccountId?: string | null;
       readonly termsAccepted?: boolean;
     } = {},
   ) {}
@@ -45,6 +47,7 @@ class FakeClient {
           closes_at: new Date("2026-09-01T16:00:00.000Z"),
           current_bid_fils: null,
           lifecycle: "LIVE",
+          leading_account_id: this.options.leadingAccountId ?? null,
           lot_soft_close_extension_ms: null,
           lot_soft_close_maximum_extensions: null,
           lot_soft_close_window_ms: null,
@@ -67,6 +70,13 @@ class FakeClient {
           terms_accepted: this.options.termsAccepted ?? true,
         },
       ]);
+    }
+    if (text.includes("FROM proxy_bids") && text.includes("maximum_fils")) {
+      return rows<T>(
+        this.options.existingProxyMaximumFils === undefined
+          ? []
+          : [{ maximum_fils: String(this.options.existingProxyMaximumFils) }],
+      );
     }
     return rows<T>([]);
   }
@@ -159,6 +169,122 @@ describe("bidding service persistence boundary", () => {
       ),
     ).toBe(false);
   });
+
+  it("registers a proxy maximum and creates the leading visible proxy bid", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-01T15:59:30.000Z"));
+    const client = new FakeClient();
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.setProxyBid(
+      proxyCommand({ maximumFils: 6000000 }),
+    );
+
+    expect(result).toMatchObject({
+      result: {
+        activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        currentBid: { amountFils: 5000000, currency: "AED" },
+        extended: true,
+        myBidStatus: "WINNING",
+        nextMinimumBid: { amountFils: 5100000, currency: "AED" },
+        sequence: 1,
+      },
+      status: "ACCEPTED",
+    });
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO proxy_bids"),
+      ),
+    ).toBe(true);
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO bid_ledger"),
+      ),
+    ).toBe(true);
+    const ledgerInsert = client.queries.find((query) =>
+      query.text.includes("INSERT INTO bid_ledger"),
+    );
+    expect(ledgerInsert?.values).toContain("PROXY");
+    vi.useRealTimers();
+  });
+
+  it("rejects a proxy maximum that does not raise the active maximum", async () => {
+    const client = new FakeClient({ existingProxyMaximumFils: 6000000 });
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.setProxyBid(
+      proxyCommand({ maximumFils: 6000000 }),
+    );
+
+    expect(result).toMatchObject({
+      error: { code: "PROXY_MAX_TOO_LOW" },
+      status: "REJECTED",
+    });
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO proxy_bids"),
+      ),
+    ).toBe(false);
+  });
+
+  it("raises a proxy maximum without a new visible bid when the user already leads", async () => {
+    const client = new FakeClient({
+      existingProxyMaximumFils: 5500000,
+      leadingAccountId: "00000000-0000-4000-8000-000000000001",
+    });
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.setProxyBid(
+      proxyCommand({ maximumFils: 6000000 }),
+    );
+
+    expect(result).toMatchObject({
+      result: {
+        activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        myBidStatus: "WINNING",
+        sequence: 0,
+      },
+      status: "ACCEPTED",
+    });
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO proxy_bids"),
+      ),
+    ).toBe(true);
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO bid_ledger"),
+      ),
+    ).toBe(false);
+  });
+
+  it("replays saved proxy command results without new writes", async () => {
+    const saved = {
+      result_payload: {
+        commandId: "835cb208-e936-4e0c-9863-c85a96f2ff61",
+        contractVersion: 1,
+        correlationId: "corr-test",
+        result: {
+          activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        },
+        serverTime: "2026-09-01T15:59:30.000Z",
+        status: "ACCEPTED",
+      },
+    };
+    const client = new FakeClient({ existingResult: saved });
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.setProxyBid(
+      proxyCommand({ maximumFils: 6000000 }),
+    );
+
+    expect(result).toBe(saved.result_payload);
+    expect(
+      client.queries.some((query) =>
+        query.text.includes("INSERT INTO proxy_bids"),
+      ),
+    ).toBe(false);
+  });
 });
 
 function command(input: { readonly amountFils: number }) {
@@ -169,6 +295,20 @@ function command(input: { readonly amountFils: number }) {
     input: {
       amountFils: input.amountFils,
       expectedSequence: 0,
+      termsVersionId: "5d51a5fd-e2b4-4fe8-a5e0-58d075cc122d",
+    },
+    lotId: "11111111-1111-4111-8111-111111111111",
+  };
+}
+
+function proxyCommand(input: { readonly maximumFils: number }) {
+  return {
+    accountId: "00000000-0000-4000-8000-000000000001",
+    commandId: "835cb208-e936-4e0c-9863-c85a96f2ff61",
+    correlationId: "corr-test",
+    input: {
+      expectedSequence: 0,
+      maximumFils: input.maximumFils,
       termsVersionId: "5d51a5fd-e2b4-4fe8-a5e0-58d075cc122d",
     },
     lotId: "11111111-1111-4111-8111-111111111111",

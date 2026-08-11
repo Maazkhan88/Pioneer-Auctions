@@ -87,6 +87,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Soft close: default window and extension are 2 minutes; accepted qualifying bids extend from the previous published close time; admin can override soft-close timing per lot.
 - Bid increments: admin can derive a lot's resolved minimum increment from a percentage of starting price or set a custom per-lot increment; the engine evaluates the resolved integer-fils value.
 - Bidding persistence: MVP manual bidding uses a PostgreSQL transaction with `FOR UPDATE OF lots` as the authoritative per-lot serialization boundary. Accepted bids write the bid ledger, lot state, bid command idempotency result, and outbox event before acknowledgement.
+- Proxy bidding: `PUT /api/v1/lots/:lotId/proxy-bid` now supports raise-only proxy maximum registration. If the bidder is not already leading, the service records the proxy maximum and creates the minimum visible proxy bid needed to lead. Full competing-proxy auto-resolution remains next.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -100,7 +101,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by adding real database integration/race tests for manual bids, then implement proxy-bid registration and resolution.
+Continue Task 004 by implementing full competing-proxy auto-resolution, then add real database integration/race tests for manual/proxy bids.
 
 ## Last validation
 
@@ -142,6 +143,13 @@ Continue Task 004 by adding real database integration/race tests for manual bids
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after the persistence boundary on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed after the persistence boundary on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 8 files / 23 tests on 2026-08-11.
+- Continued Task 004 on 2026-08-11: added `PUT /api/v1/lots/:lotId/proxy-bid`, proxy bid request/ack DTOs, raise-only active proxy registration, minimum visible proxy bid creation for non-leading bidders, idempotent proxy command replay, and proxy service tests.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 2 files / 13 tests after proxy registration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api lint` passed after proxy registration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after proxy registration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after proxy registration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed after proxy registration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 8 files / 27 tests on 2026-08-11.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

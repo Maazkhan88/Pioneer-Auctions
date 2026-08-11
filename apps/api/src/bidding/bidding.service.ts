@@ -7,6 +7,8 @@ import {
   type BidLatestState,
   type PlaceBidAck,
   type PlaceBidInput,
+  type SetProxyBidAck,
+  type SetProxyBidInput,
 } from "./bid.dto.js";
 import {
   evaluateManualBid,
@@ -23,8 +25,16 @@ interface PlaceManualBidCommand {
   readonly lotId: string;
 }
 
+interface SetProxyBidCommand {
+  readonly accountId: string;
+  readonly commandId: string;
+  readonly correlationId: string;
+  readonly input: SetProxyBidInput;
+  readonly lotId: string;
+}
+
 interface SavedCommandRow extends QueryResultRow {
-  readonly result_payload: PlaceBidAck;
+  readonly result_payload: PlaceBidAck | SetProxyBidAck;
 }
 
 interface LotForUpdateRow extends QueryResultRow {
@@ -45,6 +55,7 @@ interface LotForUpdateRow extends QueryResultRow {
   readonly lot_soft_close_maximum_extensions: number | null;
   readonly lot_soft_close_window_ms: number | null;
   readonly soft_close_extension_count: number;
+  readonly leading_account_id: string | null;
 }
 
 interface EligibilityRow extends QueryResultRow {
@@ -52,6 +63,10 @@ interface EligibilityRow extends QueryResultRow {
   readonly deposit_eligible: boolean;
   readonly kyc_verified: boolean;
   readonly terms_accepted: boolean;
+}
+
+interface ActiveProxyRow extends QueryResultRow {
+  readonly maximum_fils: string;
 }
 
 @Injectable()
@@ -65,7 +80,10 @@ export class BiddingService {
     const client = await this.database.connect();
     try {
       await client.query("BEGIN");
-      const existing = await this.findSavedCommand(client, command);
+      const existing = await this.findSavedCommand<PlaceBidAck>(
+        client,
+        command,
+      );
       if (existing !== null) {
         await client.query("COMMIT");
         return existing;
@@ -80,7 +98,7 @@ export class BiddingService {
           "LOT_NOT_FOUND",
           false,
         );
-        await this.saveCommand(client, command, rejected);
+        await this.saveCommand(client, command, "PLACE_MANUAL_BID", rejected);
         await client.query("COMMIT");
         return rejected;
       }
@@ -106,7 +124,7 @@ export class BiddingService {
           decision.retryable,
           latestFromLot(command.lotId, lotState),
         );
-        await this.saveCommand(client, command, rejected);
+        await this.saveCommand(client, command, "PLACE_MANUAL_BID", rejected);
         await client.query("COMMIT");
         return rejected;
       }
@@ -145,7 +163,7 @@ export class BiddingService {
         status: "ACCEPTED",
       };
 
-      await this.saveCommand(client, command, accepted);
+      await this.saveCommand(client, command, "PLACE_MANUAL_BID", accepted);
       await client.query("COMMIT");
       return accepted;
     } catch (error) {
@@ -156,10 +174,207 @@ export class BiddingService {
     }
   }
 
-  private async findSavedCommand(
+  async setProxyBid(command: SetProxyBidCommand): Promise<SetProxyBidAck> {
+    const client = await this.database.connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await this.findSavedCommand<SetProxyBidAck>(
+        client,
+        command,
+      );
+      if (existing !== null) {
+        await client.query("COMMIT");
+        return existing;
+      }
+
+      const serverTime = new Date();
+      const lotRow = await this.lockLot(client, command.lotId);
+      if (lotRow === null) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "LOT_NOT_FOUND",
+          false,
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+
+      const eligibility = await this.loadEligibility(client, command);
+      const lotState = toLotBidState(lotRow);
+      if (!eligibility.terms_accepted) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "TERMS_ACCEPTANCE_REQUIRED",
+          false,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+      if (
+        !eligibility.account_active ||
+        !eligibility.kyc_verified ||
+        !eligibility.deposit_eligible
+      ) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "DEPOSIT_REQUIRED",
+          false,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+      if (lotState.lifecycle !== "LIVE") {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "AUCTION_NOT_LIVE",
+          true,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+      if (serverTime.getTime() >= lotState.closesAt.getTime()) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "AUCTION_CLOSED",
+          true,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+      if (command.input.maximumFils < lotState.nextMinimumBidFils) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "PROXY_MAX_TOO_LOW",
+          true,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+
+      const existingProxy = await this.findActiveProxy(client, command);
+      if (
+        existingProxy !== null &&
+        Number(existingProxy.maximum_fils) >= command.input.maximumFils
+      ) {
+        const rejected = this.rejectProxy(
+          command,
+          serverTime,
+          "PROXY_MAX_TOO_LOW",
+          false,
+          latestFromLot(command.lotId, lotState),
+        );
+        await this.saveCommand(client, command, "SET_PROXY_BID", rejected);
+        await client.query("COMMIT");
+        return rejected;
+      }
+
+      await this.upsertProxyBid(client, command);
+
+      const userAlreadyLeading =
+        lotRow.leading_account_id === command.accountId;
+      const shouldCreateVisibleBid = !userAlreadyLeading;
+      const decision = shouldCreateVisibleBid
+        ? evaluateManualBid({
+            amountFils: lotState.nextMinimumBidFils,
+            depositEligible: true,
+            lot: lotState,
+            serverTime,
+            termsAccepted: true,
+          })
+        : null;
+
+      if (decision?.status === "ACCEPTED") {
+        await this.appendAcceptedBid(
+          client,
+          command,
+          lotRow,
+          decision.result,
+          serverTime,
+          "PROXY",
+        );
+        await this.updateLot(client, command.lotId, decision.result);
+        await this.writeOutbox(
+          client,
+          command,
+          lotRow,
+          decision.result,
+          serverTime,
+          "PROXY",
+        );
+      }
+
+      const accepted: SetProxyBidAck = {
+        commandId: command.commandId,
+        contractVersion: 1,
+        correlationId: command.correlationId,
+        result: {
+          activeProxyMaximum: money(command.input.maximumFils),
+          closesAt:
+            decision?.status === "ACCEPTED"
+              ? decision.result.closesAt.toISOString()
+              : lotState.closesAt.toISOString(),
+          currentBid:
+            decision?.status === "ACCEPTED"
+              ? money(decision.result.amountFils)
+              : lotState.currentBidFils === null
+                ? null
+                : money(lotState.currentBidFils),
+          extended:
+            decision?.status === "ACCEPTED" ? decision.result.extended : false,
+          lotId: command.lotId,
+          myBidStatus:
+            shouldCreateVisibleBid || userAlreadyLeading
+              ? "WINNING"
+              : "NOT_BIDDING",
+          nextMinimumBid:
+            decision?.status === "ACCEPTED"
+              ? money(decision.result.nextMinimumBidFils)
+              : money(lotState.nextMinimumBidFils),
+          reserveStatus:
+            decision?.status === "ACCEPTED"
+              ? decision.result.reserveStatus
+              : lotState.reserveStatus,
+          sequence:
+            decision?.status === "ACCEPTED"
+              ? decision.result.sequence
+              : lotState.sequence,
+        },
+        serverTime: serverTime.toISOString(),
+        status: "ACCEPTED",
+      };
+
+      await this.saveCommand(client, command, "SET_PROXY_BID", accepted);
+      await client.query("COMMIT");
+      return accepted;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  private async findSavedCommand<TAck extends PlaceBidAck | SetProxyBidAck>(
     client: PoolClient,
-    command: PlaceManualBidCommand,
-  ): Promise<PlaceBidAck | null> {
+    command: PlaceManualBidCommand | SetProxyBidCommand,
+  ): Promise<TAck | null> {
     const result = await client.query<SavedCommandRow>(
       `
         SELECT result_payload
@@ -168,7 +383,7 @@ export class BiddingService {
       `,
       [command.accountId, command.commandId],
     );
-    return result.rows[0]?.result_payload ?? null;
+    return (result.rows[0]?.result_payload as TAck | undefined) ?? null;
   }
 
   private async lockLot(
@@ -188,6 +403,13 @@ export class BiddingService {
           lots.reserve_status,
           lots.sequence,
           lots.soft_close_extension_count,
+          (
+            SELECT bid_ledger.account_id::text
+            FROM bid_ledger
+            WHERE bid_ledger.lot_id = lots.id
+            ORDER BY bid_ledger.sequence DESC
+            LIMIT 1
+          ) AS leading_account_id,
           auctions.soft_close_enabled,
           auctions.soft_close_window_ms AS auction_soft_close_window_ms,
           auctions.soft_close_extension_ms AS auction_soft_close_extension_ms,
@@ -207,7 +429,7 @@ export class BiddingService {
 
   private async loadEligibility(
     client: PoolClient,
-    command: PlaceManualBidCommand,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
   ): Promise<EligibilityRow> {
     const result = await client.query<EligibilityRow>(
       `
@@ -248,15 +470,71 @@ export class BiddingService {
     );
   }
 
+  private async findActiveProxy(
+    client: PoolClient,
+    command: SetProxyBidCommand,
+  ): Promise<ActiveProxyRow | null> {
+    const result = await client.query<ActiveProxyRow>(
+      `
+        SELECT maximum_fils::text
+        FROM proxy_bids
+        WHERE lot_id = $1
+          AND account_id = $2
+          AND status = 'ACTIVE'
+        ORDER BY registered_at DESC
+        LIMIT 1
+      `,
+      [command.lotId, command.accountId],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  private async upsertProxyBid(
+    client: PoolClient,
+    command: SetProxyBidCommand,
+  ): Promise<void> {
+    await client.query(
+      `
+        UPDATE proxy_bids
+        SET status = 'SUPERSEDED'
+        WHERE lot_id = $1
+          AND account_id = $2
+          AND status = 'ACTIVE'
+      `,
+      [command.lotId, command.accountId],
+    );
+    await client.query(
+      `
+        INSERT INTO proxy_bids (
+          lot_id,
+          account_id,
+          maximum_fils,
+          status,
+          command_id,
+          correlation_id
+        )
+        VALUES ($1, $2, $3, 'ACTIVE', $4, $5)
+      `,
+      [
+        command.lotId,
+        command.accountId,
+        command.input.maximumFils,
+        command.commandId,
+        command.correlationId,
+      ],
+    );
+  }
+
   private async appendAcceptedBid(
     client: PoolClient,
-    command: PlaceManualBidCommand,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
     lot: LotForUpdateRow,
     result: Extract<
       ReturnType<typeof evaluateManualBid>,
       { status: "ACCEPTED" }
     >["result"],
     serverTime: Date,
+    bidKind: "MANUAL" | "PROXY" = "MANUAL",
   ): Promise<void> {
     await client.query(
       `
@@ -272,7 +550,7 @@ export class BiddingService {
           accepted_at,
           correlation_id
         )
-        VALUES ($1, $2, $3, $4, $5, 'MANUAL', $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       `,
       [
         command.lotId,
@@ -280,6 +558,7 @@ export class BiddingService {
         command.accountId,
         command.commandId,
         result.sequence,
+        bidKind,
         result.amountFils,
         result.reserveStatus,
         serverTime,
@@ -324,13 +603,14 @@ export class BiddingService {
 
   private async writeOutbox(
     client: PoolClient,
-    command: PlaceManualBidCommand,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
     lot: LotForUpdateRow,
     result: Extract<
       ReturnType<typeof evaluateManualBid>,
       { status: "ACCEPTED" }
     >["result"],
     serverTime: Date,
+    bidKind: "MANUAL" | "PROXY" = "MANUAL",
   ): Promise<void> {
     await client.query(
       `
@@ -351,7 +631,7 @@ export class BiddingService {
         {
           amount: money(result.amountFils),
           auctionId: lot.auction_id,
-          bidKind: "MANUAL",
+          bidKind,
           currentBid: money(result.amountFils),
           event: "bid:accepted",
           extended: result.extended,
@@ -368,8 +648,9 @@ export class BiddingService {
 
   private async saveCommand(
     client: PoolClient,
-    command: PlaceManualBidCommand,
-    ack: PlaceBidAck,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
+    commandType: "PLACE_MANUAL_BID" | "SET_PROXY_BID",
+    ack: PlaceBidAck | SetProxyBidAck,
   ): Promise<void> {
     await client.query(
       `
@@ -382,17 +663,40 @@ export class BiddingService {
           result_payload,
           status
         )
-        VALUES ($1, $2, $3, 'PLACE_MANUAL_BID', $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
       `,
       [
         command.commandId,
         command.accountId,
         command.lotId,
+        commandType,
         command.input,
         ack,
         ack.status,
       ],
     );
+  }
+
+  private rejectProxy(
+    command: SetProxyBidCommand,
+    serverTime: Date,
+    code: string,
+    retryable: boolean,
+    latest?: BidLatestState,
+  ): SetProxyBidAck {
+    const ack: SetProxyBidAck = {
+      commandId: command.commandId,
+      contractVersion: 1,
+      correlationId: command.correlationId,
+      error: {
+        code,
+        message: code,
+        retryable,
+      },
+      serverTime: serverTime.toISOString(),
+      status: "REJECTED",
+    };
+    return latest === undefined ? ack : { ...ack, latest };
   }
 
   private reject(
