@@ -86,6 +86,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Bidding policy: manual/custom bids must align to configured increment steps; equal proxy maxima are won by the earlier registered maximum; live proxy maxima may be raised but not lowered/cancelled for MVP.
 - Soft close: default window and extension are 2 minutes; accepted qualifying bids extend from the previous published close time; admin can override soft-close timing per lot.
 - Bid increments: admin can derive a lot's resolved minimum increment from a percentage of starting price or set a custom per-lot increment; the engine evaluates the resolved integer-fils value.
+- Bidding persistence: MVP manual bidding uses a PostgreSQL transaction with `FOR UPDATE OF lots` as the authoritative per-lot serialization boundary. Accepted bids write the bid ledger, lot state, bid command idempotency result, and outbox event before acknowledgement.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -99,7 +100,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by wiring the framework-independent bid decision function into the PostgreSQL serialized persistence boundary, then add idempotency and proxy resolution tests.
+Continue Task 004 by adding real database integration/race tests for manual bids, then implement proxy-bid registration and resolution.
 
 ## Last validation
 
@@ -134,6 +135,13 @@ Continue Task 004 by wiring the framework-independent bid decision function into
 - `corepack pnpm --filter @pioneer/api build` passed after the bid decision function on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 7 files / 20 tests on 2026-08-11.
 - `corepack pnpm format:check` was run on 2026-08-11 and still reports pre-existing formatting warnings in unrelated Task 003/design-token files; touched Task 004 TypeScript/Markdown files were formatted directly with Prettier.
+- Continued Task 004 on 2026-08-11: added `BiddingModule`, `POST /api/v1/lots/:lotId/bids`, a PostgreSQL-serialized manual bid service, command idempotency replay, durable bid ledger writes, lot state updates, bid outbox events, and service tests for accepted, replayed, and rejected commands.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 2 files / 9 tests after the persistence boundary on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api lint` passed after the persistence boundary on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after the persistence boundary on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after the persistence boundary on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed after the persistence boundary on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 8 files / 23 tests on 2026-08-11.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

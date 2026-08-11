@@ -1,0 +1,74 @@
+import { z } from "zod";
+
+export const placeBidSchema = z.object({
+  amount: z.object({
+    amountFils: z.number().int().positive(),
+    currency: z.literal("AED"),
+  }),
+  expectedSequence: z.number().int().nonnegative(),
+  termsVersionId: z.uuid(),
+});
+
+export interface PlaceBidInput {
+  readonly amountFils: number;
+  readonly expectedSequence: number;
+  readonly termsVersionId: string;
+}
+
+export interface BidLatestState {
+  readonly lotId: string;
+  readonly sequence: number;
+  readonly currentBid: Money | null;
+  readonly nextMinimumBid: Money;
+  readonly closesAt: string;
+}
+
+export interface Money {
+  readonly currency: "AED";
+  readonly amountFils: number;
+}
+
+export type PlaceBidAck =
+  | {
+      readonly contractVersion: 1;
+      readonly commandId: string;
+      readonly status: "ACCEPTED";
+      readonly correlationId: string;
+      readonly serverTime: string;
+      readonly result: {
+        readonly lotId: string;
+        readonly sequence: number;
+        readonly currentBid: Money;
+        readonly nextMinimumBid: Money;
+        readonly myBidStatus: "WINNING";
+        readonly reserveStatus: string;
+        readonly closesAt: string;
+        readonly extended: boolean;
+      };
+    }
+  | {
+      readonly contractVersion: 1;
+      readonly commandId: string;
+      readonly status: "REJECTED";
+      readonly correlationId: string;
+      readonly serverTime: string;
+      readonly error: {
+        readonly code: string;
+        readonly message: string;
+        readonly retryable: boolean;
+      };
+      readonly latest?: BidLatestState;
+    };
+
+export function parsePlaceBidInput(input: unknown): PlaceBidInput {
+  const parsed = placeBidSchema.parse(input);
+  return {
+    amountFils: parsed.amount.amountFils,
+    expectedSequence: parsed.expectedSequence,
+    termsVersionId: parsed.termsVersionId,
+  };
+}
+
+export function money(amountFils: number): Money {
+  return { amountFils, currency: "AED" };
+}

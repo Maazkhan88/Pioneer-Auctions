@@ -119,3 +119,10 @@ Record durable product and architecture decisions here. New entries are append-o
 - Status: accepted
 - Decision: Minimum bid increments are stored as resolved integer fils on each lot. Admin can derive that resolved increment from a percentage of the starting price or set a custom per-lot increment. The bidding engine evaluates only the resolved integer-fils increment.
 - Why: Percentage defaults make bulk lot setup faster, while per-lot custom increments are necessary for unusual assets. Resolving to fils before bidding keeps the engine simple and avoids changing increments after bidding starts.
+
+## DEC-016 — PostgreSQL-serialized bidding boundary for MVP
+
+- Date: 2026-08-11
+- Status: accepted for MVP implementation
+- Decision: Start the bidding engine with a PostgreSQL transaction and `FOR UPDATE OF lots` row lock as the authoritative serialization boundary. Redis remains planned for recoverable live-state acceleration and fan-out, but accepted bids are not acknowledged until the PostgreSQL ledger, lot state update, command result, and outbox event are committed.
+- Why: This gives one deterministic order per lot with fewer moving parts during MVP hardening. It satisfies the durable-ledger invariant first; Redis optimization can be added after race/recovery tests prove the database boundary.

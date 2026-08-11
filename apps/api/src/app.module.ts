@@ -6,6 +6,7 @@ import {
 
 import { AuditModule } from "./audit/audit.module.js";
 import { AuctionsModule } from "./auctions/auctions.module.js";
+import { BiddingModule } from "./bidding/bidding.module.js";
 import { EnvironmentModule } from "./config/environment.module.js";
 import { ContractsModule } from "./contracts/contracts.module.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -23,6 +24,7 @@ import { PaymentsModule } from "./payments/payments.module.js";
     IdentityModule,
     AuditModule,
     AuctionsModule,
+    BiddingModule,
     PaymentsModule,
     HealthModule,
     ContractsModule,

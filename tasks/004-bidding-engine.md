@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; bid decision function work has started.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence boundary is implemented.
 
 ## Goal
 
@@ -54,6 +54,13 @@ pnpm --filter @pioneer/api test:recovery
 ```
 
 Include reproducible seed, load parameters, database isolation level, and result artifact in the handoff.
+
+## Current implementation notes
+
+- Manual bid REST path exists at `POST /api/v1/lots/:lotId/bids`.
+- Manual bid acceptance is serialized with a PostgreSQL row lock on the lot.
+- Accepted manual bids append `bid_ledger`, update `lots`, save `bid_commands.result_payload`, and write `outbox_events` before acknowledgement.
+- Proxy resolution, Socket.IO commands, close worker fencing, real database race tests, and Redis rebuild/recovery work remain.
 
 ## Stop conditions
 
