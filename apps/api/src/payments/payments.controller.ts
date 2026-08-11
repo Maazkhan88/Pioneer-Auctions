@@ -4,18 +4,17 @@ import type { Request } from "express";
 import { AuditService } from "../audit/audit.service.js";
 import { SessionService } from "../identity/session.service.js";
 import { parseCreateDepositPaymentIntentInput } from "./payment-intent.dto.js";
-import {
-  PAYMENT_PROVIDER,
-  type PaymentIntent,
-  type PaymentProvider,
-} from "./payment-provider.js";
+import { PAYMENT_PROVIDER } from "./payment-provider.js";
+import type { PaymentIntent, PaymentProvider } from "./payment-provider.js";
 
 @Controller("/api/v1/deposit-payment-intents")
 export class PaymentsController {
   constructor(
     @Inject(PAYMENT_PROVIDER)
     private readonly paymentProvider: PaymentProvider,
+    @Inject(SessionService)
     private readonly session: SessionService,
+    @Inject(AuditService)
     private readonly audit: AuditService,
   ) {}
 

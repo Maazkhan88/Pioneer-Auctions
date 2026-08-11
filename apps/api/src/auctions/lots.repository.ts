@@ -16,9 +16,14 @@ interface LotRow {
   readonly current_bid_fils: string | null;
   readonly next_minimum_bid_fils: string;
   readonly minimum_increment_fils: string;
+  readonly minimum_increment_percent_bps: number | null;
+  readonly bid_increment_source: "PERCENT_OF_STARTING_PRICE" | "CUSTOM";
   readonly reserve_price_fils: string | null;
   readonly reserve_status: string;
   readonly sequence: number;
+  readonly soft_close_extension_ms: number | null;
+  readonly soft_close_maximum_extensions: number | null;
+  readonly soft_close_window_ms: number | null;
 }
 
 @Injectable()
@@ -43,10 +48,15 @@ export class LotsRepository {
           starting_bid_fils,
           next_minimum_bid_fils,
           minimum_increment_fils,
+          bid_increment_source,
+          minimum_increment_percent_bps,
           reserve_price_fils,
-          reserve_status
+          reserve_status,
+          soft_close_window_ms,
+          soft_close_extension_ms,
+          soft_close_maximum_extensions
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING
           id::text,
           auction_id::text,
@@ -60,9 +70,14 @@ export class LotsRepository {
           current_bid_fils::text,
           next_minimum_bid_fils::text,
           minimum_increment_fils::text,
+          bid_increment_source,
+          minimum_increment_percent_bps,
           reserve_price_fils::text,
           reserve_status,
-          sequence
+          sequence,
+          soft_close_window_ms,
+          soft_close_extension_ms,
+          soft_close_maximum_extensions
       `,
       [
         input.auctionId,
@@ -73,8 +88,13 @@ export class LotsRepository {
         input.closesAt,
         input.startingBidFils,
         input.minimumIncrementFils,
+        input.minimumIncrementSource,
+        input.minimumIncrementPercentBps,
         input.reservePriceFils,
         reserveStatus,
+        input.softCloseWindowMs,
+        input.softCloseExtensionMs,
+        input.softCloseMaximumExtensions,
       ],
     );
 
@@ -101,9 +121,14 @@ export class LotsRepository {
           current_bid_fils::text,
           next_minimum_bid_fils::text,
           minimum_increment_fils::text,
+          bid_increment_source,
+          minimum_increment_percent_bps,
           reserve_price_fils::text,
           reserve_status,
-          sequence
+          sequence,
+          soft_close_window_ms,
+          soft_close_extension_ms,
+          soft_close_maximum_extensions
         FROM lots
         ORDER BY starts_at DESC, id DESC
         LIMIT 100
@@ -123,11 +148,16 @@ function toAdminLotView(row: LotRow): AdminLotView {
     lifecycle: row.lifecycle,
     lotNumber: row.lot_number,
     minimumIncrementFils: Number(row.minimum_increment_fils),
+    minimumIncrementPercentBps: row.minimum_increment_percent_bps,
+    minimumIncrementSource: row.bid_increment_source,
     nextMinimumBidFils: Number(row.next_minimum_bid_fils),
     reservePriceFils:
       row.reserve_price_fils === null ? null : Number(row.reserve_price_fils),
     reserveStatus: row.reserve_status,
     sequence: row.sequence,
+    softCloseExtensionMs: row.soft_close_extension_ms,
+    softCloseMaximumExtensions: row.soft_close_maximum_extensions,
+    softCloseWindowMs: row.soft_close_window_ms,
     startingBidFils: Number(row.starting_bid_fils),
     startsAt: row.starts_at.toISOString(),
     titleAr: row.title_ar,

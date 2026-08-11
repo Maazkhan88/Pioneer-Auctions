@@ -83,6 +83,9 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Contracts: Zod is the executable transport source; OpenAPI 3.1 and Dart models are generated, fixtures are shared across languages, and CI rejects artifact drift.
 - Compatibility: v1 tolerates additive object fields but rejects unknown event names and required enum values; breaking changes require a new REST base path and Socket.IO namespace with an overlap rollout.
 - Payments: local/MVP testing uses a dummy gateway provider behind the future payment-provider interface; no real card gateway is required for backend development until integration hardening.
+- Bidding policy: manual/custom bids must align to configured increment steps; equal proxy maxima are won by the earlier registered maximum; live proxy maxima may be raised but not lowered/cancelled for MVP.
+- Soft close: default window and extension are 2 minutes; accepted qualifying bids extend from the previous published close time; admin can override soft-close timing per lot.
+- Bid increments: admin can derive a lot's resolved minimum increment from a percentage of starting price or set a custom per-lot increment; the engine evaluates the resolved integer-fils value.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -91,13 +94,12 @@ See `docs/decisions-log.md` for rationale and open decisions.
 - UAE PASS and Network International commercial onboarding are external critical paths and must begin outside the codebase immediately.
 - The supplied logo is a compressed JPEG. The transparent PNG is a generated cleanup draft and not a replacement for an official vector master.
 - Provider attributes, fees, settlement times, refund SLAs, and regulatory obligations require confirmation with vendors and UAE counsel.
-- The bidding engine needs a written product ruling for proxy-bid ties before production. The proposed default is earliest maximum wins ties.
 - Final-bid rejection reason taxonomy and SLA need business/legal approval.
 - Legacy audit findings should inform Task 004 and later security/payment work: do not reuse legacy bid, auth, payment, or audit behavior without correcting server-side increments, transaction/locking, immutable history, provider verification, and RBAC.
 
 ## Next action
 
-Continue Task 004 by recording the remaining bidding product decisions, then implement the framework-independent bid decision function and persistence boundary tests.
+Continue Task 004 by wiring the framework-independent bid decision function into the PostgreSQL serialized persistence boundary, then add idempotency and proxy resolution tests.
 
 ## Last validation
 
@@ -123,6 +125,15 @@ Continue Task 004 by recording the remaining bidding product decisions, then imp
 - `corepack pnpm --filter @pioneer/api typecheck` passed after Week 1 completion on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed after Week 1 completion on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 6 files / 14 tests on 2026-08-11.
+- Continued Task 004 after product decisions on 2026-08-11: recorded MVP bidding policy defaults, added a forward migration for per-lot increment and soft-close override policy, added percentage-derived/admin-custom increment parsing for admin lot creation, and added a framework-independent manual bid decision function with aligned-increment, eligibility, reserve, and soft-close behavior tests.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after the Task 004 policy migration on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 1 file / 6 tests on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed 3 files / 9 tests on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after the bid decision function on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api lint` passed after the bid decision function on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed after the bid decision function on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 7 files / 20 tests on 2026-08-11.
+- `corepack pnpm format:check` was run on 2026-08-11 and still reports pre-existing formatting warnings in unrelated Task 003/design-token files; touched Task 004 TypeScript/Markdown files were formatted directly with Prettier.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

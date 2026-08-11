@@ -81,8 +81,6 @@ Record durable product and architecture decisions here. New entries are append-o
 
 ## Open decisions
 
-- Exact soft-close window and extension policy per category/auction.
-- Whether a bidder may lower/cancel an unused proxy maximum, and until when.
 - Deposit eligibility model: fixed hold, category/auction hold, or purchasing-power ratio.
 - Reserve disclosure wording and whether to disclose range/threshold in any category.
 - Final-bid rejection taxonomy and SLA.
@@ -107,3 +105,17 @@ Record durable product and architecture decisions here. New entries are append-o
 - Status: accepted for local/MVP test environments only
 - Decision: Use a dummy payment gateway provider during backend and UI testing. The payment module must still expose a provider interface and ledger-safe state transitions so Network International, Telr, or Checkout.com can replace the dummy provider without changing auction/deposit domain rules.
 - Why: External payment onboarding is not needed to test deposits, eligibility, invoices, and buyer flows. A dummy provider keeps development moving while avoiding any dependency on real cards or live gateway credentials.
+
+## DEC-014 — MVP bidding policy defaults
+
+- Date: 2026-08-11
+- Status: accepted
+- Decision: Use the recommended bidding policies for MVP. Manual/custom bids must align to the configured increment step. Equal proxy maxima are won by the earlier registered maximum. Active proxy maxima can be created or raised, but not lowered or cancelled while the lot is live. Soft-close defaults to a 2-minute window and 2-minute extension, and the extension is added to the previous published close time. Admin may override soft-close timing per lot.
+- Why: These rules are deterministic, explainable to bidders, and avoid clock/client-latency disputes.
+
+## DEC-015 — Lot increment configuration model
+
+- Date: 2026-08-11
+- Status: accepted
+- Decision: Minimum bid increments are stored as resolved integer fils on each lot. Admin can derive that resolved increment from a percentage of the starting price or set a custom per-lot increment. The bidding engine evaluates only the resolved integer-fils increment.
+- Why: Percentage defaults make bulk lot setup faster, while per-lot custom increments are necessary for unusual assets. Resolving to fils before bidding keeps the engine simple and avoids changing increments after bidding starts.

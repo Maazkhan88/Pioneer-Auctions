@@ -1,7 +1,7 @@
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, it, vi } from "vitest";
 
 import { AuditService } from "../src/audit/audit.service.js";
 import { AdminAuctionsController } from "../src/auctions/admin-auctions.controller.js";

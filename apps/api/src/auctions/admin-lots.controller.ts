@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -10,14 +11,17 @@ import {
 import { AuditService } from "../audit/audit.service.js";
 import { AdminPermissionGuard } from "../identity/admin-permission.guard.js";
 import { RequirePermission } from "../identity/permission.decorator.js";
-import { type AdminLotView, parseCreateLotInput } from "./lot.dto.js";
+import { parseCreateLotInput } from "./lot.dto.js";
+import type { AdminLotView } from "./lot.dto.js";
 import { LotsRepository } from "./lots.repository.js";
 
 @Controller("/api/v1/admin/lots")
 @UseGuards(AdminPermissionGuard)
 export class AdminLotsController {
   constructor(
+    @Inject(LotsRepository)
     private readonly lots: LotsRepository,
+    @Inject(AuditService)
     private readonly audit: AuditService,
   ) {}
 

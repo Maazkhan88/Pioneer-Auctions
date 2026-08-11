@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; next work is the bid decision function and persistence boundary.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; bid decision function work has started.
 
 ## Goal
 
@@ -11,7 +11,7 @@ Implement the server-authoritative manual/proxy bidding engine, durable ordered 
 ## Prerequisites
 
 - Tasks 001 and 002 complete.
-- Proxy tie rule, custom amount alignment, proxy cancellation, and soft-close formula recorded as accepted decisions for MVP.
+- Proxy tie rule, custom amount alignment, proxy cancellation, and soft-close formula recorded as accepted decisions for MVP in `docs/decisions-log.md`.
 - Local/MVP testing will use a dummy payment gateway provider; real gateway integration is deferred behind the payment-provider interface.
 
 ## Scope

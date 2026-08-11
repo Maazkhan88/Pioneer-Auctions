@@ -175,17 +175,17 @@ Provider webhooks live under authenticated provider-specific paths and are not c
 
 Socket commands are preferred while connected. Equivalent REST commands support accessibility, recovery, and clients without a healthy socket.
 
-| Method | Path                        | Purpose                                |
-| ------ | --------------------------- | -------------------------------------- |
-| POST   | `/lots/:lotId/bids`         | Place manual/custom bid                |
-| PUT    | `/lots/:lotId/proxy-bid`    | Create/raise proxy maximum             |
-| GET    | `/lots/:lotId/my-proxy-bid` | Private active proxy status/max        |
-| DELETE | `/lots/:lotId/proxy-bid`    | **OPEN:** cancel only if policy allows |
-| POST   | `/lots/:lotId/offers`       | Submit an eligible make-an-offer       |
-| GET    | `/me/bids`                  | Active/won/lost activity               |
-| GET    | `/me/offers`                | Pending/accepted/rejected offers       |
-| GET    | `/me/watchlist`             | Watched lots                           |
-| GET    | `/me/notifications`         | In-app notification feed               |
+| Method | Path                        | Purpose                                          |
+| ------ | --------------------------- | ------------------------------------------------ |
+| POST   | `/lots/:lotId/bids`         | Place manual/custom bid                          |
+| PUT    | `/lots/:lotId/proxy-bid`    | Create/raise proxy maximum                       |
+| GET    | `/lots/:lotId/my-proxy-bid` | Private active proxy status/max                  |
+| DELETE | `/lots/:lotId/proxy-bid`    | Planned; MVP rejects live-lot proxy cancellation |
+| POST   | `/lots/:lotId/offers`       | Submit an eligible make-an-offer                 |
+| GET    | `/me/bids`                  | Active/won/lost activity                         |
+| GET    | `/me/offers`                | Pending/accepted/rejected offers                 |
+| GET    | `/me/watchlist`             | Watched lots                                     |
+| GET    | `/me/notifications`         | In-app notification feed                         |
 
 ### Seller MVP/v1 boundary
 
@@ -632,7 +632,7 @@ These carry the relevant entity ID, state, display amount, timestamp, and deep-l
 ### Manual bid
 
 - Must be at least `nextMinimumBid` at evaluation time.
-- Higher custom bids are accepted if aligned with configured policy. **OPEN:** decide whether any amount above minimum is valid or must align to increment steps.
+- Higher custom bids are accepted only when aligned to the configured increment steps.
 - A leader may bid again only when it raises their committed visible amount or proxy maximum according to policy.
 
 ### Proxy bid
@@ -640,7 +640,8 @@ These carry the relevant entity ID, state, display amount, timestamp, and deep-l
 - `maximum` must be at least the current `nextMinimumBid`.
 - The maximum is secret to its owner and authorized staff; it is never included in public history/events.
 - The engine exposes only the minimum visible amount needed for the highest-priority maximum to lead, bounded by that maximum.
-- Proposed tie rule: earlier registered equal maximum has priority.
+- Tie rule: earlier registered equal maximum has priority.
+- For MVP, an active proxy maximum may be created or raised only. Lowering or cancelling an active proxy maximum while the lot is live is not supported.
 - A user receives immediate `OUTBID` if a higher/equal-priority proxy already defeats their maximum.
 - Public history may label system-generated visible bids as `PROXY` without identifying remaining headroom.
 
@@ -677,12 +678,12 @@ and acceptedAt < closesAt
 and closesAt - acceptedAt <= windowMs
 and extension limit is not exhausted:
     previousClosesAt = closesAt
-    closesAt = max(closesAt, acceptedAt) + extensionMs
+    closesAt = previousClosesAt + extensionMs
 ```
 
 The bid decision and updated close time are atomic. The close worker must fence against the same lot decision boundary and re-check `closesAt` after acquiring it. Client receipt time never changes eligibility.
 
-**OPEN:** Confirm whether the new close is `previousClosesAt + extensionMs` or `acceptedAt + extensionMs`. The proposed formula above effectively uses `previousClosesAt + extensionMs` for on-time bids and avoids shortening time.
+MVP defaults are a 2-minute soft-close window and a 2-minute extension. Admin may override the extension policy per lot where a lot needs a different closing behavior.
 
 ## 13. Closing and approval semantics
 

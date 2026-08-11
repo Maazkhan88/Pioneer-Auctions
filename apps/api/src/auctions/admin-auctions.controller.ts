@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -10,17 +11,17 @@ import {
 import { AuditService } from "../audit/audit.service.js";
 import { AdminPermissionGuard } from "../identity/admin-permission.guard.js";
 import { RequirePermission } from "../identity/permission.decorator.js";
-import {
-  type AdminAuctionView,
-  parseCreateAuctionInput,
-} from "./auction.dto.js";
+import { parseCreateAuctionInput } from "./auction.dto.js";
+import type { AdminAuctionView } from "./auction.dto.js";
 import { AuctionsRepository } from "./auctions.repository.js";
 
 @Controller("/api/v1/admin/auctions")
 @UseGuards(AdminPermissionGuard)
 export class AdminAuctionsController {
   constructor(
+    @Inject(AuctionsRepository)
     private readonly auctions: AuctionsRepository,
+    @Inject(AuditService)
     private readonly audit: AuditService,
   ) {}
 
