@@ -23,4 +23,19 @@ export class SessionService {
 
     return account;
   }
+
+  async requireAccountId(
+    accountId: string | undefined,
+  ): Promise<AccountSummary> {
+    if (accountId === undefined || accountId.length === 0) {
+      throw new UnauthorizedException("Account context is required");
+    }
+
+    const account = await this.identity.getAccountSummary(accountId);
+    if (account === null) {
+      throw new UnauthorizedException("Account was not found");
+    }
+
+    return account;
+  }
 }

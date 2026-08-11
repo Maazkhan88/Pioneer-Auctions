@@ -89,6 +89,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Bidding persistence: MVP manual bidding uses a PostgreSQL transaction with `FOR UPDATE OF lots` as the authoritative per-lot serialization boundary. Accepted bids write the bid ledger, lot state, bid command idempotency result, and outbox event before acknowledgement.
 - Proxy bidding: `PUT /api/v1/lots/:lotId/proxy-bid` now supports raise-only proxy maximum registration. If the bidder is not already leading, the service records the proxy maximum and resolves the visible proxy leaderboard so the highest-priority maximum leads at the minimum required visible amount. Manual bids against an existing active proxy now append the manual bid and the automatic proxy response in order, and command acknowledgements return the final user-relative state.
 - Database-backed bidding validation now has opt-in Vitest suites behind `PIONEER_RUN_DB_TESTS=1`: `test:integration` applies migrations in an isolated temporary schema and validates real-table proxy/manual/outbox persistence; `test:race` fires 100 same-lot manual commands and verifies ledger sequence/final-lot consistency.
+- Socket.IO bidding gateway foundation exists on namespace `/auctions/v1`: connection hello, test-header-equivalent socket account context via `handshake.auth.testAccountId`, `lot:subscribe`, `lot:sync`, `lot:unsubscribe`, `bid:place`, and `proxy-bid:set`. Bid/proxy socket commands call the same durable bidding service as REST; subscribe/sync return authoritative database snapshots.
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
 
 See `docs/decisions-log.md` for rationale and open decisions.
@@ -103,7 +104,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by running `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available, then implement Socket.IO command acknowledgements, snapshots/replay, close worker fencing, and Redis rebuild/recovery checks. UI redesign work is intentionally paused until the visual direction is revisited.
+Continue Task 004 by adding durable outbox publish/replay handling for Socket.IO broadcasts, then close worker fencing and Redis rebuild/recovery checks. Run `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available. UI redesign work is intentionally paused until the visual direction is revisited.
 
 ## Last validation
 
@@ -170,6 +171,14 @@ Continue Task 004 by running `PIONEER_RUN_DB_TESTS=1` database integration/race 
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after DB harness additions on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api build` passed after DB harness additions on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 8 files / 30 tests with 2 opt-in DB suites skipped after DB harness additions on 2026-08-12.
+- Continued Task 004 on 2026-08-12: added NestJS Socket.IO dependencies, `BiddingGateway`, socket command parsers, test-account socket session helper, and authoritative lot snapshot query support.
+- Socket gateway coverage added on 2026-08-12 for connection hello/user room join, lot subscribe snapshot ack, manual bid command routing, proxy bid command routing, and malformed command rejection.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 3 files / 21 tests after Socket.IO gateway foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after Socket.IO gateway foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after Socket.IO gateway foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after Socket.IO gateway foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after Socket.IO gateway foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test` passed 9 files / 35 tests with 2 opt-in DB suites skipped after Socket.IO gateway foundation on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

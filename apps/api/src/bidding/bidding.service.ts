@@ -5,6 +5,7 @@ import { DatabasePool } from "../database/database.pool.js";
 import {
   money,
   type BidLatestState,
+  type LotSnapshot,
   type PlaceBidAck,
   type PlaceBidInput,
   type SetProxyBidAck,
@@ -71,6 +72,24 @@ interface ActiveProxyRow extends QueryResultRow {
   readonly registered_at: Date;
 }
 
+interface LotSnapshotRow extends QueryResultRow {
+  readonly auction_id: string;
+  readonly bid_count: number;
+  readonly closes_at: Date;
+  readonly current_bid_fils: string | null;
+  readonly lifecycle: string;
+  readonly next_minimum_bid_fils: string;
+  readonly reserve_status: string;
+  readonly sequence: number;
+  readonly soft_close_enabled: boolean;
+  readonly auction_soft_close_extension_ms: number;
+  readonly auction_soft_close_window_ms: number;
+  readonly lot_soft_close_extension_ms: number | null;
+  readonly lot_soft_close_window_ms: number | null;
+  readonly soft_close_extension_count: number;
+  readonly starts_at: Date;
+}
+
 type AcceptedBidResult = Extract<
   ReturnType<typeof evaluateManualBid>,
   { status: "ACCEPTED" }
@@ -88,6 +107,66 @@ export class BiddingService {
     @Inject(DatabasePool)
     private readonly database: DatabasePool,
   ) {}
+
+  async getLotSnapshot(lotId: string): Promise<LotSnapshot | null> {
+    const result = await this.database.query<LotSnapshotRow>(
+      `
+        SELECT
+          lots.auction_id::text,
+          lots.bid_count,
+          lots.closes_at,
+          lots.current_bid_fils::text,
+          lots.lifecycle,
+          lots.next_minimum_bid_fils::text,
+          lots.reserve_status,
+          lots.sequence,
+          lots.soft_close_extension_count,
+          lots.starts_at,
+          auctions.soft_close_enabled,
+          auctions.soft_close_window_ms AS auction_soft_close_window_ms,
+          auctions.soft_close_extension_ms AS auction_soft_close_extension_ms,
+          lots.soft_close_window_ms AS lot_soft_close_window_ms,
+          lots.soft_close_extension_ms AS lot_soft_close_extension_ms
+        FROM lots
+        INNER JOIN auctions ON auctions.id = lots.auction_id
+        WHERE lots.id = $1
+      `,
+      [lotId],
+    );
+    const row = result.rows[0];
+    if (row === undefined) {
+      return null;
+    }
+    return {
+      auctionId: row.auction_id,
+      contractVersion: 1,
+      event: "lot:snapshot",
+      generatedAt: new Date().toISOString(),
+      lotId,
+      sequence: row.sequence,
+      state: {
+        bidCount: row.bid_count,
+        closesAt: row.closes_at.toISOString(),
+        currentBid:
+          row.current_bid_fils === null
+            ? null
+            : money(Number(row.current_bid_fils)),
+        lifecycle: row.lifecycle,
+        nextMinimumBid: money(Number(row.next_minimum_bid_fils)),
+        reserveStatus: row.reserve_status,
+        softClose: {
+          enabled: row.soft_close_enabled,
+          extensionCount: row.soft_close_extension_count,
+          extensionMs:
+            row.lot_soft_close_extension_ms ??
+            row.auction_soft_close_extension_ms,
+          windowMs:
+            row.lot_soft_close_window_ms ?? row.auction_soft_close_window_ms,
+        },
+        startsAt: row.starts_at.toISOString(),
+      },
+    };
+  }
 
   async placeManualBid(command: PlaceManualBidCommand): Promise<PlaceBidAck> {
     const client = await this.database.connect();
