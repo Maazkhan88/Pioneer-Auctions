@@ -7,3 +7,4 @@ pnpm-lock.yaml
 *.min.js
 packages/contracts/openapi/*.json
 packages/contracts/schemas/**/*.json
+docs/legacy-analysis/

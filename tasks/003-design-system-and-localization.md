@@ -2,7 +2,7 @@
 
 Recommended owner: Codex for tokens/web primitives; one designated Flutter owner for Dart primitives
 
-Status: In progress on `agent/task-003-design-system` (started 2026-07-15). Codex owns both token/web work and the bounded Flutter primitives for consistency.
+Status: Complete on `agent/task-003-design-system` (started 2026-07-15). Antigravity completed the token, web, and Flutter primitive foundation. A later documentation-only commit imported `docs/legacy-analysis/` for Task 004 context.
 
 ## Goal
 

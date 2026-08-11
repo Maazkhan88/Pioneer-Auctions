@@ -1,6 +1,6 @@
 # Current state
 
-Last updated: 2026-07-15
+Last updated: 2026-08-11
 
 Repository: `https://github.com/Maazkhan88/Pioneer-Auctions` (`main`)
 
@@ -27,6 +27,7 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 - Product and system architecture in `docs/architecture.md`.
 - Versioned REST and Socket.IO contract in `docs/api-contracts.md`.
 - Design/RTL rules in `docs/design-system.md`.
+- Legacy reverse-engineering audit in `docs/legacy-analysis/`, imported from `E:\Pioneer Dev\PIONEER AUCTIONS WEB & PORTAL CODE\docs\legacy-analysis`; source code, zips, and credential material were intentionally not imported.
 - Quality gates in `docs/quality-gates.md`.
 - Initial TypeScript contract and design-token packages.
 - Sequenced task packets under `tasks/`.
@@ -52,20 +53,20 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 
 None. Task 003 was completed on 2026-07-15. The next owner should claim Task 004.
 
-| Task                   | Owner        | Branch                             | Status             | Notes                                     |
-| ---------------------- | ------------ | ---------------------------------- | ------------------ | ----------------------------------------- |
-| 001 Foundation         | Codex        | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
-| 002 Contracts          | Codex        | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
-| 003 Design system      | Antigravity  | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens |
-| 004 Bidding engine     | Unassigned   | —                                  | Ready after 002    | Product rulings still gate production     |
-| 005 Web buyer loop     | Unassigned   | —                                  | Blocked by 002–004 | Full bidding client                       |
-| 006 Mobile buyer loop  | Unassigned   | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
-| 007 Admin core         | Unassigned   | —                                  | Ready after 002    | Lots, auctions, approval queues           |
-| 008 Identity/KYC       | Unassigned   | —                                  | Ready after 002    | Provider adapter first                    |
-| 009 Deposits/payments  | Unassigned   | —                                  | Ready after 002    | Ledger + webhook safety                   |
-| 010 Notifications      | Unassigned   | —                                  | Ready after 002    | Transactional matrix                      |
-| 011 Observability/load | Unassigned   | —                                  | Blocked by 004     | Test-auction readiness                    |
-| 012 MVP hardening      | Unassigned   | —                                  | Blocked by 004–011 | Real test auction gate                    |
+| Task                   | Owner       | Branch                             | Status             | Notes                                     |
+| ---------------------- | ----------- | ---------------------------------- | ------------------ | ----------------------------------------- |
+| 001 Foundation         | Codex       | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
+| 002 Contracts          | Codex       | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
+| 003 Design system      | Antigravity | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens |
+| 004 Bidding engine     | Unassigned  | —                                  | Ready after 002    | Product rulings still gate production     |
+| 005 Web buyer loop     | Unassigned  | —                                  | Blocked by 002–004 | Full bidding client                       |
+| 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
+| 007 Admin core         | Unassigned  | —                                  | Ready after 002    | Lots, auctions, approval queues           |
+| 008 Identity/KYC       | Unassigned  | —                                  | Ready after 002    | Provider adapter first                    |
+| 009 Deposits/payments  | Unassigned  | —                                  | Ready after 002    | Ledger + webhook safety                   |
+| 010 Notifications      | Unassigned  | —                                  | Ready after 002    | Transactional matrix                      |
+| 011 Observability/load | Unassigned  | —                                  | Blocked by 004     | Test-auction readiness                    |
+| 012 MVP hardening      | Unassigned  | —                                  | Blocked by 004–011 | Real test auction gate                    |
 
 ## Decisions already made
 
@@ -91,16 +92,18 @@ See `docs/decisions-log.md` for rationale and open decisions.
 - Provider attributes, fees, settlement times, refund SLAs, and regulatory obligations require confirmation with vendors and UAE counsel.
 - The bidding engine needs a written product ruling for proxy-bid ties before production. The proposed default is earliest maximum wins ties.
 - Final-bid rejection reason taxonomy and SLA need business/legal approval.
+- Legacy audit findings should inform Task 004 and later security/payment work: do not reuse legacy bid, auth, payment, or audit behavior without correcting server-side increments, transaction/locking, immutable history, provider verification, and RBAC.
 
 ## Next action
 
-Execute `tasks/004-bidding-engine.md`. Implement proxy and manual bid evaluation, soft-close triggers, sequence numbering, and administrative queues in the NestJS backend.
+Execute `tasks/004-bidding-engine.md`. Before implementing, read `docs/legacy-analysis/06-bidding-engine.md`, `docs/legacy-analysis/18-security-review.md`, and `docs/legacy-analysis/20-open-questions.md` so the new engine deliberately closes the legacy correctness and security gaps.
 
 ## Last validation
 
 - Added contrast ratio check tests under `packages/design-tokens` validating WCAG AA constraints.
 - Added `formatMoney` utility unit tests under `packages/contracts` for English/Arabic.
 - Added pseudolocalizer validation tests under `apps/web` and `apps/admin` to prevent hardcoded content.
+- `docs/legacy-analysis/*.md` were copied into the rebuild repo on 2026-08-11. This was a documentation-only import; the full app test suite was not rerun for the docs-only change.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.
