@@ -11,6 +11,7 @@ import {
   type AccountSummary,
 } from "../src/identity/identity.service.js";
 import { AdminPermissionGuard } from "../src/identity/admin-permission.guard.js";
+import { SessionService } from "../src/identity/session.service.js";
 
 const activeAdmin: AccountSummary = {
   displayName: "Ops Admin",
@@ -100,6 +101,7 @@ async function createApp(account: AccountSummary): Promise<INestApplication> {
             summary.permissions.includes(permission),
         },
       },
+      SessionService,
     ],
   }).compile();
 

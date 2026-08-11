@@ -4,10 +4,11 @@ import { Reflector } from "@nestjs/core";
 import { DatabaseModule } from "../database/database.module.js";
 import { AdminPermissionGuard } from "./admin-permission.guard.js";
 import { IdentityService } from "./identity.service.js";
+import { SessionService } from "./session.service.js";
 
 @Module({
-  exports: [AdminPermissionGuard, IdentityService],
+  exports: [AdminPermissionGuard, IdentityService, SessionService],
   imports: [DatabaseModule],
-  providers: [AdminPermissionGuard, IdentityService, Reflector],
+  providers: [AdminPermissionGuard, IdentityService, Reflector, SessionService],
 })
 export class IdentityModule {}

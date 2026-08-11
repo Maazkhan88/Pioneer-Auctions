@@ -45,20 +45,20 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 ## What does not exist yet
 
 - No generated Flutter runtime application.
-- No database migrations or runnable bidding engine.
+- No runnable bidding engine.
 - No connected UAE PASS, payment, KYC, push, email, or SMS provider.
 - No production cloud resources.
 
 ## Active task
 
-Task 004 / backend Week 1 is active. Owner: Codex. Branch: `agent/task-004-backend-week1`. Started: 2026-08-11.
+Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/task-004-backend-week1`. Started and completed: 2026-08-11.
 
 | Task                   | Owner       | Branch                             | Status             | Notes                                     |
 | ---------------------- | ----------- | ---------------------------------- | ------------------ | ----------------------------------------- |
 | 001 Foundation         | Codex       | `agent/task-001-foundation`        | Complete           | Scaffold, local services, CI              |
 | 002 Contracts          | Codex       | `agent/task-002-runtime-contracts` | Complete           | Runtime schemas and compatibility harness |
 | 003 Design system      | Antigravity | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens |
-| 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 schema/auth/RBAC/audit foundation  |
+| 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 complete; bidding engine next      |
 | 005 Web buyer loop     | Unassigned  | —                                  | Blocked by 002–004 | Full bidding client                       |
 | 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
 | 007 Admin core         | Unassigned  | —                                  | Ready after 002    | Lots, auctions, approval queues           |
@@ -97,7 +97,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 Week 1 by adding lot repository/admin endpoints and an auth/session service skeleton. Keep bidding price/winner/close-time behavior behind explicit Task 004 decisions before implementing the bid decision function.
+Continue Task 004 by recording the remaining bidding product decisions, then implement the framework-independent bid decision function and persistence boundary tests.
 
 ## Last validation
 
@@ -117,6 +117,12 @@ Continue Task 004 Week 1 by adding lot repository/admin endpoints and an auth/se
 - `corepack pnpm --filter @pioneer/api typecheck` passed again on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api build` passed again on 2026-08-11.
 - `corepack pnpm --filter @pioneer/api test` passed 5 files / 12 tests on 2026-08-11.
+- Completed the Week 1 backend foundation on 2026-08-11: added admin lot repository/endpoints, auth/session test-header skeleton, and dummy payment-provider interface plus test deposit payment-intent endpoint.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after Week 1 completion on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed 3 files / 9 tests on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after Week 1 completion on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api build` passed after Week 1 completion on 2026-08-11.
+- `corepack pnpm --filter @pioneer/api test` passed 6 files / 14 tests on 2026-08-11.
 - `corepack pnpm check` passed formatting, lint, strict type checks, 12 contract tests, 5 API tests, 4 web tests, and 4 admin tests on 2026-07-15.
 - `corepack pnpm --filter @pioneer/api test:contract` proved the served OpenAPI document matches the generated artifact.
 - Dart SDK 3.12.2 reported no analysis issues, generated the new token representations, and decoded/round-tripped the shared `Money`, `LotSnapshot`, `PlaceBidCommand`, and `CommandAck` fixture.

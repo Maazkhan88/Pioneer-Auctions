@@ -13,6 +13,7 @@ import { HealthModule } from "./health/health.module.js";
 import { IdentityModule } from "./identity/identity.module.js";
 import { CorrelationIdMiddleware } from "./observability/correlation-id.middleware.js";
 import { ObservabilityModule } from "./observability/observability.module.js";
+import { PaymentsModule } from "./payments/payments.module.js";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ObservabilityModule } from "./observability/observability.module.js";
     IdentityModule,
     AuditModule,
     AuctionsModule,
+    PaymentsModule,
     HealthModule,
     ContractsModule,
   ],

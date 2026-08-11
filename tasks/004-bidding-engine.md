@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Codex is implementing the backend Week 1 foundation before the bid decision function.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; next work is the bid decision function and persistence boundary.
 
 ## Goal
 
