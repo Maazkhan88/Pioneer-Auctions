@@ -538,7 +538,7 @@ export class BiddingService {
   ): Promise<readonly ActiveProxyRow[]> {
     const result = await client.query<ActiveProxyRow>(
       `
-        SELECT account_id::text, maximum_fils::text, registered_at
+        SELECT account_id::text, maximum_fils::text, priority_at AS registered_at
         FROM proxy_bids
         WHERE lot_id = $1
           AND status = 'ACTIVE'
@@ -635,16 +635,6 @@ export class BiddingService {
   ): Promise<void> {
     await client.query(
       `
-        UPDATE proxy_bids
-        SET status = 'SUPERSEDED'
-        WHERE lot_id = $1
-          AND account_id = $2
-          AND status = 'ACTIVE'
-      `,
-      [command.lotId, command.accountId],
-    );
-    await client.query(
-      `
         INSERT INTO proxy_bids (
           lot_id,
           account_id,
@@ -654,6 +644,14 @@ export class BiddingService {
           correlation_id
         )
         VALUES ($1, $2, $3, 'ACTIVE', $4, $5)
+        ON CONFLICT (lot_id, account_id)
+        DO UPDATE SET
+          maximum_fils = EXCLUDED.maximum_fils,
+          status = 'ACTIVE',
+          command_id = EXCLUDED.command_id,
+          correlation_id = EXCLUDED.correlation_id,
+          priority_at = now(),
+          updated_at = now()
       `,
       [
         command.lotId,

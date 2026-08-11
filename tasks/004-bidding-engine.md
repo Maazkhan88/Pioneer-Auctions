@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, and initial competing-proxy resolution are implemented.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, and opt-in database integration/race harnesses are implemented.
 
 ## Goal
 
@@ -64,7 +64,8 @@ Include reproducible seed, load parameters, database isolation level, and result
 - Manual bids against active proxies now append both the manual bid and automatic proxy response in sequence when the proxy can beat the manual amount.
 - Proxy maximum registration now resolves the active proxy leaderboard to the minimum visible amount required for the highest-priority proxy to lead, including equal-maximum priority by earlier registration.
 - Accepted manual/proxy commands can acknowledge `OUTBID` when the submitted command is valid but immediately defeated by a higher/equal-priority proxy.
-- Socket.IO commands, close worker fencing, real database race tests, and Redis rebuild/recovery work remain.
+- Real database integration/race test harnesses exist and are opt-in with `PIONEER_RUN_DB_TESTS=1`; they need execution in an environment with local PostgreSQL available.
+- Socket.IO commands, close worker fencing, executed database race results, and Redis rebuild/recovery work remain.
 
 ## Stop conditions
 

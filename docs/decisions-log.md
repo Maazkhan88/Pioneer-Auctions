@@ -126,3 +126,10 @@ Record durable product and architecture decisions here. New entries are append-o
 - Status: accepted for MVP implementation
 - Decision: Start the bidding engine with a PostgreSQL transaction and `FOR UPDATE OF lots` row lock as the authoritative serialization boundary. Redis remains planned for recoverable live-state acceleration and fan-out, but accepted bids are not acknowledged until the PostgreSQL ledger, lot state update, command result, and outbox event are committed.
 - Why: This gives one deterministic order per lot with fewer moving parts during MVP hardening. It satisfies the durable-ledger invariant first; Redis optimization can be added after race/recovery tests prove the database boundary.
+
+## DEC-017 — Proxy raise priority timestamp
+
+- Date: 2026-08-12
+- Status: accepted for MVP implementation
+- Decision: Raising an active proxy maximum updates that bidder's current proxy priority timestamp. Equal maximums are therefore won by the bidder who registered that effective maximum earlier, not by a stale lower maximum that was later raised.
+- Why: This keeps the equal-maximum tie rule auditable and fair: priority belongs to the committed maximum currently being compared.
