@@ -102,6 +102,7 @@ export interface LotSnapshot {
   readonly auctionId: string;
   readonly sequence: number;
   readonly generatedAt: string;
+  readonly replay?: readonly unknown[];
   readonly state: {
     readonly lifecycle: string;
     readonly currentBid: Money | null;
@@ -117,6 +118,12 @@ export interface LotSnapshot {
       readonly extensionCount: number;
     };
   };
+}
+
+export interface LotReplayEvent {
+  readonly event: string;
+  readonly payload: unknown;
+  readonly sequence: number;
 }
 
 export type PlaceBidAck =

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { BiddingGateway } from "../src/bidding/bidding.gateway.js";
 import { money, type LotSnapshot } from "../src/bidding/bid.dto.js";
+import type { BiddingOutboxPublisher } from "../src/bidding/bidding-outbox.publisher.js";
 import type { BiddingService } from "../src/bidding/bidding.service.js";
 import type { SessionService } from "../src/identity/session.service.js";
 
@@ -56,6 +57,45 @@ describe("bidding gateway", () => {
     expect(socket.join).toHaveBeenCalledWith(`lot:${lotId}`);
     expect(result).toMatchObject({
       result: snapshot,
+      status: "ACCEPTED",
+    });
+  });
+
+  it("replays contiguous retained lot events on subscribe when afterSequence is supplied", async () => {
+    const replayPayload = {
+      event: "bid:accepted",
+      lotId,
+      sequence: 2,
+    };
+    const gateway = gatewayFor({
+      getLotEventsAfter: vi.fn().mockResolvedValue([
+        {
+          event: "bid:accepted",
+          payload: replayPayload,
+          sequence: 2,
+        },
+      ]),
+      getLotSnapshot: vi.fn().mockResolvedValue({
+        ...lotSnapshot(),
+        sequence: 2,
+      }),
+    });
+
+    const result = await gateway.subscribeToLot(
+      fakeSocket({ accountId }) as never,
+      {
+        afterSequence: 1,
+        commandId,
+        contractVersion: 1,
+        lotId,
+        sentAt: "2026-09-01T15:59:30.000Z",
+      },
+    );
+
+    expect(result).toMatchObject({
+      result: {
+        replay: [replayPayload],
+      },
       status: "ACCEPTED",
     });
   });
@@ -162,19 +202,39 @@ describe("bidding gateway", () => {
       status: "REJECTED",
     });
   });
+
+  it("publishes pending outbox events through the injected publisher", async () => {
+    const publishPendingLotEvents = vi.fn().mockResolvedValue(3);
+    const gateway = gatewayFor({}, { publishPendingLotEvents });
+    const server = { to: vi.fn() };
+    Object.defineProperty(gateway, "server", { value: server });
+
+    const count = await gateway.publishPendingOutboxEvents(50);
+
+    expect(count).toBe(3);
+    expect(publishPendingLotEvents).toHaveBeenCalledWith(server, 50);
+  });
 });
 
-function gatewayFor(overrides: Partial<BiddingService> = {}): BiddingGateway {
+function gatewayFor(
+  overrides: Partial<BiddingService> = {},
+  publisherOverrides: Partial<BiddingOutboxPublisher> = {},
+): BiddingGateway {
   const bidding = {
+    getLotEventsAfter: vi.fn().mockResolvedValue([]),
     getLotSnapshot: vi.fn().mockResolvedValue(lotSnapshot()),
     placeManualBid: vi.fn(),
     setProxyBid: vi.fn(),
     ...overrides,
   } as unknown as BiddingService;
+  const publisher = {
+    publishPendingLotEvents: vi.fn().mockResolvedValue(0),
+    ...publisherOverrides,
+  } as unknown as BiddingOutboxPublisher;
   const session = {
     requireAccountId: vi.fn().mockResolvedValue({ id: accountId }),
   } as unknown as SessionService;
-  return new BiddingGateway(bidding, session);
+  return new BiddingGateway(bidding, publisher, session);
 }
 
 function fakeSocket(input: { readonly accountId?: string }): FakeSocket {

@@ -20,6 +20,7 @@ import {
   type PlaceBidAck,
   type SetProxyBidAck,
 } from "./bid.dto.js";
+import { BiddingOutboxPublisher } from "./bidding-outbox.publisher.js";
 import { BiddingService } from "./bidding.service.js";
 
 interface SocketAck<T> {
@@ -53,6 +54,8 @@ export class BiddingGateway implements OnGatewayConnection {
   constructor(
     @Inject(BiddingService)
     private readonly bidding: BiddingService,
+    @Inject(BiddingOutboxPublisher)
+    private readonly outboxPublisher: BiddingOutboxPublisher,
     @Inject(SessionService)
     private readonly session: SessionService,
   ) {}
@@ -81,7 +84,11 @@ export class BiddingGateway implements OnGatewayConnection {
     try {
       const input = parseLotSubscribeInput(body);
       await socket.join(`lot:${input.lotId}`);
-      return await this.snapshotAck(input.commandId, input.lotId);
+      return await this.syncAck(
+        input.commandId,
+        input.lotId,
+        input.afterSequence,
+      );
     } catch (error) {
       return genericCommandError(error, commandIdFrom(body));
     }
@@ -91,7 +98,11 @@ export class BiddingGateway implements OnGatewayConnection {
   async syncLot(@MessageBody() body: unknown): Promise<SocketAck<LotSnapshot>> {
     try {
       const input = parseLotSyncInput(body);
-      return await this.snapshotAck(input.commandId, input.lotId);
+      return await this.syncAck(
+        input.commandId,
+        input.lotId,
+        input.afterSequence,
+      );
     } catch (error) {
       return genericCommandError(error, commandIdFrom(body));
     }
@@ -155,9 +166,14 @@ export class BiddingGateway implements OnGatewayConnection {
     }
   }
 
-  private async snapshotAck(
+  async publishPendingOutboxEvents(batchSize = 100): Promise<number> {
+    return this.outboxPublisher.publishPendingLotEvents(this.server, batchSize);
+  }
+
+  private async syncAck(
     commandId: string,
     lotId: string,
+    afterSequence: number | undefined,
   ): Promise<SocketAck<LotSnapshot>> {
     const snapshot = await this.bidding.getLotSnapshot(lotId);
     if (snapshot === null) {
@@ -173,6 +189,20 @@ export class BiddingGateway implements OnGatewayConnection {
         serverTime: new Date().toISOString(),
         status: "REJECTED",
       };
+    }
+    if (afterSequence !== undefined) {
+      const events = await this.bidding.getLotEventsAfter(lotId, afterSequence);
+      if (
+        events.length > 0 &&
+        events.every(
+          (event, index) => event.sequence === afterSequence + index + 1,
+        )
+      ) {
+        return acceptedAck(commandId, {
+          ...snapshot,
+          replay: events.map((event) => event.payload),
+        });
+      }
     }
     return acceptedAck(commandId, snapshot);
   }

@@ -5,6 +5,7 @@ import { DatabasePool } from "../database/database.pool.js";
 import {
   money,
   type BidLatestState,
+  type LotReplayEvent,
   type LotSnapshot,
   type PlaceBidAck,
   type PlaceBidInput,
@@ -90,6 +91,12 @@ interface LotSnapshotRow extends QueryResultRow {
   readonly starts_at: Date;
 }
 
+interface OutboxReplayRow extends QueryResultRow {
+  readonly event_name: string;
+  readonly payload: Record<string, unknown>;
+  readonly sequence: number | null;
+}
+
 type AcceptedBidResult = Extract<
   ReturnType<typeof evaluateManualBid>,
   { status: "ACCEPTED" }
@@ -166,6 +173,33 @@ export class BiddingService {
         startsAt: row.starts_at.toISOString(),
       },
     };
+  }
+
+  async getLotEventsAfter(
+    lotId: string,
+    afterSequence: number,
+  ): Promise<readonly LotReplayEvent[]> {
+    const result = await this.database.query<OutboxReplayRow>(
+      `
+        SELECT
+          event_name,
+          payload,
+          (payload ->> 'sequence')::integer AS sequence
+        FROM outbox_events
+        WHERE aggregate_type = 'lot'
+          AND aggregate_id = $1
+          AND (payload ->> 'sequence')::integer > $2
+        ORDER BY (payload ->> 'sequence')::integer ASC, occurred_at ASC
+      `,
+      [lotId, afterSequence],
+    );
+    return result.rows
+      .filter((row) => row.sequence !== null)
+      .map((row) => ({
+        event: row.event_name,
+        payload: row.payload,
+        sequence: row.sequence ?? 0,
+      }));
   }
 
   async placeManualBid(command: PlaceManualBidCommand): Promise<PlaceBidAck> {
