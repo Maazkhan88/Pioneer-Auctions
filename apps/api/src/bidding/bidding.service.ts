@@ -104,6 +104,7 @@ type AcceptedBidResult = Extract<
 
 interface VisibleBid {
   readonly accountId: string;
+  readonly activeProxyMaximumFils: number | null;
   readonly bidKind: "MANUAL" | "PROXY";
   readonly result: AcceptedBidResult;
 }
@@ -257,6 +258,7 @@ export class BiddingService {
 
       const visibleBids: VisibleBid[] = [
         {
+          activeProxyMaximumFils: null,
           accountId: command.accountId,
           bidKind: "MANUAL",
           result: decision.result,
@@ -303,13 +305,36 @@ export class BiddingService {
         finalBid.result,
         visibleBids.length,
       );
-      await this.writePersonalBidStatusOutbox(
+      for (const visibleBid of visibleBids) {
+        await this.writePersonalBidStatusOutbox(
+          client,
+          visibleBid.accountId,
+          command,
+          lotRow,
+          finalBid.result,
+          finalBid.accountId === visibleBid.accountId ? "WINNING" : "OUTBID",
+          serverTime,
+          visibleBid.activeProxyMaximumFils,
+        );
+      }
+      if (!visibleBids.some((bid) => bid.accountId === command.accountId)) {
+        await this.writePersonalBidStatusOutbox(
+          client,
+          command.accountId,
+          command,
+          lotRow,
+          finalBid.result,
+          finalBid.accountId === command.accountId ? "WINNING" : "OUTBID",
+          serverTime,
+        );
+      }
+      await this.writePreviousLeaderOutbidStatusOutbox(
         client,
-        command.accountId,
+        lotRow.leading_account_id,
+        finalBid.accountId,
         command,
         lotRow,
         finalBid.result,
-        finalBid.accountId === command.accountId ? "WINNING" : "OUTBID",
         serverTime,
       );
 
@@ -494,6 +519,27 @@ export class BiddingService {
           proxyBid.accountId === command.accountId ? "WINNING" : "OUTBID",
           serverTime,
           command.input.maximumFils,
+        );
+        if (proxyBid.accountId !== command.accountId) {
+          await this.writePersonalBidStatusOutbox(
+            client,
+            proxyBid.accountId,
+            command,
+            lotRow,
+            proxyBid.result,
+            "WINNING",
+            serverTime,
+            proxyBid.activeProxyMaximumFils,
+          );
+        }
+        await this.writePreviousLeaderOutbidStatusOutbox(
+          client,
+          lotRow.leading_account_id,
+          proxyBid.accountId,
+          command,
+          lotRow,
+          proxyBid.result,
+          serverTime,
         );
       } else {
         await this.writePersonalBidStatusOutbox(
@@ -720,6 +766,7 @@ export class BiddingService {
       throw new Error(`proxy response rejected: ${proxyDecision.errorCode}`);
     }
     return {
+      activeProxyMaximumFils: Number(competingProxy.maximum_fils),
       accountId: competingProxy.account_id,
       bidKind: "PROXY",
       result: proxyDecision.result,
@@ -766,6 +813,7 @@ export class BiddingService {
       throw new Error(`proxy leaderboard bid rejected: ${decision.errorCode}`);
     }
     return {
+      activeProxyMaximumFils: Number(winner.maximum_fils),
       accountId: winner.account_id,
       bidKind: "PROXY",
       result: decision.result,
@@ -986,6 +1034,33 @@ export class BiddingService {
         command.correlationId,
         serverTime,
       ],
+    );
+  }
+
+  private async writePreviousLeaderOutbidStatusOutbox(
+    client: PoolClient,
+    previousLeaderAccountId: string | null,
+    currentLeaderAccountId: string,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
+    lot: LotForUpdateRow,
+    result: AcceptedBidResult,
+    serverTime: Date,
+  ): Promise<void> {
+    if (
+      previousLeaderAccountId === null ||
+      previousLeaderAccountId === currentLeaderAccountId ||
+      previousLeaderAccountId === command.accountId
+    ) {
+      return;
+    }
+    await this.writePersonalBidStatusOutbox(
+      client,
+      previousLeaderAccountId,
+      command,
+      lot,
+      result,
+      "OUTBID",
+      serverTime,
     );
   }
 

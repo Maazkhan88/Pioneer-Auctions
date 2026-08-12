@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, durable outbox replay/publish foundation, close worker fencing foundation, personal bid-status event foundation, and PostgreSQL-derived recovery rebuild foundation are implemented.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, durable outbox replay/publish foundation, close worker fencing foundation, personal bid-status event fan-out for command/proxy/previous-leader accounts, and PostgreSQL-derived recovery rebuild foundation are implemented.
 
 ## Goal
 
@@ -68,9 +68,9 @@ Include reproducible seed, load parameters, database isolation level, and result
 - Socket.IO gateway foundation exists for connection hello, lot subscribe/sync/unsubscribe, manual bid, and proxy bid commands. Bid/proxy socket commands use the same durable bidding service as REST and subscribe/sync return authoritative database snapshots.
 - Durable outbox publish/replay foundation exists: unpublished lot events are emitted from `outbox_events` to lot rooms and marked published; subscribe/sync can replay retained contiguous lot events after `afterSequence` or fall back to snapshot state.
 - Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, rechecked under a lot row lock, moved to `PENDING_APPROVAL` when they have a bid or `CLOSED` when they do not, assigned the next lot sequence, and recorded through the outbox.
-- Personal bid-status event foundation exists: accepted manual/proxy commands write private account-scoped `bid:status-changed` outbox rows, and the publisher emits account rows to `user:{accountId}` rooms.
+- Personal bid-status event foundation exists: accepted manual/proxy commands write private account-scoped `bid:status-changed` outbox rows for command accounts, automatic proxy winners, and previous leaders who become outbid; the publisher emits account rows to `user:{accountId}` rooms.
 - Recovery rebuild foundation exists: `BiddingRecoveryService` can reconstruct derived lot state from PostgreSQL lot/bid-ledger/proxy tables, preserve closed/pending-approval lifecycle states, avoid exposing proxy maxima, and write rebuilt state to an abstract derived-state store for future Redis integration.
-- Executed database race results and richer personal status coverage for proxy winners/losers remain.
+- Executed database race results remain.
 
 ## Stop conditions
 

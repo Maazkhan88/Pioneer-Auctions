@@ -181,6 +181,20 @@ describe("bidding service persistence boundary", () => {
     expect(ledgerInserts[1]?.values).toContain(
       "00000000-0000-4000-8000-000000000002",
     );
+    const accountOutboxInserts = accountOutboxWrites(client);
+    expect(accountOutboxInserts.map((query) => query.values[1])).toEqual([
+      "00000000-0000-4000-8000-000000000001",
+      "00000000-0000-4000-8000-000000000002",
+    ]);
+    expect(accountOutboxInserts[0]?.values[3]).toMatchObject({
+      data: { status: "OUTBID" },
+    });
+    expect(accountOutboxInserts[1]?.values[3]).toMatchObject({
+      data: {
+        activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        status: "WINNING",
+      },
+    });
     vi.useRealTimers();
   });
 
@@ -424,9 +438,34 @@ describe("bidding service persistence boundary", () => {
       },
       status: "ACCEPTED",
     });
+    const accountOutboxInserts = accountOutboxWrites(client);
+    expect(accountOutboxInserts.map((query) => query.values[1])).toEqual([
+      "00000000-0000-4000-8000-000000000001",
+      "00000000-0000-4000-8000-000000000002",
+    ]);
+    expect(accountOutboxInserts[0]?.values[3]).toMatchObject({
+      data: {
+        activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        status: "OUTBID",
+      },
+    });
+    expect(accountOutboxInserts[1]?.values[3]).toMatchObject({
+      data: {
+        activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+        status: "WINNING",
+      },
+    });
     vi.useRealTimers();
   });
 });
+
+function accountOutboxWrites(client: FakeClient): readonly QueryCall[] {
+  return client.queries.filter(
+    (query) =>
+      query.text.includes("INSERT INTO outbox_events") &&
+      query.values[0] === "account",
+  );
+}
 
 function command(input: { readonly amountFils: number }) {
   return {
