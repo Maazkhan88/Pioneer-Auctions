@@ -104,6 +104,7 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Backend dummy lots can be served in development with `PIONEER_ADMIN_DUMMY_LOTS=1`; `GET /api/v1/admin/lots` then returns three demo lots covering live vehicle, scheduled real estate, and pending-approval equipment states.
 - Public `GET /api/v1/lots` now returns sanitized lot-card data from the same dummy/backend source without reserve price, increment policy internals, proxy data, or admin metadata.
 - Buyer web homepage now loads lots through `loadBuyerHomeData`: it fetches `PIONEER_PUBLIC_API_BASE_URL/api/v1/lots` when configured and otherwise shows the same three dummy lots in static Cloudflare preview.
+- Buyer web mobile header now uses a compact responsive layout: brand and language switch share the top row, and navigation is a smaller horizontal scroll row to avoid covering the first lot card.
 - Admin UI now fetches protected `/admin/lots` when API configuration is available and renders a backend lot list in the Lot Management panel; static Cloudflare preview falls back safely when no API is configured.
 - Admin Lot Management now includes a disabled static create/edit lot form shell with English/Arabic title fields, lot number, AED starting/reserve inputs, increment mode, custom increment, soft-close extension minutes, and featured flag.
 - Admin runtime helper `submitFinalBidDecision` exists for future authenticated final-bid approve/reject actions; static preview controls remain disabled until a safe admin session runtime is connected.
@@ -294,6 +295,12 @@ Continue Task 007 with authenticated runtime action handling for final-bid appro
 - `corepack pnpm --filter @pioneer/api test` passed 14 files / 61 tests with 2 opt-in DB suites skipped after public dummy lots on 2026-08-12.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed after homepage dummy lots on 2026-08-12.
 - `cmd /c npx wrangler deploy` redeployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` after homepage dummy lots on 2026-08-12. Wrangler reported version ID `11eca963-c891-4770-93eb-34ef24bfe570`.
+- Fixed the buyer web mobile header on 2026-08-12 so it no longer stacks into a tall floating card.
+- `corepack pnpm --filter @pioneer/web test` passed 4 files / 6 tests after the mobile header fix on 2026-08-12.
+- `corepack pnpm --filter @pioneer/web typecheck` passed after the mobile header fix on 2026-08-12.
+- `corepack pnpm --filter @pioneer/web lint` passed after the mobile header fix on 2026-08-12.
+- `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed after the mobile header fix on 2026-08-12.
+- `cmd /c npx wrangler deploy` redeployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` after the mobile header fix on 2026-08-12. Wrangler reported version ID `08eba58f-0876-4414-b963-eaa6befd73d5`.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

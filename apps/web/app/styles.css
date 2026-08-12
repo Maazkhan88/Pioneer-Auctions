@@ -647,22 +647,63 @@ input:focus-visible {
 
 @media (max-width: 720px) {
   .m3-shell {
-    padding: 10px;
+    padding: 8px;
   }
 
   .m3-topbar {
-    align-items: stretch;
-    border-radius: 24px;
-    flex-direction: column;
+    align-items: center;
+    border-radius: 22px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr auto;
+    padding: 10px;
+  }
+
+  .m3-brand {
+    min-width: 0;
+  }
+
+  .m3-brand span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .m3-mark {
+    border-radius: 16px;
+    height: 40px;
+    width: 40px;
+  }
+
+  .m3-language {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 12px;
   }
 
   .m3-nav {
-    justify-content: space-between;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
     overflow-x: auto;
+    padding: 3px;
+    scrollbar-width: none;
+  }
+
+  .m3-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .m3-nav a {
+    flex: 0 0 auto;
+    font-size: 0.82rem;
+    padding: 8px 11px;
+    white-space: nowrap;
   }
 
   .m3-hero {
-    padding-top: 28px;
+    padding-top: 20px;
   }
 
   .m3-hero h1 {
