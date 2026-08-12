@@ -6,6 +6,7 @@ import { BiddingController } from "./bidding.controller.js";
 import { AuctionCloseService } from "./auction-close.service.js";
 import { BiddingOutboxPublisher } from "./bidding-outbox.publisher.js";
 import { BiddingGateway } from "./bidding.gateway.js";
+import { BiddingRecoveryService } from "./bidding-recovery.service.js";
 import { BiddingService } from "./bidding.service.js";
 
 @Module({
@@ -14,6 +15,7 @@ import { BiddingService } from "./bidding.service.js";
   providers: [
     AuctionCloseService,
     BiddingGateway,
+    BiddingRecoveryService,
     BiddingOutboxPublisher,
     BiddingService,
   ],

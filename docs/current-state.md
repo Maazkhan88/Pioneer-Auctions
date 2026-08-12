@@ -107,7 +107,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 with Redis rebuild/recovery checks and richer personal status coverage for proxy winners/losers. Run `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available. UI redesign work is intentionally paused until the visual direction is revisited.
+Continue Task 004 with richer personal status coverage for proxy winners/losers and, when Redis is introduced as a concrete provider, wire `BiddingRecoveryService` into startup/operational recovery. Run `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available. UI redesign work is intentionally paused until the visual direction is revisited.
 
 ## Last validation
 
@@ -206,6 +206,14 @@ Continue Task 004 with Redis rebuild/recovery checks and richer personal status 
 - `corepack pnpm --filter @pioneer/api build` passed after personal bid-status event foundation on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after personal bid-status event foundation on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 11 files / 43 tests with 2 opt-in DB suites skipped after personal bid-status event foundation on 2026-08-12.
+- Continued Task 004 on 2026-08-12: added `BiddingRecoveryService` to rebuild derived lot state from PostgreSQL lot, bid-ledger, and proxy tables; preserve closed/pending-approval lifecycle states; avoid exposing proxy maxima; and write rebuilt state to an abstract derived-state store for future Redis integration.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 6 files / 33 tests after recovery rebuild foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after recovery rebuild foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after recovery rebuild foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after recovery rebuild foundation on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after recovery rebuild foundation on 2026-08-12.
+- First `corepack pnpm --filter @pioneer/api test` run after recovery rebuild foundation hit a transient timeout in `test/admin-auctions.spec.ts > requires admin account context`; the same spec passed alone immediately afterward.
+- Second `corepack pnpm --filter @pioneer/api test` run passed 12 files / 47 tests with 2 opt-in DB suites skipped after recovery rebuild foundation on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.
