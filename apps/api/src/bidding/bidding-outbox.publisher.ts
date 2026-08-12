@@ -6,6 +6,7 @@ import { DatabasePool } from "../database/database.pool.js";
 
 interface OutboxRow extends QueryResultRow {
   readonly aggregate_id: string;
+  readonly aggregate_type: "account" | "lot";
   readonly event_name: string;
   readonly id: string;
   readonly payload: Record<string, unknown>;
@@ -18,17 +19,21 @@ export class BiddingOutboxPublisher {
     private readonly database: DatabasePool,
   ) {}
 
-  async publishPendingLotEvents(
+  async publishPendingEvents(
     server: Pick<Server, "to">,
     batchSize = 100,
   ): Promise<number> {
     const client = await this.database.connect();
     try {
       await client.query("BEGIN");
-      const rows = await this.claimUnpublishedLotEvents(client, batchSize);
+      const rows = await this.claimUnpublishedEvents(client, batchSize);
 
       for (const row of rows) {
-        server.to(`lot:${row.aggregate_id}`).emit(row.event_name, row.payload);
+        const room =
+          row.aggregate_type === "account"
+            ? `user:${row.aggregate_id}`
+            : `lot:${row.aggregate_id}`;
+        server.to(room).emit(row.event_name, row.payload);
       }
 
       if (rows.length > 0) {
@@ -52,7 +57,14 @@ export class BiddingOutboxPublisher {
     }
   }
 
-  private async claimUnpublishedLotEvents(
+  async publishPendingLotEvents(
+    server: Pick<Server, "to">,
+    batchSize = 100,
+  ): Promise<number> {
+    return this.publishPendingEvents(server, batchSize);
+  }
+
+  private async claimUnpublishedEvents(
     client: PoolClient,
     batchSize: number,
   ): Promise<readonly OutboxRow[]> {
@@ -60,11 +72,12 @@ export class BiddingOutboxPublisher {
       `
         SELECT
           id::text,
+          aggregate_type,
           aggregate_id::text,
           event_name,
           payload
         FROM outbox_events
-        WHERE aggregate_type = 'lot'
+        WHERE aggregate_type IN ('lot', 'account')
           AND published_at IS NULL
         ORDER BY occurred_at ASC, id ASC
         LIMIT $1

@@ -303,6 +303,15 @@ export class BiddingService {
         finalBid.result,
         visibleBids.length,
       );
+      await this.writePersonalBidStatusOutbox(
+        client,
+        command.accountId,
+        command,
+        lotRow,
+        finalBid.result,
+        finalBid.accountId === command.accountId ? "WINNING" : "OUTBID",
+        serverTime,
+      );
 
       const accepted: PlaceBidAck = {
         commandId: command.commandId,
@@ -475,6 +484,27 @@ export class BiddingService {
           proxyBid.result,
           serverTime,
           "PROXY",
+        );
+        await this.writePersonalBidStatusOutbox(
+          client,
+          command.accountId,
+          command,
+          lotRow,
+          proxyBid.result,
+          proxyBid.accountId === command.accountId ? "WINNING" : "OUTBID",
+          serverTime,
+          command.input.maximumFils,
+        );
+      } else {
+        await this.writePersonalBidStatusOutbox(
+          client,
+          command.accountId,
+          command,
+          lotRow,
+          null,
+          userAlreadyLeading ? "WINNING" : "NOT_BIDDING",
+          serverTime,
+          command.input.maximumFils,
         );
       }
 
@@ -893,6 +923,65 @@ export class BiddingService {
           nextMinimumBid: money(result.nextMinimumBidFils),
           reserveStatus: result.reserveStatus,
           sequence: result.sequence,
+        },
+        command.correlationId,
+        serverTime,
+      ],
+    );
+  }
+
+  private async writePersonalBidStatusOutbox(
+    client: PoolClient,
+    accountId: string,
+    command: PlaceManualBidCommand | SetProxyBidCommand,
+    lot: LotForUpdateRow,
+    result: AcceptedBidResult | null,
+    status: "NOT_BIDDING" | "WINNING" | "OUTBID",
+    serverTime: Date,
+    activeProxyMaximumFils: number | null = null,
+  ): Promise<void> {
+    const currentBidFils =
+      result?.amountFils ??
+      (lot.current_bid_fils === null ? null : Number(lot.current_bid_fils));
+    const nextMinimumBidFils =
+      result?.nextMinimumBidFils ?? Number(lot.next_minimum_bid_fils);
+    const closesAt = result?.closesAt ?? lot.closes_at;
+    const lotSequence = result?.sequence ?? lot.sequence;
+
+    await client.query(
+      `
+        INSERT INTO outbox_events (
+          aggregate_type,
+          aggregate_id,
+          event_name,
+          payload,
+          correlation_id,
+          occurred_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `,
+      [
+        "account",
+        accountId,
+        "bid:status-changed",
+        {
+          contractVersion: 1,
+          correlationId: command.correlationId,
+          data: {
+            activeProxyMaximum:
+              activeProxyMaximumFils === null
+                ? null
+                : money(activeProxyMaximumFils),
+            auctionId: lot.auction_id,
+            closesAt: closesAt.toISOString(),
+            currentBid: currentBidFils === null ? null : money(currentBidFils),
+            lotId: command.lotId,
+            lotSequence,
+            nextMinimumBid: money(nextMinimumBidFils),
+            status,
+          },
+          event: "bid:status-changed",
+          occurredAt: serverTime.toISOString(),
         },
         command.correlationId,
         serverTime,

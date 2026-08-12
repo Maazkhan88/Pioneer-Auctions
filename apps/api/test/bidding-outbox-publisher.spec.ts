@@ -9,6 +9,7 @@ interface QueryCall {
 }
 
 class FakeClient {
+  accountEventMode = false;
   readonly queries: QueryCall[] = [];
 
   async query<T>(
@@ -17,10 +18,26 @@ class FakeClient {
   ): Promise<{ rows: T[] }> {
     this.queries.push({ text, values });
     if (text.includes("FROM outbox_events")) {
+      if (this.accountEventMode) {
+        return {
+          rows: [
+            {
+              aggregate_id: "00000000-0000-4000-8000-000000000001",
+              aggregate_type: "account",
+              event_name: "bid:status-changed",
+              id: "33333333-3333-4333-8333-333333333333",
+              payload: {
+                event: "bid:status-changed",
+              },
+            },
+          ] as T[],
+        };
+      }
       return {
         rows: [
           {
             aggregate_id: "11111111-1111-4111-8111-111111111111",
+            aggregate_type: "lot",
             event_name: "bid:accepted",
             id: "33333333-3333-4333-8333-333333333333",
             payload: {
@@ -58,6 +75,25 @@ describe("bidding outbox publisher", () => {
         query.text.includes("SET published_at = now()"),
       ),
     ).toBe(true);
+  });
+
+  it("emits unpublished account events to private user rooms", async () => {
+    const client = new FakeClient();
+    const emit = vi.fn();
+    const to = vi.fn().mockReturnValue({ emit });
+    client.accountEventMode = true;
+    const publisher = new BiddingOutboxPublisher(databaseFor(client));
+
+    const count = await publisher.publishPendingEvents({ to }, 25);
+
+    expect(count).toBe(1);
+    expect(to).toHaveBeenCalledWith(
+      "user:00000000-0000-4000-8000-000000000001",
+    );
+    expect(emit).toHaveBeenCalledWith(
+      "bid:status-changed",
+      expect.objectContaining({ event: "bid:status-changed" }),
+    );
   });
 });
 

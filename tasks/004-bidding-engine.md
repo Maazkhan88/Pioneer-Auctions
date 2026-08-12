@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, durable outbox replay/publish foundation, and close worker fencing foundation are implemented.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, durable outbox replay/publish foundation, close worker fencing foundation, and personal bid-status event foundation are implemented.
 
 ## Goal
 
@@ -68,7 +68,8 @@ Include reproducible seed, load parameters, database isolation level, and result
 - Socket.IO gateway foundation exists for connection hello, lot subscribe/sync/unsubscribe, manual bid, and proxy bid commands. Bid/proxy socket commands use the same durable bidding service as REST and subscribe/sync return authoritative database snapshots.
 - Durable outbox publish/replay foundation exists: unpublished lot events are emitted from `outbox_events` to lot rooms and marked published; subscribe/sync can replay retained contiguous lot events after `afterSequence` or fall back to snapshot state.
 - Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, rechecked under a lot row lock, moved to `PENDING_APPROVAL` when they have a bid or `CLOSED` when they do not, assigned the next lot sequence, and recorded through the outbox.
-- Personal status events, executed database race results, and Redis rebuild/recovery work remain.
+- Personal bid-status event foundation exists: accepted manual/proxy commands write private account-scoped `bid:status-changed` outbox rows, and the publisher emits account rows to `user:{accountId}` rooms.
+- Executed database race results, richer personal status coverage for proxy winners/losers, and Redis rebuild/recovery work remain.
 
 ## Stop conditions
 
