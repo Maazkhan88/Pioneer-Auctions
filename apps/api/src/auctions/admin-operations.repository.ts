@@ -4,6 +4,7 @@ import type { QueryResultRow } from "pg";
 import { DatabasePool } from "../database/database.pool.js";
 import {
   type AdminDashboardMetric,
+  type FinalBidApprovalDecisionRecord,
   type FinalBidApprovalView,
   toMoney,
 } from "./admin-operations.dto.js";
@@ -29,6 +30,13 @@ interface FinalBidApprovalRow extends QueryResultRow {
   readonly sequence: number;
   readonly title_ar: string;
   readonly title_en: string;
+}
+
+interface FinalBidDecisionRow extends QueryResultRow {
+  readonly auction_id: string;
+  readonly current_bid_fils: string;
+  readonly id: string;
+  readonly sequence: number;
 }
 
 @Injectable()
@@ -129,6 +137,49 @@ export class AdminOperationsRepository {
     );
 
     return result.rows.map((row) => toFinalBidApprovalView(row, serverTime));
+  }
+
+  async approveFinalBid(
+    lotId: string,
+  ): Promise<FinalBidApprovalDecisionRecord> {
+    return this.transitionFinalBidDecision(lotId, "APPROVED");
+  }
+
+  async rejectFinalBid(lotId: string): Promise<FinalBidApprovalDecisionRecord> {
+    return this.transitionFinalBidDecision(lotId, "REJECTED");
+  }
+
+  private async transitionFinalBidDecision(
+    lotId: string,
+    lifecycle: "APPROVED" | "REJECTED",
+  ): Promise<FinalBidApprovalDecisionRecord> {
+    const result = await this.database.query<FinalBidDecisionRow>(
+      `
+        UPDATE lots
+        SET lifecycle = $2, updated_at = now()
+        WHERE id = $1
+          AND lifecycle = 'PENDING_APPROVAL'
+          AND current_bid_fils IS NOT NULL
+        RETURNING
+          id::text,
+          auction_id::text,
+          current_bid_fils::text,
+          sequence
+      `,
+      [lotId, lifecycle],
+    );
+    const row = result.rows[0];
+    if (row === undefined) {
+      throw new Error(
+        "Final bid approval item was not found or is not pending",
+      );
+    }
+    return {
+      auctionId: row.auction_id,
+      hammerPriceFils: Number(row.current_bid_fils),
+      lotId: row.id,
+      sequence: row.sequence,
+    };
   }
 }
 

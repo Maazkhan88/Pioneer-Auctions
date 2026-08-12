@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, and API-backed UI data adapter with static fallback are implemented without requiring local PostgreSQL execution.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, and audited final-bid approve/reject command skeletons are implemented without requiring local PostgreSQL execution.
 
 ## Goal
 
@@ -38,6 +38,11 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Admin UI now renders metrics and approval rows through `loadAdminOperationsData`.
 - If `PIONEER_ADMIN_API_BASE_URL` is configured at build/runtime, the UI fetches the protected admin read endpoints with `x-pioneer-test-account-id` for local development.
 - If API configuration is absent or unavailable, the UI keeps the Cloudflare static preview working with localized fallback data.
+- Added protected `POST /api/v1/admin/final-bid-approvals/:lotId/approve` and `POST /api/v1/admin/final-bid-approvals/:lotId/reject` command skeletons.
+- Final-bid decisions require `admin.auctions.write`.
+- Approval/rejection update only the pending lot lifecycle and return the existing hammer price; they do not edit the bid ledger or hammer amount.
+- Rejection requires one of the approved reason codes: `BUYER_ELIGIBILITY_FAILED`, `DOCUMENTATION_INCOMPLETE`, `RESERVE_NOT_MET`, `SELLER_WITHDRAWN`, or `OTHER`.
+- Both decision commands write immutable audit records with actor, correlation ID, lot subject, hammer price, and sequence metadata.
 
 ## Acceptance criteria
 
