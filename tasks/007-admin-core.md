@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice is implemented without PostgreSQL dependency.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice and protected dashboard/final-bid approval read endpoints are implemented without requiring local PostgreSQL execution.
 
 ## Goal
 
@@ -31,6 +31,10 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - High-risk operation copy explicitly references reason, confirmation, correlation/audit requirements.
 - All visible strings are in `apps/admin/i18n/messages.ts`.
 - Current data is seed-style static UI data until PostgreSQL/API-backed admin read models are available.
+- Added protected `GET /api/v1/admin/dashboard` read endpoint for operations metrics.
+- Added protected `GET /api/v1/admin/final-bid-approvals` read endpoint for pending final-bid approval context.
+- Admin read endpoints use `AdminPermissionGuard` and `admin.auctions.read`.
+- Final-bid approval read models expose hammer/current price, bidder KYC/deposit eligibility, SLA, reserve status, and lot metadata; they do not expose reserve price, proxy maxima, or editable hammer fields.
 
 ## Acceptance criteria
 

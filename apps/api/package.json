@@ -13,7 +13,7 @@
     "start": "node dist/main.js",
     "test": "vitest run",
     "test:bidding": "vitest run test/bid-decision.spec.ts test/bidding-service.spec.ts test/bidding-gateway.spec.ts test/bidding-outbox-publisher.spec.ts test/auction-close-service.spec.ts test/bidding-recovery.spec.ts",
-    "test:foundation": "vitest run test/foundation.spec.ts test/admin-auctions.spec.ts test/admin-lots-and-payments.spec.ts",
+    "test:foundation": "vitest run test/foundation.spec.ts test/admin-auctions.spec.ts test/admin-lots-and-payments.spec.ts test/admin-operations.spec.ts",
     "test:integration": "vitest run test/bidding-integration.spec.ts",
     "test:race": "vitest run test/bidding-race.spec.ts",
     "test:contract": "vitest run test/contracts.spec.ts",

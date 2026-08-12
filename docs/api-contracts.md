@@ -204,6 +204,7 @@ Admin paths require RBAC and audit metadata. Destructive/financial actions may r
 
 | Method | Path                                     | Purpose                                        |
 | ------ | ---------------------------------------- | ---------------------------------------------- |
+| GET    | `/admin/dashboard`                       | Operations dashboard metrics and queue counts  |
 | GET    | `/admin/lots`                            | List lots for operations                       |
 | POST   | `/admin/lots`                            | Create lot                                     |
 | PATCH  | `/admin/lots/:id`                        | Update lot, media/docs, feature flags          |

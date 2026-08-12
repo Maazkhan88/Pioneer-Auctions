@@ -62,7 +62,7 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 | 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 complete; bidding engine next      |
 | 005 Web buyer loop     | Unassigned  | —                                  | Blocked by 002–004 | Full bidding client                       |
 | 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
-| 007 Admin core         | Codex       | `agent/task-007-admin-core`        | In progress        | Static operations UI slice implemented    |
+| 007 Admin core         | Codex       | `agent/task-007-admin-core`        | In progress        | UI + protected read endpoints implemented |
 | 008 Identity/KYC       | Unassigned  | —                                  | Ready after 002    | Provider adapter first                    |
 | 009 Deposits/payments  | Unassigned  | —                                  | Ready after 002    | Ledger + webhook safety                   |
 | 010 Notifications      | Unassigned  | —                                  | Ready after 002    | Transactional matrix                      |
@@ -96,6 +96,7 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, each lot is re-locked with `FOR UPDATE OF lots`, close time/lifecycle are rechecked under the same row-lock boundary used by bids, lots with bids transition to `PENDING_APPROVAL`, lots without bids transition to `CLOSED`, sequence increments, and an `auction:state-changed` outbox event is written before commit.
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
 - Admin core first UI slice exists on `agent/task-007-admin-core`: responsive EN/AR operations dashboard, lot-management actions, auction controls, approval queue, and audit trail using seed-style data until PostgreSQL/API-backed read models are available. The admin preview is deployed to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev`.
+- Admin core protected read endpoints exist: `GET /api/v1/admin/dashboard` for operations metrics and `GET /api/v1/admin/final-bid-approvals` for final-bid approval queue context, both guarded by `admin.auctions.read`.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -109,7 +110,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 007 with API-backed admin read models and protected admin queue endpoints that can be unit-tested without local PostgreSQL. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
+Continue Task 007 by wiring the admin UI to the protected read endpoints with a static-preview fallback, then add audited approve/reject command skeletons. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
 
 ## Last validation
 
@@ -232,6 +233,14 @@ Continue Task 007 with API-backed admin read models and protected admin queue en
 - Prepared and deployed the admin static Cloudflare preview on 2026-08-12: added admin static export config, `apps/admin/wrangler.jsonc`, and `build:cloudflare`.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/admin build:cloudflare` passed on 2026-08-12 and generated `apps/admin/out`.
 - `cmd /c npx wrangler deploy` deployed the admin preview to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `ddacb940-5e94-4ef7-8f0c-2e9b1fa45eff`.
+- Continued Task 007 on 2026-08-12: added `GET /api/v1/admin/dashboard`, `GET /api/v1/admin/final-bid-approvals`, `AdminOperationsRepository`, and guarded admin read-model tests.
+- `corepack pnpm --filter @pioneer/api exec vitest run test/admin-operations.spec.ts --reporter verbose` passed 1 file / 4 tests on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed 4 files / 13 tests after admin read endpoints on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after admin read endpoints on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after admin read endpoints on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after admin read endpoints on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after admin read endpoints on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test` passed 13 files / 51 tests with 2 opt-in DB suites skipped after admin read endpoints on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.
