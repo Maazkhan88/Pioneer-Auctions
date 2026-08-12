@@ -2,7 +2,7 @@
 
 Recommended owner: Claude Code
 
-Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, and durable outbox replay/publish foundation are implemented.
+Status: In progress on `agent/task-004-backend-week1` (started 2026-08-11). Backend Week 1 foundation is complete; MVP bidding policies are decided; manual bid persistence, proxy registration, initial competing-proxy resolution, opt-in database integration/race harnesses, Socket.IO command acknowledgement foundation, durable outbox replay/publish foundation, and close worker fencing foundation are implemented.
 
 ## Goal
 
@@ -67,7 +67,8 @@ Include reproducible seed, load parameters, database isolation level, and result
 - Real database integration/race test harnesses exist and are opt-in with `PIONEER_RUN_DB_TESTS=1`; they need execution in an environment with local PostgreSQL available.
 - Socket.IO gateway foundation exists for connection hello, lot subscribe/sync/unsubscribe, manual bid, and proxy bid commands. Bid/proxy socket commands use the same durable bidding service as REST and subscribe/sync return authoritative database snapshots.
 - Durable outbox publish/replay foundation exists: unpublished lot events are emitted from `outbox_events` to lot rooms and marked published; subscribe/sync can replay retained contiguous lot events after `afterSequence` or fall back to snapshot state.
-- Personal status events, close worker fencing, executed database race results, and Redis rebuild/recovery work remain.
+- Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, rechecked under a lot row lock, moved to `PENDING_APPROVAL` when they have a bid or `CLOSED` when they do not, assigned the next lot sequence, and recorded through the outbox.
+- Personal status events, executed database race results, and Redis rebuild/recovery work remain.
 
 ## Stop conditions
 

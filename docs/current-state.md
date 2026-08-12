@@ -91,6 +91,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Database-backed bidding validation now has opt-in Vitest suites behind `PIONEER_RUN_DB_TESTS=1`: `test:integration` applies migrations in an isolated temporary schema and validates real-table proxy/manual/outbox persistence; `test:race` fires 100 same-lot manual commands and verifies ledger sequence/final-lot consistency.
 - Socket.IO bidding gateway foundation exists on namespace `/auctions/v1`: connection hello, test-header-equivalent socket account context via `handshake.auth.testAccountId`, `lot:subscribe`, `lot:sync`, `lot:unsubscribe`, `bid:place`, and `proxy-bid:set`. Bid/proxy socket commands call the same durable bidding service as REST; subscribe/sync return authoritative database snapshots.
 - Socket.IO durable outbox foundation exists: unpublished lot outbox rows can be claimed with `FOR UPDATE SKIP LOCKED`, emitted to `lot:{lotId}` rooms, and marked published after successful emit. Lot subscribe/sync can return contiguous retained outbox events after `afterSequence` as an additive `replay` array, otherwise the authoritative snapshot remains the recovery fallback.
+- Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, each lot is re-locked with `FOR UPDATE OF lots`, close time/lifecycle are rechecked under the same row-lock boundary used by bids, lots with bids transition to `PENDING_APPROVAL`, lots without bids transition to `CLOSED`, sequence increments, and an `auction:state-changed` outbox event is written before commit.
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
 
 See `docs/decisions-log.md` for rationale and open decisions.
@@ -105,7 +106,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 by adding close worker fencing and personal bid-status events, then Redis rebuild/recovery checks. Run `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available. UI redesign work is intentionally paused until the visual direction is revisited.
+Continue Task 004 by adding personal bid-status events, then Redis rebuild/recovery checks. Run `PIONEER_RUN_DB_TESTS=1` database integration/race suites in an environment with local PostgreSQL available. UI redesign work is intentionally paused until the visual direction is revisited.
 
 ## Last validation
 
@@ -188,6 +189,14 @@ Continue Task 004 by adding close worker fencing and personal bid-status events,
 - `corepack pnpm --filter @pioneer/api build` passed after outbox replay foundation on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after outbox replay foundation on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 10 files / 38 tests with 2 opt-in DB suites skipped after outbox replay foundation on 2026-08-12.
+- Continued Task 004 on 2026-08-12: added `AuctionCloseService` for close worker fencing, due-lot selection with `FOR UPDATE SKIP LOCKED`, per-lot close recheck under `FOR UPDATE OF lots`, `PENDING_APPROVAL` vs `CLOSED` transition rules, sequence incrementing, and `auction:state-changed` outbox writes.
+- Close worker coverage added on 2026-08-12 for bid-present pending approval, no-bid closed, future-close recheck/no-op, and due-lot selection through the fenced close path.
+- `corepack pnpm --filter @pioneer/api test:bidding` passed 5 files / 28 tests after close worker fencing on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after close worker fencing on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after close worker fencing on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after close worker fencing on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after close worker fencing on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test` passed 11 files / 42 tests with 2 opt-in DB suites skipped after close worker fencing on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.
