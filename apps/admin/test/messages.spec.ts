@@ -23,5 +23,13 @@ describe("localized admin shell", () => {
     expect(messages.actionRequired).toContain("audit");
     expect(messages.auctionsActions[1]?.description).toContain("reason");
     expect(messages.approvalQueue[0]?.title).toContain("Final-bid");
+    expect(messages.rejectionReasons.map((reason) => reason.label)).toEqual([
+      "Buyer eligibility",
+      "Documentation",
+      "Reserve not met",
+      "Seller withdrawn",
+      "Other",
+    ]);
+    expect(messages.staticPreviewActionNotice).toContain("disabled");
   });
 });

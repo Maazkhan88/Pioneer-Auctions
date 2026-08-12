@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, and audited final-bid approve/reject command skeletons are implemented without requiring local PostgreSQL execution.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, audited final-bid approve/reject command skeletons, and safe final-bid decision UI controls are implemented without requiring local PostgreSQL execution.
 
 ## Goal
 
@@ -43,6 +43,9 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Approval/rejection update only the pending lot lifecycle and return the existing hammer price; they do not edit the bid ledger or hammer amount.
 - Rejection requires one of the approved reason codes: `BUYER_ELIGIBILITY_FAILED`, `DOCUMENTATION_INCOMPLETE`, `RESERVE_NOT_MET`, `SELLER_WITHDRAWN`, or `OTHER`.
 - Both decision commands write immutable audit records with actor, correlation ID, lot subject, hammer price, and sequence metadata.
+- Approval queue rows now render disabled approve/reject controls and a rejection reason selector in the static preview.
+- API-loaded approval rows carry approve/reject endpoint metadata for the future authenticated runtime action handler.
+- Static preview controls intentionally remain disabled to avoid exposing development test headers or unauthenticated mutation paths.
 
 ## Acceptance criteria
 

@@ -22,6 +22,7 @@ interface FinalBidApprovalsApiResponse {
       readonly currency: "AED";
     };
     readonly lot: {
+      readonly lotId: string;
       readonly lotNumber: string;
       readonly titleAr: string;
       readonly titleEn: string;
@@ -87,11 +88,14 @@ export async function loadAdminOperationsData(
         value: String(metric.value),
       })),
       queue: approvals.items.map((item) => ({
+        approveEndpoint: `/api/v1/admin/final-bid-approvals/${item.lot.lotId}/approve`,
         amount: formatAed(locale, item.hammerPrice.amountFils),
+        lotId: item.lot.lotId,
         meta: [
           `Lot #${item.lot.lotNumber}`,
           locale === "ar" ? item.lot.titleAr : item.lot.titleEn,
         ].join(" · "),
+        rejectEndpoint: `/api/v1/admin/final-bid-approvals/${item.lot.lotId}/reject`,
         sla: formatSla(locale, item.sla),
         title:
           item.reserveStatus === "MET"

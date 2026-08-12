@@ -48,6 +48,7 @@ describe("admin operations data adapter", () => {
           {
             hammerPrice: { amountFils: 56000000, currency: "AED" },
             lot: {
+              lotId: "11111111-1111-4111-8111-111111111111",
               lotNumber: "214",
               titleAr: "تويوتا لاند كروزر 2019",
               titleEn: "Toyota Land Cruiser 2019",
@@ -69,7 +70,12 @@ describe("admin operations data adapter", () => {
       ],
       queue: [
         {
+          approveEndpoint:
+            "/api/v1/admin/final-bid-approvals/11111111-1111-4111-8111-111111111111/approve",
+          lotId: "11111111-1111-4111-8111-111111111111",
           meta: "Lot #214 · Toyota Land Cruiser 2019",
+          rejectEndpoint:
+            "/api/v1/admin/final-bid-approvals/11111111-1111-4111-8111-111111111111/reject",
           sla: "42 min remaining",
           title: "Reserve met",
         },

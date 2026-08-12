@@ -255,10 +255,10 @@ p {
 }
 
 .queue-item {
-  align-items: center;
+  align-items: start;
   display: grid;
   gap: var(--pa-space-4);
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(12rem, 1fr) auto minmax(15rem, 22rem);
 }
 
 .queue-meta {
@@ -296,6 +296,60 @@ button:focus-visible,
 button:hover {
   background: var(--pa-color-urgency);
   outline: 3px solid var(--pa-color-orange-100);
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:disabled:hover {
+  background: var(--pa-color-action);
+  outline: none;
+}
+
+.button-secondary {
+  background: var(--pa-color-danger);
+}
+
+.button-secondary:disabled:hover {
+  background: var(--pa-color-danger);
+}
+
+.decision-controls {
+  display: grid;
+  gap: var(--pa-space-3);
+}
+
+.decision-controls label {
+  display: grid;
+  gap: var(--pa-space-2);
+}
+
+.decision-controls span,
+.decision-controls p {
+  color: var(--pa-color-muted);
+  font-size: 0.82rem;
+}
+
+.decision-controls p {
+  margin: 0;
+}
+
+.decision-controls select {
+  background: white;
+  border: 1px solid var(--pa-color-border);
+  border-radius: 0.85rem;
+  color: var(--pa-color-ink);
+  padding-block: var(--pa-space-2);
+  padding-inline: var(--pa-space-3);
+}
+
+.decision-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pa-space-2);
 }
 
 .audit-panel ol {

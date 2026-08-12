@@ -2,8 +2,11 @@ export const locales = ["en", "ar"] as const;
 export type Locale = (typeof locales)[number];
 
 export interface QueueItem {
+  readonly approveEndpoint?: string;
   readonly amount: string;
+  readonly lotId?: string;
   readonly meta: string;
+  readonly rejectEndpoint?: string;
   readonly sla: string;
   readonly title: string;
 }
@@ -22,6 +25,7 @@ export interface ActionItem {
 export interface Messages {
   readonly actionRequired: string;
   readonly adminRole: string;
+  readonly approveButton: string;
   readonly approvalQueue: readonly QueueItem[];
   readonly approvalsTitle: string;
   readonly auditEvents: readonly string[];
@@ -39,8 +43,12 @@ export interface Messages {
   readonly lotsTitle: string;
   readonly metrics: readonly Metric[];
   readonly reviewButton: string;
+  readonly rejectButton: string;
+  readonly rejectionReasonLabel: string;
+  readonly rejectionReasons: readonly ActionItem[];
   readonly reserveMetApprovalTitle: string;
   readonly shellLabel: string;
+  readonly staticPreviewActionNotice: string;
   readonly status: string;
 }
 
@@ -48,6 +56,7 @@ const messages: Record<Locale, Messages> = {
   ar: {
     actionRequired: "يتطلب سبباً وتأكيداً وسجل تدقيق",
     adminRole: "مدير العمليات",
+    approveButton: "اعتماد",
     approvalQueue: [
       {
         amount: "AED ٥٦٠,٠٠٠",
@@ -117,14 +126,29 @@ const messages: Record<Locale, Messages> = {
       { label: "تنبيهات عالية الخطورة", tone: "danger", value: "2" },
     ],
     reviewButton: "مراجعة",
+    rejectButton: "رفض",
+    rejectionReasonLabel: "سبب الرفض",
+    rejectionReasons: [
+      {
+        description: "لم يجتز المشتري متطلبات الأهلية.",
+        label: "أهلية المشتري",
+      },
+      { description: "المستندات المطلوبة غير مكتملة.", label: "المستندات" },
+      { description: "لم يتحقق سعر الاحتياطي.", label: "الاحتياطي" },
+      { description: "تم سحب الأصل من البائع.", label: "سحب البائع" },
+      { description: "سبب تشغيلي آخر مع ملاحظة.", label: "أخرى" },
+    ],
     reserveMetApprovalTitle: "الاحتياطي تحقق",
     shellLabel: "لوحة إدارة بايونير",
+    staticPreviewActionNotice:
+      "الأزرار معطلة في المعاينة الثابتة حتى يتم تفعيل جلسة إدارة موثقة.",
     status:
       "هذه واجهة تشغيل أولية تعمل ببيانات نموذجية حتى تتوفر قاعدة PostgreSQL.",
   },
   en: {
     actionRequired: "Requires reason, confirmation, and audit record",
     adminRole: "Operations admin",
+    approveButton: "Approve",
     approvalQueue: [
       {
         amount: "AED 560,000",
@@ -197,8 +221,25 @@ const messages: Record<Locale, Messages> = {
       { label: "High-risk alerts", tone: "danger", value: "2" },
     ],
     reviewButton: "Review",
+    rejectButton: "Reject",
+    rejectionReasonLabel: "Rejection reason",
+    rejectionReasons: [
+      {
+        description: "Buyer did not pass final eligibility checks.",
+        label: "Buyer eligibility",
+      },
+      {
+        description: "Required documents are incomplete.",
+        label: "Documentation",
+      },
+      { description: "Reserve price was not met.", label: "Reserve not met" },
+      { description: "Seller withdrew the asset.", label: "Seller withdrawn" },
+      { description: "Other operational reason with note.", label: "Other" },
+    ],
     reserveMetApprovalTitle: "Reserve met",
     shellLabel: "Pioneer admin console",
+    staticPreviewActionNotice:
+      "Actions are disabled in the static preview until an authenticated admin runtime session is available.",
     status:
       "This is a first operations UI slice using seed-style data until PostgreSQL is available.",
   },

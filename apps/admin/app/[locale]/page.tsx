@@ -108,7 +108,29 @@ export default async function LocalePage({ params }: LocalePageProperties) {
                   <strong>{item.amount}</strong>
                   <span>{item.sla}</span>
                 </div>
-                <button type="button">{messages.reviewButton}</button>
+                <form
+                  className="decision-controls"
+                  data-approve-endpoint={item.approveEndpoint ?? ""}
+                  data-reject-endpoint={item.rejectEndpoint ?? ""}
+                >
+                  <label>
+                    <span>{messages.rejectionReasonLabel}</span>
+                    <select disabled name="reasonCode">
+                      {messages.rejectionReasons.map((reason) => (
+                        <option key={reason.label}>{reason.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="decision-buttons">
+                    <button disabled type="button">
+                      {messages.approveButton}
+                    </button>
+                    <button className="button-secondary" disabled type="button">
+                      {messages.rejectButton}
+                    </button>
+                  </div>
+                  <p>{messages.staticPreviewActionNotice}</p>
+                </form>
               </article>
             ))}
           </div>
