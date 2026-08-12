@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, audited final-bid approve/reject command skeletons, and safe final-bid decision UI controls are implemented without requiring local PostgreSQL execution.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, audited final-bid approve/reject command skeletons, safe final-bid decision UI controls, auction pause/resume/cancel skeletons, backend dummy lots, and the lot create/edit form shell are implemented without requiring local PostgreSQL execution.
 
 ## Goal
 
@@ -46,6 +46,12 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Approval queue rows now render disabled approve/reject controls and a rejection reason selector in the static preview.
 - API-loaded approval rows carry approve/reject endpoint metadata for the future authenticated runtime action handler.
 - Static preview controls intentionally remain disabled to avoid exposing development test headers or unauthenticated mutation paths.
+- Added `POST /api/v1/admin/auctions/:auctionId/pause`, `/resume`, and `/cancel` skeletons, guarded by `admin.auctions.write`.
+- Auction pause/resume/cancel commands require a reason, accept an optional note, update only auction lifecycle, and write audit metadata.
+- Added `PIONEER_ADMIN_DUMMY_LOTS=1` backend dummy lot support so `GET /api/v1/admin/lots` can serve three demo lots without PostgreSQL in development.
+- Admin UI data loading now fetches `/admin/lots` when the protected API is configured and renders a backend lot list in the Lot Management panel.
+- Added a disabled static lot create/edit form shell with English/Arabic title fields, lot number, starting bid, reserve, increment mode, custom increment, soft-close extension minutes, and featured flag.
+- Added `submitFinalBidDecision` runtime helper for future authenticated approve/reject actions; static Cloudflare controls remain disabled until a safe admin session runtime exists.
 
 ## Acceptance criteria
 

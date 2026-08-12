@@ -41,6 +41,18 @@ describe("admin operations data adapter", () => {
           ],
         });
       }
+      if (String(input).endsWith("/lots")) {
+        return jsonResponse([
+          {
+            currentBidFils: 56000000,
+            lifecycle: "LIVE",
+            lotNumber: "214",
+            minimumIncrementFils: 100000,
+            titleAr: "تويوتا لاند كروزر 2019",
+            titleEn: "Toyota Land Cruiser 2019",
+          },
+        ]);
+      }
       return jsonResponse({
         contractVersion: 1,
         generatedAt: "2026-09-01T16:00:00.000Z",
@@ -67,6 +79,13 @@ describe("admin operations data adapter", () => {
       metrics: [
         { label: "Live auctions", tone: "success", value: "4" },
         { label: "Pending approvals", tone: "warning", value: "7" },
+      ],
+      lots: [
+        {
+          lifecycle: "LIVE",
+          lotNumber: "214",
+          title: "Toyota Land Cruiser 2019",
+        },
       ],
       queue: [
         {

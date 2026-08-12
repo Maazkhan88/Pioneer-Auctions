@@ -31,5 +31,18 @@ describe("localized admin shell", () => {
       "Other",
     ]);
     expect(messages.staticPreviewActionNotice).toContain("disabled");
+    expect(messages.lotFormTitle).toContain("lot");
+    expect(messages.lotFormStaticNotice).toContain("disabled");
+    expect(messages.lotFormFields.map((field) => field.name)).toEqual([
+      "titleEn",
+      "titleAr",
+      "lotNumber",
+      "startingBid",
+      "reservePrice",
+      "incrementMode",
+      "customIncrement",
+      "softCloseExtensionMinutes",
+      "featured",
+    ]);
   });
 });

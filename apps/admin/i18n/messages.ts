@@ -22,6 +22,21 @@ export interface ActionItem {
   readonly label: string;
 }
 
+export interface LotFormField {
+  readonly label: string;
+  readonly name: string;
+  readonly placeholder: string;
+  readonly type: "checkbox" | "number" | "select" | "text";
+}
+
+export interface AdminLotItem {
+  readonly amount: string;
+  readonly increment: string;
+  readonly lifecycle: string;
+  readonly lotNumber: string;
+  readonly title: string;
+}
+
 export interface Messages {
   readonly actionRequired: string;
   readonly adminRole: string;
@@ -39,6 +54,12 @@ export interface Messages {
   readonly heading: string;
   readonly localeSwitch: string;
   readonly localeSwitchHref: string;
+  readonly lotFormFields: readonly LotFormField[];
+  readonly lotFormSaveButton: string;
+  readonly lotFormStaticNotice: string;
+  readonly lotFormTitle: string;
+  readonly lotListEmpty: string;
+  readonly lotListTitle: string;
   readonly lotsActions: readonly ActionItem[];
   readonly lotsTitle: string;
   readonly metrics: readonly Metric[];
@@ -52,6 +73,110 @@ export interface Messages {
   readonly status: string;
 }
 
+const lotFormFieldsEn: readonly LotFormField[] = [
+  {
+    label: "Title English",
+    name: "titleEn",
+    placeholder: "Toyota Land Cruiser 2019",
+    type: "text",
+  },
+  {
+    label: "Title Arabic",
+    name: "titleAr",
+    placeholder: "تويوتا لاند كروزر 2019",
+    type: "text",
+  },
+  { label: "Lot #", name: "lotNumber", placeholder: "214", type: "text" },
+  {
+    label: "Starting bid AED",
+    name: "startingBid",
+    placeholder: "500000",
+    type: "number",
+  },
+  {
+    label: "Reserve AED",
+    name: "reservePrice",
+    placeholder: "540000",
+    type: "number",
+  },
+  {
+    label: "Bid increment mode",
+    name: "incrementMode",
+    placeholder: "Default percentage of starting price",
+    type: "select",
+  },
+  {
+    label: "Custom increment AED",
+    name: "customIncrement",
+    placeholder: "1000",
+    type: "number",
+  },
+  {
+    label: "Soft-close extension minutes",
+    name: "softCloseExtensionMinutes",
+    placeholder: "2",
+    type: "number",
+  },
+  {
+    label: "Featured lot",
+    name: "featured",
+    placeholder: "Promote on homepage",
+    type: "checkbox",
+  },
+];
+
+const lotFormFieldsAr: readonly LotFormField[] = [
+  {
+    label: "العنوان بالإنجليزية",
+    name: "titleEn",
+    placeholder: "Toyota Land Cruiser 2019",
+    type: "text",
+  },
+  {
+    label: "العنوان بالعربية",
+    name: "titleAr",
+    placeholder: "تويوتا لاند كروزر 2019",
+    type: "text",
+  },
+  { label: "رقم القطعة", name: "lotNumber", placeholder: "214", type: "text" },
+  {
+    label: "سعر البداية AED",
+    name: "startingBid",
+    placeholder: "500000",
+    type: "number",
+  },
+  {
+    label: "الاحتياطي AED",
+    name: "reservePrice",
+    placeholder: "540000",
+    type: "number",
+  },
+  {
+    label: "طريقة زيادة المزايدة",
+    name: "incrementMode",
+    placeholder: "النسبة الافتراضية من سعر البداية",
+    type: "select",
+  },
+  {
+    label: "زيادة مخصصة AED",
+    name: "customIncrement",
+    placeholder: "1000",
+    type: "number",
+  },
+  {
+    label: "تمديد الإغلاق بالدقائق",
+    name: "softCloseExtensionMinutes",
+    placeholder: "2",
+    type: "number",
+  },
+  {
+    label: "قطعة مميزة",
+    name: "featured",
+    placeholder: "عرض في الواجهة",
+    type: "checkbox",
+  },
+];
+
 const messages: Record<Locale, Messages> = {
   ar: {
     actionRequired: "يتطلب سبباً وتأكيداً وسجل تدقيق",
@@ -59,20 +184,20 @@ const messages: Record<Locale, Messages> = {
     approveButton: "اعتماد",
     approvalQueue: [
       {
-        amount: "AED ٥٦٠,٠٠٠",
-        meta: "قطعة #214 · تويوتا لاند كروزر 2019",
+        amount: "AED 560,000",
+        meta: "Lot #214 · Toyota Land Cruiser 2019",
         sla: "متبقٍ 42 دقيقة",
         title: "اعتماد عرض نهائي",
       },
       {
-        amount: "AED ٢,٤٠٠,٠٠٠",
-        meta: "قطعة #88 · وحدة سكنية في دبي مارينا",
+        amount: "AED 2,400,000",
+        meta: "Lot #88 · Dubai Marina apartment",
         sla: "متبقٍ ساعتان",
         title: "الاحتياطي تحقق",
       },
       {
-        amount: "AED ١٨٥,٠٠٠",
-        meta: "قطعة #331 · حفارة كاتربيلر",
+        amount: "AED 185,000",
+        meta: "Lot #331 · Caterpillar excavator",
         sla: "متأخر 12 دقيقة",
         title: "مراجعة إيداع المشتري",
       },
@@ -103,6 +228,13 @@ const messages: Record<Locale, Messages> = {
     heading: "تحكم آمن في المزادات والقطع والاعتمادات.",
     localeSwitch: "English",
     localeSwitchHref: "/en",
+    lotFormFields: lotFormFieldsAr,
+    lotFormSaveButton: "حفظ كمسودة",
+    lotFormStaticNotice:
+      "نموذج القطعة معطل في المعاينة حتى يتم توصيل جلسة إدارة موثقة.",
+    lotFormTitle: "نموذج إنشاء / تعديل قطعة",
+    lotListEmpty: "لا توجد قطع من واجهة API بعد.",
+    lotListTitle: "قطع من الخلفية",
     lotsActions: [
       {
         description: "حقول عربية وإنجليزية، صور، مستندات، سعر بداية واحتياطي.",
@@ -196,6 +328,13 @@ const messages: Record<Locale, Messages> = {
     heading: "Safe control for auctions, lots, and approvals.",
     localeSwitch: "العربية",
     localeSwitchHref: "/ar",
+    lotFormFields: lotFormFieldsEn,
+    lotFormSaveButton: "Save draft",
+    lotFormStaticNotice:
+      "Lot form is disabled in the static preview until an authenticated admin runtime session is connected.",
+    lotFormTitle: "Create / edit lot form",
+    lotListEmpty: "No backend lots returned yet.",
+    lotListTitle: "Backend lots",
     lotsActions: [
       {
         description:

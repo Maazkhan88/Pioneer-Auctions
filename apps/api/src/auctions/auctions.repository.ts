@@ -1,7 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { DatabasePool } from "../database/database.pool.js";
-import type { AdminAuctionView, CreateAuctionInput } from "./auction.dto.js";
+import type {
+  AdminAuctionControlResult,
+  AdminAuctionView,
+  CreateAuctionInput,
+} from "./auction.dto.js";
 
 interface AuctionRow {
   readonly id: string;
@@ -46,6 +50,58 @@ export class AuctionsRepository {
       `,
     );
     return result.rows.map(toAdminAuctionView);
+  }
+
+  async cancel(auctionId: string): Promise<AdminAuctionControlResult> {
+    return this.transition(auctionId, "CANCELLED", [
+      "CLOSING",
+      "DRAFT",
+      "LIVE",
+      "PAUSED",
+      "SCHEDULED",
+    ]);
+  }
+
+  async pause(auctionId: string): Promise<AdminAuctionControlResult> {
+    return this.transition(auctionId, "PAUSED", ["LIVE"]);
+  }
+
+  async resume(auctionId: string): Promise<AdminAuctionControlResult> {
+    return this.transition(auctionId, "LIVE", ["PAUSED"], "RESUMED");
+  }
+
+  private async transition(
+    auctionId: string,
+    lifecycle: string,
+    allowedFrom: readonly string[],
+    decision: AdminAuctionControlResult["decision"] = lifecycle as AdminAuctionControlResult["decision"],
+  ): Promise<AdminAuctionControlResult> {
+    const result = await this.database.query<{
+      readonly id: string;
+      readonly lifecycle: string;
+      readonly updated_at: Date;
+    }>(
+      `
+        UPDATE auctions
+        SET lifecycle = $2, updated_at = now()
+        WHERE id = $1 AND lifecycle = ANY($3::text[])
+        RETURNING id::text, lifecycle, updated_at
+      `,
+      [auctionId, lifecycle, allowedFrom],
+    );
+
+    const row = result.rows[0];
+    if (row === undefined) {
+      throw new Error("Auction transition did not return a row");
+    }
+
+    return {
+      auctionId: row.id,
+      contractVersion: 1,
+      decidedAt: row.updated_at.toISOString(),
+      decision,
+      lifecycle: row.lifecycle,
+    };
   }
 }
 

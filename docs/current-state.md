@@ -100,6 +100,11 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Admin UI data adapter exists: it fetches the protected admin read endpoints when `PIONEER_ADMIN_API_BASE_URL` is configured and otherwise uses localized static fallback data so the Cloudflare preview remains viewable.
 - Admin final-bid decision skeletons exist: `POST /api/v1/admin/final-bid-approvals/:lotId/approve` and `/reject`, guarded by `admin.auctions.write`, preserving hammer price and writing audit records.
 - Admin approval queue UI now shows approve/reject controls, rejection reason selection, and static-preview disabled notices; API-loaded rows include endpoint metadata for future authenticated runtime actions.
+- Admin auction control skeletons exist: `POST /api/v1/admin/auctions/:auctionId/pause`, `/resume`, and `/cancel`, guarded by `admin.auctions.write`, requiring a reason, accepting an optional note, changing only auction lifecycle, and writing audit metadata.
+- Backend dummy lots can be served in development with `PIONEER_ADMIN_DUMMY_LOTS=1`; `GET /api/v1/admin/lots` then returns three demo lots covering live vehicle, scheduled real estate, and pending-approval equipment states.
+- Admin UI now fetches protected `/admin/lots` when API configuration is available and renders a backend lot list in the Lot Management panel; static Cloudflare preview falls back safely when no API is configured.
+- Admin Lot Management now includes a disabled static create/edit lot form shell with English/Arabic title fields, lot number, AED starting/reserve inputs, increment mode, custom increment, soft-close extension minutes, and featured flag.
+- Admin runtime helper `submitFinalBidDecision` exists for future authenticated final-bid approve/reject actions; static preview controls remain disabled until a safe admin session runtime is connected.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -264,6 +269,18 @@ Continue Task 007 with authenticated runtime action handling for final-bid appro
 - `corepack pnpm --filter @pioneer/admin lint` passed after final-bid decision UI controls on 2026-08-12.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/admin build:cloudflare` passed after final-bid decision UI controls on 2026-08-12.
 - `cmd /c npx wrangler deploy` redeployed the admin preview to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev` after final-bid decision UI controls on 2026-08-12. Wrangler reported version ID `05ca943d-53c7-4176-b113-8b8a1aef88c6`.
+- Continued Task 007 on 2026-08-12: added audited auction pause/resume/cancel command skeletons, backend dummy lots behind `PIONEER_ADMIN_DUMMY_LOTS=1`, admin runtime final-bid decision helper, protected API lot-list mapping in the admin data adapter, visible backend lot list, and disabled lot create/edit form shell.
+- `corepack pnpm --filter @pioneer/api test:foundation` passed 4 files / 22 tests after auction controls and dummy backend lots on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin test` passed 5 files / 11 tests after runtime helper and lot UI additions on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed after auction controls and dummy backend lots on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed after auction controls and dummy backend lots on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin typecheck` passed after runtime helper and lot UI additions on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin lint` passed after runtime helper and lot UI additions on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api build` passed after auction controls and dummy backend lots on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api migrate:check` passed after auction controls and dummy backend lots on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api test` passed 13 files / 60 tests with 2 opt-in DB suites skipped after auction controls and dummy backend lots on 2026-08-12.
+- `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/admin build:cloudflare` passed after lot UI additions on 2026-08-12.
+- `cmd /c npx wrangler deploy` redeployed the admin preview to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev` after lot UI additions on 2026-08-12. Wrangler reported version ID `67d6ef46-3d63-48d9-aa50-1998f1934087`.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

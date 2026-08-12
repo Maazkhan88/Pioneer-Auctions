@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { DatabasePool } from "../database/database.pool.js";
+import { dummyAdminLots } from "./dummy-lots.js";
 import type { AdminLotView, CreateLotInput } from "./lot.dto.js";
 
 interface LotRow {
@@ -106,6 +107,10 @@ export class LotsRepository {
   }
 
   async list(): Promise<AdminLotView[]> {
+    if (process.env.PIONEER_ADMIN_DUMMY_LOTS === "1") {
+      return [...dummyAdminLots];
+    }
+
     const result = await this.database.query<LotRow>(
       `
         SELECT

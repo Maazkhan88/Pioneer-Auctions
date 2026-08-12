@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Inject,
+  Param,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -11,8 +12,14 @@ import {
 import { AuditService } from "../audit/audit.service.js";
 import { AdminPermissionGuard } from "../identity/admin-permission.guard.js";
 import { RequirePermission } from "../identity/permission.decorator.js";
-import { parseCreateAuctionInput } from "./auction.dto.js";
-import type { AdminAuctionView } from "./auction.dto.js";
+import {
+  parseAuctionControlInput,
+  parseCreateAuctionInput,
+} from "./auction.dto.js";
+import type {
+  AdminAuctionControlResult,
+  AdminAuctionView,
+} from "./auction.dto.js";
 import { AuctionsRepository } from "./auctions.repository.js";
 
 @Controller("/api/v1/admin/auctions")
@@ -48,5 +55,87 @@ export class AdminAuctionsController {
       subjectType: "auction",
     });
     return created;
+  }
+
+  @Post(":auctionId/pause")
+  @RequirePermission("admin.auctions.write")
+  async pause(
+    @Param("auctionId") auctionId: string,
+    @Body() body: unknown,
+    @Headers("x-correlation-id") correlationId = "missing-correlation-id",
+    @Headers("x-pioneer-test-account-id") actorAccountId: string | undefined,
+  ): Promise<AdminAuctionControlResult> {
+    const input = parseAuctionControlInput(body);
+    const result = await this.auctions.pause(auctionId);
+    await this.recordControlAudit({
+      action: "admin.auctions.pause",
+      actorAccountId,
+      correlationId,
+      input,
+      result,
+    });
+    return result;
+  }
+
+  @Post(":auctionId/resume")
+  @RequirePermission("admin.auctions.write")
+  async resume(
+    @Param("auctionId") auctionId: string,
+    @Body() body: unknown,
+    @Headers("x-correlation-id") correlationId = "missing-correlation-id",
+    @Headers("x-pioneer-test-account-id") actorAccountId: string | undefined,
+  ): Promise<AdminAuctionControlResult> {
+    const input = parseAuctionControlInput(body);
+    const result = await this.auctions.resume(auctionId);
+    await this.recordControlAudit({
+      action: "admin.auctions.resume",
+      actorAccountId,
+      correlationId,
+      input,
+      result,
+    });
+    return result;
+  }
+
+  @Post(":auctionId/cancel")
+  @RequirePermission("admin.auctions.write")
+  async cancel(
+    @Param("auctionId") auctionId: string,
+    @Body() body: unknown,
+    @Headers("x-correlation-id") correlationId = "missing-correlation-id",
+    @Headers("x-pioneer-test-account-id") actorAccountId: string | undefined,
+  ): Promise<AdminAuctionControlResult> {
+    const input = parseAuctionControlInput(body);
+    const result = await this.auctions.cancel(auctionId);
+    await this.recordControlAudit({
+      action: "admin.auctions.cancel",
+      actorAccountId,
+      correlationId,
+      input,
+      result,
+    });
+    return result;
+  }
+
+  private async recordControlAudit(parameters: {
+    readonly action: string;
+    readonly actorAccountId: string | undefined;
+    readonly correlationId: string;
+    readonly input: { readonly note: string | null; readonly reason: string };
+    readonly result: AdminAuctionControlResult;
+  }): Promise<void> {
+    await this.audit.record({
+      action: parameters.action,
+      actorAccountId: parameters.actorAccountId ?? null,
+      correlationId: parameters.correlationId,
+      metadata: {
+        decision: parameters.result.decision,
+        lifecycle: parameters.result.lifecycle,
+        note: parameters.input.note,
+        reason: parameters.input.reason,
+      },
+      subjectId: parameters.result.auctionId,
+      subjectType: "auction",
+    });
   }
 }

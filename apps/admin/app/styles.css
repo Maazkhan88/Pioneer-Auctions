@@ -299,6 +299,7 @@ button:hover {
 }
 
 button:disabled,
+input:disabled,
 select:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -344,6 +345,111 @@ button:disabled:hover {
   color: var(--pa-color-ink);
   padding-block: var(--pa-space-2);
   padding-inline: var(--pa-space-3);
+}
+
+.lot-form {
+  background: rgb(255 255 255 / 78%);
+  border: 1px dashed var(--pa-color-border);
+  border-radius: 1.2rem;
+  display: grid;
+  gap: var(--pa-space-4);
+  margin-block-start: var(--pa-space-5);
+  padding: var(--pa-space-4);
+}
+
+.backend-lots {
+  border-block-start: 1px solid var(--pa-color-border);
+  display: grid;
+  gap: var(--pa-space-3);
+  margin-block-start: var(--pa-space-5);
+  padding-block-start: var(--pa-space-5);
+}
+
+.lot-list {
+  display: grid;
+  gap: var(--pa-space-3);
+}
+
+.lot-row {
+  align-items: center;
+  background: var(--pa-color-background);
+  border: 1px solid var(--pa-color-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: var(--pa-space-3);
+  grid-template-columns: 1fr auto;
+  padding: var(--pa-space-3);
+}
+
+.lot-row div {
+  display: grid;
+  gap: var(--pa-space-1);
+}
+
+.lot-row div:last-child {
+  justify-items: end;
+}
+
+[dir="rtl"] .lot-row div:last-child {
+  justify-items: start;
+}
+
+.lot-row strong {
+  color: var(--pa-color-brand-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.lot-row span {
+  color: var(--pa-color-muted);
+  font-size: 0.86rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--pa-space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid label {
+  display: grid;
+  gap: var(--pa-space-2);
+}
+
+.form-grid span,
+.form-footer p {
+  color: var(--pa-color-muted);
+  font-size: 0.82rem;
+}
+
+.form-grid input,
+.form-grid select {
+  background: white;
+  border: 1px solid var(--pa-color-border);
+  border-radius: 0.85rem;
+  color: var(--pa-color-ink);
+  min-inline-size: 0;
+  padding-block: var(--pa-space-2);
+  padding-inline: var(--pa-space-3);
+}
+
+.check-field {
+  align-content: start;
+}
+
+.check-field input {
+  inline-size: 1.25rem;
+}
+
+.form-footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pa-space-3);
+  justify-content: space-between;
+}
+
+.form-footer p {
+  margin: 0;
 }
 
 .decision-buttons {
@@ -396,6 +502,8 @@ button:disabled:hover {
 @media (max-width: 640px) {
   .metric-grid,
   .operations-grid,
+  .form-grid,
+  .lot-row,
   .queue-item {
     grid-template-columns: 1fr;
   }

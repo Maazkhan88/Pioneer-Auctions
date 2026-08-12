@@ -60,6 +60,22 @@ describe("admin lots and dummy payments foundation", () => {
       ]);
   });
 
+  it("can serve backend dummy lots when explicitly enabled", async () => {
+    vi.stubEnv("PIONEER_ADMIN_DUMMY_LOTS", "1");
+    const repository = new LotsRepository({
+      query: vi.fn(),
+    } as never);
+
+    const lots = await repository.list();
+
+    expect(lots).toHaveLength(3);
+    expect(lots[0]).toMatchObject({
+      lifecycle: "LIVE",
+      lotNumber: "214",
+      titleEn: "Toyota Land Cruiser 2019",
+    });
+  });
+
   it("creates dummy deposit payment intents for test accounts", async () => {
     app = await createApp();
     const server = app.getHttpServer() as Parameters<typeof request>[0];

@@ -1,4 +1,10 @@
-import type { Locale, Messages, Metric, QueueItem } from "../i18n/messages";
+import type {
+  AdminLotItem,
+  Locale,
+  Messages,
+  Metric,
+  QueueItem,
+} from "../i18n/messages";
 
 type DashboardMetricKey =
   "FEATURED_LOTS" | "HIGH_RISK_ALERTS" | "LIVE_AUCTIONS" | "PENDING_APPROVALS";
@@ -35,7 +41,17 @@ interface FinalBidApprovalsApiResponse {
   }[];
 }
 
+interface AdminLotApiResponse {
+  readonly currentBidFils: number | null;
+  readonly lifecycle: string;
+  readonly lotNumber: string;
+  readonly minimumIncrementFils: number;
+  readonly titleAr: string;
+  readonly titleEn: string;
+}
+
 export interface AdminOperationsData {
+  readonly lots: readonly AdminLotItem[];
   readonly metrics: readonly Metric[];
   readonly queue: readonly QueueItem[];
   readonly source: "api" | "static-fallback";
@@ -73,15 +89,23 @@ export async function loadAdminOperationsData(
   }
 
   try {
-    const [dashboard, approvals] = await Promise.all([
+    const [dashboard, approvals, lots] = await Promise.all([
       fetchAdminJson<AdminDashboardApiResponse>(baseUrl, "/admin/dashboard"),
       fetchAdminJson<FinalBidApprovalsApiResponse>(
         baseUrl,
         "/admin/final-bid-approvals",
       ),
+      fetchAdminJson<readonly AdminLotApiResponse[]>(baseUrl, "/admin/lots"),
     ]);
 
     return {
+      lots: lots.map((lot) => ({
+        amount: formatAed(locale, lot.currentBidFils ?? 0),
+        increment: formatAed(locale, lot.minimumIncrementFils),
+        lifecycle: lot.lifecycle,
+        lotNumber: lot.lotNumber,
+        title: locale === "ar" ? lot.titleAr : lot.titleEn,
+      })),
       metrics: dashboard.metrics.map((metric) => ({
         label: metricLabels[locale][metric.key],
         tone: metricToneByKey[metric.key],
@@ -111,6 +135,7 @@ export async function loadAdminOperationsData(
 
 function staticFallback(messages: Messages): AdminOperationsData {
   return {
+    lots: [],
     metrics: messages.metrics,
     queue: messages.approvalQueue,
     source: "static-fallback",

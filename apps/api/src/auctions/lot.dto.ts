@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { z } from "zod";
 
 const moneyFilsSchema = z.number().int().nonnegative();
@@ -92,7 +93,14 @@ export interface AdminLotView {
 }
 
 export function parseCreateLotInput(input: unknown): CreateLotInput {
-  const parsed = createLotSchema.parse(input);
+  const parsedResult = createLotSchema.safeParse(input);
+  if (!parsedResult.success) {
+    throw new BadRequestException({
+      code: "VALIDATION_FAILED",
+      issues: z.treeifyError(parsedResult.error),
+    });
+  }
+  const parsed = parsedResult.data;
   const increment = resolveMinimumIncrement(parsed);
   return {
     auctionId: parsed.auctionId,

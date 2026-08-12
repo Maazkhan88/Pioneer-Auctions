@@ -69,6 +69,61 @@ export default async function LocalePage({ params }: LocalePageProperties) {
                 </article>
               ))}
             </div>
+            <div className="backend-lots">
+              <h3>{messages.lotListTitle}</h3>
+              {operationsData.lots.length === 0 ? (
+                <p>{messages.lotListEmpty}</p>
+              ) : (
+                <div className="lot-list">
+                  {operationsData.lots.map((lot) => (
+                    <article className="lot-row" key={lot.lotNumber}>
+                      <div>
+                        <strong>Lot #{lot.lotNumber}</strong>
+                        <span>{lot.title}</span>
+                      </div>
+                      <div>
+                        <strong>{lot.amount}</strong>
+                        <span>
+                          {lot.lifecycle} · +{lot.increment}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+            <form className="lot-form" aria-label={messages.lotFormTitle}>
+              <h3>{messages.lotFormTitle}</h3>
+              <div className="form-grid">
+                {messages.lotFormFields.map((field) => (
+                  <label
+                    className={field.type === "checkbox" ? "check-field" : ""}
+                    key={field.name}
+                  >
+                    <span>{field.label}</span>
+                    {field.type === "select" ? (
+                      <select disabled name={field.name}>
+                        <option>{field.placeholder}</option>
+                        <option>Custom lot increment</option>
+                      </select>
+                    ) : (
+                      <input
+                        disabled
+                        name={field.name}
+                        placeholder={field.placeholder}
+                        type={field.type}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+              <div className="form-footer">
+                <p>{messages.lotFormStaticNotice}</p>
+                <button disabled type="button">
+                  {messages.lotFormSaveButton}
+                </button>
+              </div>
+            </form>
           </section>
 
           <section className="panel" id="auctions">
