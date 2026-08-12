@@ -29,6 +29,7 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 - Design/RTL rules in `docs/design-system.md`.
 - Legacy reverse-engineering audit in `docs/legacy-analysis/`, imported from `E:\Pioneer Dev\PIONEER AUCTIONS WEB & PORTAL CODE\docs\legacy-analysis`; source code, zips, and credential material were intentionally not imported.
 - Quality gates in `docs/quality-gates.md`.
+- Bidding-engine technical handoff in `docs/bidding-engine-handoff.md`.
 - Initial TypeScript contract and design-token packages.
 - Sequenced task packets under `tasks/`.
 - A provisional transparent raster logo under `assets/brand/`.
@@ -107,7 +108,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 with a technical correctness review/handoff and any remaining test hardening that can run without local PostgreSQL. When PostgreSQL is available, run `PIONEER_RUN_DB_TESTS=1` database integration/race suites. When Redis is introduced as a concrete provider, wire `BiddingRecoveryService` into startup/operational recovery. UI redesign work is intentionally paused until the visual direction is revisited.
+Continue Task 004 with any remaining test hardening that can run without local PostgreSQL. When PostgreSQL is available, run `PIONEER_RUN_DB_TESTS=1` database integration/race suites. When Redis is introduced as a concrete provider, wire `BiddingRecoveryService` into startup/operational recovery. UI redesign work is intentionally paused until the visual direction is revisited.
 
 ## Last validation
 
@@ -221,6 +222,7 @@ Continue Task 004 with a technical correctness review/handoff and any remaining 
 - `corepack pnpm --filter @pioneer/api build` passed after expanded personal status fan-out on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after expanded personal status fan-out on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 12 files / 47 tests with 2 opt-in DB suites skipped after expanded personal status fan-out on 2026-08-12.
+- Added Task 004 technical correctness handoff on 2026-08-12 at `docs/bidding-engine-handoff.md`, covering the PostgreSQL lock model, idempotency, proxy behavior, soft close, recovery, validation already run, and PostgreSQL-only validation still required.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.
