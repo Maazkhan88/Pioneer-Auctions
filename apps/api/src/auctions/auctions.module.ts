@@ -9,12 +9,14 @@ import { AdminOperationsController } from "./admin-operations.controller.js";
 import { AdminOperationsRepository } from "./admin-operations.repository.js";
 import { AuctionsRepository } from "./auctions.repository.js";
 import { LotsRepository } from "./lots.repository.js";
+import { PublicLotsController } from "./public-lots.controller.js";
 
 @Module({
   controllers: [
     AdminAuctionsController,
     AdminLotsController,
     AdminOperationsController,
+    PublicLotsController,
   ],
   imports: [AuditModule, DatabaseModule, IdentityModule],
   providers: [AdminOperationsRepository, AuctionsRepository, LotsRepository],

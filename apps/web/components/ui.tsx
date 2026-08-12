@@ -608,7 +608,11 @@ export function BidCTA({
             }}
           >
             <span style={{ fontSize: "1.5rem", fontWeight: "700" }}>AED</span>
-            <span>{(nextBidFils / 100).toLocaleString()}</span>
+            <span>
+              {(nextBidFils / 100).toLocaleString(
+                locale === "ar" ? "ar-AE" : "en-AE",
+              )}
+            </span>
           </div>
           <div
             style={{
@@ -619,7 +623,7 @@ export function BidCTA({
           >
             + 3.00% -5.00% Buyer Fee{" "}
             <span style={{ textDecoration: "underline", cursor: "pointer" }}>
-              Buyer's T&C
+              Buyer&apos;s T&amp;C
             </span>
           </div>
         </div>
@@ -642,7 +646,10 @@ export function BidCTA({
             {bidText} Now
           </span>
           <span className="btn-subtext" style={{ fontSize: "0.68rem" }}>
-            Minimum bid increment AED {(incrementFils / 100).toLocaleString()}
+            Minimum bid increment AED{" "}
+            {(incrementFils / 100).toLocaleString(
+              locale === "ar" ? "ar-AE" : "en-AE",
+            )}
           </span>
         </button>
 

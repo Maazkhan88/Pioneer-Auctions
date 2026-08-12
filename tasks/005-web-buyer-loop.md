@@ -2,6 +2,8 @@
 
 Recommended owner: Antigravity
 
+Status: Initial buyer-homepage backend-data slice started on `agent/task-007-admin-core` on 2026-08-12. Public dummy lot endpoint, web data adapter, static fallback, tests, and Cloudflare preview deployment are implemented; full buyer bidding loop remains pending.
+
 ## Goal
 
 Deliver the complete English/Arabic web journey from discovery through a trustworthy live bid and post-close state.
@@ -21,6 +23,14 @@ Deliver the complete English/Arabic web journey from discovery through a trustwo
 - Explicit command states: preparing, pending/unknown, accepted, rejected with latest price, outbid, extended, closed, pending approval, approved/rejected.
 - Arabic RTL, localized SEO metadata, bidi-safe identifiers/money, dark/light, reduced motion.
 - Analytics events that contain no proxy maximum or sensitive KYC/payment information.
+
+## Current implementation notes
+
+- Added public `GET /api/v1/lots` for sanitized lot-card data.
+- The endpoint can serve the current backend dummy lots when `PIONEER_ADMIN_DUMMY_LOTS=1` is enabled.
+- Public response omits reserve price, increment policy internals, proxy maxima, bidder identity, KYC data, and admin metadata.
+- Buyer homepage uses `loadBuyerHomeData` to fetch `PIONEER_PUBLIC_API_BASE_URL/api/v1/lots` when configured.
+- Cloudflare static preview uses the same three dummy lot cards as fallback so the homepage shows demo lots without a deployed API.
 
 ## Acceptance criteria
 

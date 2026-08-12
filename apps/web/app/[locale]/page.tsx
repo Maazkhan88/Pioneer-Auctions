@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isLocale, messagesFor, type PreviewLot } from "../../i18n/messages";
+import { loadBuyerHomeData } from "../../lib/home-data";
 
 interface LocalePageProperties {
   readonly params: Promise<{ readonly locale: string }>;
@@ -75,6 +76,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
   }
 
   const messages = messagesFor(locale);
+  const homeData = await loadBuyerHomeData(locale, messages);
 
   return (
     <div className="m3-shell">
@@ -153,7 +155,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
           </div>
 
           <div className="m3-lot-grid">
-            {messages.lots.map((lot) => (
+            {homeData.lots.map((lot) => (
               <LotCard
                 key={lot.lotNumber}
                 bidNow={messages.bidNow}

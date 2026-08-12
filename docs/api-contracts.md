@@ -157,6 +157,8 @@ This is the MVP surface. Additive response fields are allowed within v1; removal
 | DELETE | `/lots/:lotId/watch`             | Unwatch lot                                                    |
 | POST   | `/lots/:lotId/terms-acceptances` | Accept immutable terms version before bidding                  |
 
+Initial implementation note: `GET /lots` currently supports the homepage lot-card slice and returns `{ contractVersion: 1, items: PublicLotCard[] }`. `PublicLotCard` includes `lotId`, `auctionId`, localized titles, `lotNumber`, `lifecycle`, `closesAt`, public `currentBid`, public `nextMinimumBid`, and `reserveStatus`. It intentionally omits reserve price, proxy maxima, bidder identity, KYC data, admin notes, and increment-policy internals. Cursor pagination/filter fields remain planned for the full buyer-loop task.
+
 ### Eligibility, deposits, and payments
 
 | Method | Path                           | Purpose                             |
