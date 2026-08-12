@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice and protected dashboard/final-bid approval read endpoints are implemented without requiring local PostgreSQL execution.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, and API-backed UI data adapter with static fallback are implemented without requiring local PostgreSQL execution.
 
 ## Goal
 
@@ -35,6 +35,9 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Added protected `GET /api/v1/admin/final-bid-approvals` read endpoint for pending final-bid approval context.
 - Admin read endpoints use `AdminPermissionGuard` and `admin.auctions.read`.
 - Final-bid approval read models expose hammer/current price, bidder KYC/deposit eligibility, SLA, reserve status, and lot metadata; they do not expose reserve price, proxy maxima, or editable hammer fields.
+- Admin UI now renders metrics and approval rows through `loadAdminOperationsData`.
+- If `PIONEER_ADMIN_API_BASE_URL` is configured at build/runtime, the UI fetches the protected admin read endpoints with `x-pioneer-test-account-id` for local development.
+- If API configuration is absent or unavailable, the UI keeps the Cloudflare static preview working with localized fallback data.
 
 ## Acceptance criteria
 

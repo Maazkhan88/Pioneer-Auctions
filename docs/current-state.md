@@ -97,6 +97,7 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
 - Admin core first UI slice exists on `agent/task-007-admin-core`: responsive EN/AR operations dashboard, lot-management actions, auction controls, approval queue, and audit trail using seed-style data until PostgreSQL/API-backed read models are available. The admin preview is deployed to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev`.
 - Admin core protected read endpoints exist: `GET /api/v1/admin/dashboard` for operations metrics and `GET /api/v1/admin/final-bid-approvals` for final-bid approval queue context, both guarded by `admin.auctions.read`.
+- Admin UI data adapter exists: it fetches the protected admin read endpoints when `PIONEER_ADMIN_API_BASE_URL` is configured and otherwise uses localized static fallback data so the Cloudflare preview remains viewable.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -110,7 +111,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 007 by wiring the admin UI to the protected read endpoints with a static-preview fallback, then add audited approve/reject command skeletons. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
+Continue Task 007 with audited approve/reject command skeletons for final-bid approvals. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
 
 ## Last validation
 
@@ -241,6 +242,12 @@ Continue Task 007 by wiring the admin UI to the protected read endpoints with a 
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after admin read endpoints on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api build` passed after admin read endpoints on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 13 files / 51 tests with 2 opt-in DB suites skipped after admin read endpoints on 2026-08-12.
+- Continued Task 007 on 2026-08-12: added `apps/admin/lib/admin-data.ts` so the admin UI maps `GET /api/v1/admin/dashboard` and `GET /api/v1/admin/final-bid-approvals` into localized UI data when `PIONEER_ADMIN_API_BASE_URL` is configured, with static fallback for Cloudflare preview.
+- `corepack pnpm --filter @pioneer/admin test` passed 4 files / 8 tests after admin UI data adapter on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin typecheck` passed after admin UI data adapter on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin lint` passed after admin UI data adapter on 2026-08-12.
+- `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/admin build:cloudflare` passed after admin UI data adapter on 2026-08-12.
+- `cmd /c npx wrangler deploy` redeployed the admin preview to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev` after admin UI data adapter on 2026-08-12. Wrangler reported version ID `f5b27aa6-8604-4047-912b-6d5990de0b79`.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

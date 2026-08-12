@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isLocale, messagesFor } from "../../i18n/messages";
+import { loadAdminOperationsData } from "../../lib/admin-data";
 
 interface LocalePageProperties {
   readonly params: Promise<{ readonly locale: string }>;
@@ -14,6 +15,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
   }
 
   const messages = messagesFor(locale);
+  const operationsData = await loadAdminOperationsData(locale, messages);
 
   return (
     <section className="workspace">
@@ -42,7 +44,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
         </header>
 
         <section className="metric-grid" aria-label={messages.dashboardTitle}>
-          {messages.metrics.map((metric) => (
+          {operationsData.metrics.map((metric) => (
             <article
               className={`metric-card tone-${metric.tone}`}
               key={metric.label}
@@ -93,7 +95,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
             </div>
           </div>
           <div className="queue-list">
-            {messages.approvalQueue.map((item) => (
+            {operationsData.queue.map((item) => (
               <article
                 className="queue-item"
                 key={`${item.title}-${item.meta}`}

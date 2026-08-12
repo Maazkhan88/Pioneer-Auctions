@@ -31,6 +31,7 @@ export interface Messages {
   readonly brand: string;
   readonly dashboardTitle: string;
   readonly eyebrow: string;
+  readonly finalBidApprovalTitle: string;
   readonly heading: string;
   readonly localeSwitch: string;
   readonly localeSwitchHref: string;
@@ -38,6 +39,7 @@ export interface Messages {
   readonly lotsTitle: string;
   readonly metrics: readonly Metric[];
   readonly reviewButton: string;
+  readonly reserveMetApprovalTitle: string;
   readonly shellLabel: string;
   readonly status: string;
 }
@@ -88,6 +90,7 @@ const messages: Record<Locale, Messages> = {
     brand: "بايونير للمزادات",
     dashboardTitle: "لوحة العمليات",
     eyebrow: "مساحة إدارة المزادات",
+    finalBidApprovalTitle: "اعتماد عرض نهائي",
     heading: "تحكم آمن في المزادات والقطع والاعتمادات.",
     localeSwitch: "English",
     localeSwitchHref: "/en",
@@ -114,6 +117,7 @@ const messages: Record<Locale, Messages> = {
       { label: "تنبيهات عالية الخطورة", tone: "danger", value: "2" },
     ],
     reviewButton: "مراجعة",
+    reserveMetApprovalTitle: "الاحتياطي تحقق",
     shellLabel: "لوحة إدارة بايونير",
     status:
       "هذه واجهة تشغيل أولية تعمل ببيانات نموذجية حتى تتوفر قاعدة PostgreSQL.",
@@ -164,6 +168,7 @@ const messages: Record<Locale, Messages> = {
     brand: "Pioneer Auctions",
     dashboardTitle: "Operations dashboard",
     eyebrow: "Auction admin workspace",
+    finalBidApprovalTitle: "Final-bid approval",
     heading: "Safe control for auctions, lots, and approvals.",
     localeSwitch: "العربية",
     localeSwitchHref: "/ar",
@@ -192,6 +197,7 @@ const messages: Record<Locale, Messages> = {
       { label: "High-risk alerts", tone: "danger", value: "2" },
     ],
     reviewButton: "Review",
+    reserveMetApprovalTitle: "Reserve met",
     shellLabel: "Pioneer admin console",
     status:
       "This is a first operations UI slice using seed-style data until PostgreSQL is available.",
