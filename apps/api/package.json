@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "deploy:preview": "wrangler deploy",
     "dev": "tsx watch src/main.ts",
     "lint": "eslint .",
     "migrate:check": "tsx src/database/check-migrations.ts",

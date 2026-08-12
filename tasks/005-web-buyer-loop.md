@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: Initial buyer-homepage backend-data slice started on `agent/task-007-admin-core` on 2026-08-12. Public dummy lot endpoint, web data adapter, static fallback, tests, and Cloudflare preview deployment are implemented; full buyer bidding loop remains pending.
+Status: Buyer discovery/detail preview slice continued on `agent/task-007-admin-core` on 2026-08-12. Public dummy lot endpoint, Cloudflare preview API, web data adapter, static fallback, homepage lot links, local watch interaction, lot-detail pages, bid panel shell, tests, and Cloudflare preview deployment are implemented; full authenticated live buyer bidding loop remains pending.
 
 ## Goal
 
@@ -31,6 +31,10 @@ Deliver the complete English/Arabic web journey from discovery through a trustwo
 - Public response omits reserve price, increment policy internals, proxy maxima, bidder identity, KYC data, and admin metadata.
 - Buyer homepage uses `loadBuyerHomeData` to fetch `PIONEER_PUBLIC_API_BASE_URL/api/v1/lots` when configured.
 - Cloudflare static preview uses the same three dummy lot cards as fallback so the homepage shows demo lots without a deployed API.
+- A Cloudflare public preview API serves dummy lot cards at `https://pioneer-auctions-api.maaz-n-khan.workers.dev/api/v1/lots`. This is not the full NestJS runtime; it exists so the remote/mobile preview can consume backend-shaped public lot data immediately.
+- Buyer lot cards link to statically exported detail pages for each dummy lot in English and Arabic.
+- Lot detail pages show gallery placeholder, reserve/lifecycle context, specs, documents, fee lines, a local watch button, and a disabled bid panel shell aligned to `POST /api/v1/lots/:lotId/bids`.
+- The watch button stores preview state locally in `localStorage`; it is not yet account-backed.
 
 ## Acceptance criteria
 
@@ -44,6 +48,18 @@ Deliver the complete English/Arabic web journey from discovery through a trustwo
 ## Validation
 
 Run unit/component, Playwright, accessibility, visual regression, production build, and a two-browser live bidding scenario against the integration API.
+
+Current preview-slice validation on 2026-08-12:
+
+- `corepack pnpm --filter @pioneer/api exec vitest run test/public-preview-worker.spec.ts` passed.
+- `corepack pnpm --filter @pioneer/api typecheck` passed.
+- `corepack pnpm --filter @pioneer/api lint` passed.
+- `corepack pnpm --filter @pioneer/web lint` passed.
+- `corepack pnpm --filter @pioneer/web typecheck` passed.
+- `PIONEER_PUBLIC_API_BASE_URL=https://pioneer-auctions-api.maaz-n-khan.workers.dev CLOUDFLARE_PAGES=true corepack pnpm --filter @pioneer/web build:cloudflare` passed.
+- `corepack pnpm exec wrangler deploy --config apps/api/wrangler.jsonc` deployed API version `b600d143-3167-4404-9da3-e840065dbfdf`.
+- `corepack pnpm exec wrangler deploy --config apps/web/wrangler.jsonc` deployed web version `255a115a-9cdc-4f51-90d9-3ddc49f670b4`.
+- Remote URL checks returned HTTP 200 for `/en`, the preview API `/api/v1/lots`, and `/en/lots/11111111-1111-4111-8111-111111111111`.
 
 ## Out of scope
 

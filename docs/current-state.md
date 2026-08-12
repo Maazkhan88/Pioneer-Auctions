@@ -94,7 +94,8 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Socket.IO durable outbox foundation exists: unpublished lot outbox rows can be claimed with `FOR UPDATE SKIP LOCKED`, emitted to `lot:{lotId}` rooms, and marked published after successful emit. Lot subscribe/sync can return contiguous retained outbox events after `afterSequence` as an additive `replay` array, otherwise the authoritative snapshot remains the recovery fallback.
 - Personal bid-status event foundation exists: accepted manual/proxy commands write private `bid:status-changed` outbox rows for command accounts, automatic proxy winners, and previous leaders who become outbid after durable state changes. The outbox publisher emits account-scoped rows to `user:{accountId}` rooms. Payloads include the user-relative status, public current/next bid, lot sequence, close time, and private active proxy maximum when applicable.
 - Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, each lot is re-locked with `FOR UPDATE OF lots`, close time/lifecycle are rechecked under the same row-lock boundary used by bids, lots with bids transition to `PENDING_APPROVAL`, lots without bids transition to `CLOSED`, sequence increments, and an `auction:state-changed` outbox event is written before commit.
-- Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
+- Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction, links dummy lots to detail pages, includes local watch interactions, and was rebuilt against the public preview API.
+- Cloudflare public preview API exists at `https://pioneer-auctions-api.maaz-n-khan.workers.dev`; `GET /api/v1/lots` serves backend-shaped dummy lot cards for remote/mobile buyer-web preview only. This is separate from the full NestJS API runtime.
 - Admin core first UI slice exists on `agent/task-007-admin-core`: responsive EN/AR operations dashboard, lot-management actions, auction controls, approval queue, and audit trail using seed-style data until PostgreSQL/API-backed read models are available. The admin preview is deployed to `https://pioneer-auctions-admin.maaz-n-khan.workers.dev`.
 - Admin core protected read endpoints exist: `GET /api/v1/admin/dashboard` for operations metrics and `GET /api/v1/admin/final-bid-approvals` for final-bid approval queue context, both guarded by `admin.auctions.read`.
 - Admin UI data adapter exists: it fetches the protected admin read endpoints when `PIONEER_ADMIN_API_BASE_URL` is configured and otherwise uses localized static fallback data so the Cloudflare preview remains viewable.
@@ -105,9 +106,19 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 - Public `GET /api/v1/lots` now returns sanitized lot-card data from the same dummy/backend source without reserve price, increment policy internals, proxy data, or admin metadata.
 - Buyer web homepage now loads lots through `loadBuyerHomeData`: it fetches `PIONEER_PUBLIC_API_BASE_URL/api/v1/lots` when configured and otherwise shows the same three dummy lots in static Cloudflare preview.
 - Buyer web mobile header now uses a compact responsive layout: brand and language switch share the top row, and navigation is a smaller horizontal scroll row to avoid covering the first lot card.
+- Buyer web lot detail preview routes now exist for the three dummy lots in English and Arabic, including a gallery placeholder, reserve/lifecycle context, specs/documents/fees, local watch button, and disabled bid panel shell aligned to `POST /api/v1/lots/:lotId/bids`.
 - Admin UI now fetches protected `/admin/lots` when API configuration is available and renders a backend lot list in the Lot Management panel; static Cloudflare preview falls back safely when no API is configured.
 - Admin Lot Management now includes a disabled static create/edit lot form shell with English/Arabic title fields, lot number, AED starting/reserve inputs, increment mode, custom increment, soft-close extension minutes, and featured flag.
 - Admin runtime helper `submitFinalBidDecision` exists for future authenticated final-bid approve/reject actions; static preview controls remain disabled until a safe admin session runtime is connected.
+- On 2026-08-12, continued the buyer preview slice: added `apps/api/worker/public-preview.ts`, `apps/api/wrangler.jsonc`, `apps/api/test/public-preview-worker.spec.ts`, statically exported lot detail routes, `WatchButton`, `BidPanelShell`, and `loadLotDetailData`.
+- `corepack pnpm --filter @pioneer/api exec vitest run test/public-preview-worker.spec.ts` passed on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api typecheck` passed on 2026-08-12.
+- `corepack pnpm --filter @pioneer/api lint` passed on 2026-08-12.
+- `corepack pnpm --filter @pioneer/web lint` passed on 2026-08-12.
+- `corepack pnpm --filter @pioneer/web typecheck` passed on 2026-08-12.
+- `PIONEER_PUBLIC_API_BASE_URL=https://pioneer-auctions-api.maaz-n-khan.workers.dev CLOUDFLARE_PAGES=true corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12.
+- API preview deployed to Cloudflare Worker version `b600d143-3167-4404-9da3-e840065dbfdf` at `https://pioneer-auctions-api.maaz-n-khan.workers.dev`; remote `GET /api/v1/lots` returned HTTP 200 with three dummy lots.
+- Buyer web preview deployed to Cloudflare Worker version `255a115a-9cdc-4f51-90d9-3ddc49f670b4` at `https://pioneer-auctions-web.maaz-n-khan.workers.dev`; remote `/en` and `/en/lots/11111111-1111-4111-8111-111111111111` returned HTTP 200.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -121,7 +132,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 007 with authenticated runtime action handling for final-bid approve/reject, or move to auction pause/resume/cancel command skeletons. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
+Continue Task 005 buyer loop with the real bid action state machine: authenticated session adapter, eligibility/deposit gate, terms acknowledgement, command UUID generation, and REST/Socket.IO acknowledgement handling. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
 
 ## Last validation
 

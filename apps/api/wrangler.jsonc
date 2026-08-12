@@ -1,0 +1,9 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "pioneer-auctions-api",
+  "main": "worker/public-preview.ts",
+  "compatibility_date": "2026-08-11",
+  "observability": {
+    "enabled": true,
+  },
+}

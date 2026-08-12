@@ -133,3 +133,10 @@ Record durable product and architecture decisions here. New entries are append-o
 - Status: accepted for MVP implementation
 - Decision: Raising an active proxy maximum updates that bidder's current proxy priority timestamp. Equal maximums are therefore won by the bidder who registered that effective maximum earlier, not by a stale lower maximum that was later raised.
 - Why: This keeps the equal-maximum tie rule auditable and fair: priority belongs to the committed maximum currently being compared.
+
+## DEC-018 — Cloudflare public preview API for dummy lots
+
+- Date: 2026-08-12
+- Status: accepted for preview/testing only
+- Decision: Add a self-contained Cloudflare Worker under `apps/api/worker/public-preview.ts` that serves `GET /api/v1/lots` and `/health` with backend-shaped dummy lot data. Use this Worker as `PIONEER_PUBLIC_API_BASE_URL` for static buyer-web preview deployments.
+- Why: The real NestJS API is a long-running Express/Nest server and is not directly deployable as a simple Cloudflare Worker. A small preview API lets remote/mobile stakeholders see homepage/detail data loaded from an API-shaped endpoint now, without changing the production backend target of NestJS/PostgreSQL/Redis on AWS.

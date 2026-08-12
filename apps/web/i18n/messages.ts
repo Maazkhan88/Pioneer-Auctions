@@ -8,6 +8,7 @@ export interface PreviewLot {
   readonly closesIn: string;
   readonly imageClass: string;
   readonly increment: string;
+  readonly lotId: string;
   readonly lotNumber: string;
   readonly price: string;
   readonly reserve: string;
@@ -89,6 +90,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "00:08:41",
         imageClass: "m3-lot-car",
         increment: "AED 1,000",
+        lotId: "11111111-1111-4111-8111-111111111111",
         lotNumber: "Lot #564458",
         price: "AED 3,500,000",
         reserve: "تم بلوغ الاحتياطي",
@@ -102,6 +104,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "00:21:03",
         imageClass: "m3-lot-equipment",
         increment: "AED 500",
+        lotId: "66666666-6666-4666-8666-666666666666",
         lotNumber: "Lot #566785",
         price: "AED 1,250,000",
         reserve: "لم يبلغ الاحتياطي",
@@ -115,6 +118,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "06:04:19",
         imageClass: "m3-lot-material",
         increment: "AED 250",
+        lotId: "77777777-7777-4777-8777-777777777777",
         lotNumber: "Lot #563567",
         price: "AED 25,000",
         reserve: "بدون احتياطي",
@@ -164,6 +168,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "00:08:41",
         imageClass: "m3-lot-car",
         increment: "AED 1,000",
+        lotId: "11111111-1111-4111-8111-111111111111",
         lotNumber: "Lot #564458",
         price: "AED 3,500,000",
         reserve: "Reserve met",
@@ -177,6 +182,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "00:21:03",
         imageClass: "m3-lot-equipment",
         increment: "AED 500",
+        lotId: "66666666-6666-4666-8666-666666666666",
         lotNumber: "Lot #566785",
         price: "AED 1,250,000",
         reserve: "Reserve not met",
@@ -190,6 +196,7 @@ const messages: Record<Locale, Messages> = {
         closesIn: "06:04:19",
         imageClass: "m3-lot-material",
         increment: "AED 250",
+        lotId: "77777777-7777-4777-8777-777777777777",
         lotNumber: "Lot #563567",
         price: "AED 25,000",
         reserve: "No reserve",

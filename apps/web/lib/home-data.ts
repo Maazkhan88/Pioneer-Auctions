@@ -9,6 +9,7 @@ interface PublicLotsResponse {
       readonly currency: "AED";
     };
     readonly lifecycle: string;
+    readonly lotId?: string;
     readonly lotNumber: string;
     readonly nextMinimumBid: {
       readonly amountFils: number;
@@ -51,6 +52,7 @@ export async function loadBuyerHomeData(
         closesIn: formatCountdownLabel(locale, lot.closesAt),
         imageClass: imageClassFor(index),
         increment: formatAed(locale, lot.nextMinimumBid.amountFils),
+        lotId: lot.lotId ?? lot.lotNumber,
         lotNumber: `Lot #${lot.lotNumber}`,
         price: formatAed(locale, lot.currentBid.amountFils),
         reserve: reserveLabel(locale, lot.reserveStatus),
@@ -74,6 +76,7 @@ function staticFallback(): BuyerHomeData {
         closesIn: "14d",
         imageClass: "m3-lot-car",
         increment: "AED 561,000",
+        lotId: "11111111-1111-4111-8111-111111111111",
         lotNumber: "Lot #214",
         price: "AED 560,000",
         reserve: "Reserve met",
@@ -87,6 +90,7 @@ function staticFallback(): BuyerHomeData {
         closesIn: "16d",
         imageClass: "m3-lot-material",
         increment: "AED 2,200,000",
+        lotId: "44444444-4444-4444-8444-444444444444",
         lotNumber: "Lot #88",
         price: "AED 2,200,000",
         reserve: "Reserve not met",
@@ -100,6 +104,7 @@ function staticFallback(): BuyerHomeData {
         closesIn: "18d",
         imageClass: "m3-lot-equipment",
         increment: "AED 190,000",
+        lotId: "66666666-6666-4666-8666-666666666666",
         lotNumber: "Lot #331",
         price: "AED 185,000",
         reserve: "No reserve",

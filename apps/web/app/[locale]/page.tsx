@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { WatchButton } from "../../components/watch-button";
 import { isLocale, messagesFor, type PreviewLot } from "../../i18n/messages";
 import { loadBuyerHomeData } from "../../lib/home-data";
 
@@ -22,28 +23,32 @@ function GavelMark() {
 function LotCard({
   bidNow,
   currentBid,
+  locale,
   lot,
   nextBid,
 }: {
   readonly bidNow: string;
   readonly currentBid: string;
+  readonly locale: string;
   readonly lot: PreviewLot;
   readonly nextBid: string;
 }) {
+  const detailHref = `/${locale}/lots/${encodeURIComponent(lot.lotId)}`;
+
   return (
     <article className={`m3-lot-card ${lot.status}`}>
       <div className={`m3-lot-media ${lot.imageClass}`}>
         <span className="m3-live-chip">{lot.badge}</span>
-        <button className="m3-icon-button" type="button" aria-label="Watch lot">
-          ☆
-        </button>
+        <WatchButton lotId={lot.lotId} />
       </div>
       <div className="m3-lot-body">
         <div className="m3-meta-row">
           <span>{lot.lotNumber}</span>
           <span>{lot.category}</span>
         </div>
-        <h2>{lot.title}</h2>
+        <h2>
+          <Link href={detailHref}>{lot.title}</Link>
+        </h2>
         <div className="m3-status-row">
           <span className="m3-timer" dir="ltr">
             {lot.closesIn}
@@ -61,9 +66,9 @@ function LotCard({
             <strong dir="ltr">{lot.increment}</strong>
           </div>
         </div>
-        <button className="m3-bid-button" type="button">
+        <Link className="m3-bid-button" href={detailHref}>
           {bidNow}
-        </button>
+        </Link>
       </div>
     </article>
   );
@@ -157,9 +162,10 @@ export default async function LocalePage({ params }: LocalePageProperties) {
           <div className="m3-lot-grid">
             {homeData.lots.map((lot) => (
               <LotCard
-                key={lot.lotNumber}
+                key={lot.lotId}
                 bidNow={messages.bidNow}
                 currentBid={messages.currentBid}
+                locale={locale}
                 lot={lot}
                 nextBid={messages.nextBid}
               />
