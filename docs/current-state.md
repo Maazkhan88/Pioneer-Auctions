@@ -52,7 +52,7 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 
 ## Active task
 
-Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/task-004-backend-week1`. Started and completed: 2026-08-11.
+Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-core`. Started: 2026-08-12.
 
 | Task                   | Owner       | Branch                             | Status             | Notes                                     |
 | ---------------------- | ----------- | ---------------------------------- | ------------------ | ----------------------------------------- |
@@ -62,7 +62,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 | 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 complete; bidding engine next      |
 | 005 Web buyer loop     | Unassigned  | —                                  | Blocked by 002–004 | Full bidding client                       |
 | 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent            |
-| 007 Admin core         | Unassigned  | —                                  | Ready after 002    | Lots, auctions, approval queues           |
+| 007 Admin core         | Codex       | `agent/task-007-admin-core`        | In progress        | Static operations UI slice implemented    |
 | 008 Identity/KYC       | Unassigned  | —                                  | Ready after 002    | Provider adapter first                    |
 | 009 Deposits/payments  | Unassigned  | —                                  | Ready after 002    | Ledger + webhook safety                   |
 | 010 Notifications      | Unassigned  | —                                  | Ready after 002    | Transactional matrix                      |
@@ -95,6 +95,7 @@ Task 004 / backend Week 1 foundation is complete. Owner: Codex. Branch: `agent/t
 - Personal bid-status event foundation exists: accepted manual/proxy commands write private `bid:status-changed` outbox rows for command accounts, automatic proxy winners, and previous leaders who become outbid after durable state changes. The outbox publisher emits account-scoped rows to `user:{accountId}` rooms. Payloads include the user-relative status, public current/next bid, lot sequence, close time, and private active proxy maximum when applicable.
 - Close worker fencing foundation exists: due live lots are selected with `FOR UPDATE SKIP LOCKED`, each lot is re-locked with `FOR UPDATE OF lots`, close time/lifecycle are rechecked under the same row-lock boundary used by bids, lots with bids transition to `PENDING_APPROVAL`, lots without bids transition to `CLOSED`, sequence increments, and an `auction:state-changed` outbox event is written before commit.
 - Cloudflare preview: buyer web static UI is prepared for Cloudflare export and deployed to `https://pioneer-auctions-web.maaz-n-khan.workers.dev`. The current deployed version uses the new Material 3 Expressive-inspired Pioneer buyer UI direction.
+- Admin core first UI slice exists on `agent/task-007-admin-core`: responsive EN/AR operations dashboard, lot-management actions, auction controls, approval queue, and audit trail using seed-style data until PostgreSQL/API-backed read models are available.
 
 See `docs/decisions-log.md` for rationale and open decisions.
 
@@ -108,7 +109,7 @@ See `docs/decisions-log.md` for rationale and open decisions.
 
 ## Next action
 
-Continue Task 004 with any remaining test hardening that can run without local PostgreSQL. When PostgreSQL is available, run `PIONEER_RUN_DB_TESTS=1` database integration/race suites. When Redis is introduced as a concrete provider, wire `BiddingRecoveryService` into startup/operational recovery. UI redesign work is intentionally paused until the visual direction is revisited.
+Continue Task 007 with API-backed admin read models and protected admin queue endpoints that can be unit-tested without local PostgreSQL. When PostgreSQL is available, run the Task 004 `PIONEER_RUN_DB_TESTS=1` database integration/race suites.
 
 ## Last validation
 
@@ -223,6 +224,11 @@ Continue Task 004 with any remaining test hardening that can run without local P
 - `corepack pnpm --filter @pioneer/api migrate:check` passed after expanded personal status fan-out on 2026-08-12.
 - `corepack pnpm --filter @pioneer/api test` passed 12 files / 47 tests with 2 opt-in DB suites skipped after expanded personal status fan-out on 2026-08-12.
 - Added Task 004 technical correctness handoff on 2026-08-12 at `docs/bidding-engine-handoff.md`, covering the PostgreSQL lock model, idempotency, proxy behavior, soft close, recovery, validation already run, and PostgreSQL-only validation still required.
+- Started Task 007 on 2026-08-12: replaced the thin admin placeholder with a responsive EN/AR operations dashboard, lot-management action cards, auction operation controls, approval queue, and audit trail; fixed admin dictionary strings to clean UTF-8.
+- `corepack pnpm --filter @pioneer/admin test` passed 3 files / 5 tests after the first admin-core UI slice on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin typecheck` passed after the first admin-core UI slice on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin lint` passed after the first admin-core UI slice on 2026-08-12.
+- `corepack pnpm --filter @pioneer/admin build` passed after the first admin-core UI slice on 2026-08-12.
 - Prepared Cloudflare static deployment on 2026-08-12: added web static export config, `apps/web/wrangler.jsonc`, Cloudflare deployment notes, and fixed buyer web build issues in the component preview.
 - `$env:CLOUDFLARE_PAGES='true'; corepack pnpm --filter @pioneer/web build:cloudflare` passed on 2026-08-12 and generated `apps/web/out`.
 - `cmd /c npx wrangler deploy` deployed the buyer web preview to `https://pioneer-auctions-web.maaz-n-khan.workers.dev` on 2026-08-12. Wrangler reported version ID `68fdd981-72aa-4aba-9ff5-63df0801c91b`.

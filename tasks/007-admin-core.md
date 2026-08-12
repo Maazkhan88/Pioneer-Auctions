@@ -2,6 +2,8 @@
 
 Recommended owner: Antigravity
 
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice is implemented without PostgreSQL dependency.
+
 ## Goal
 
 Give authorized operations staff safe, auditable control over lots, auctions, deposits overview, and approval queues without bypassing domain invariants.
@@ -21,6 +23,14 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Offer and consignment review queue shells aligned to v1 contract.
 - Read-only bid ledger/timeline and audit event explorer.
 - Safe bulk import dry-run, row validation, error export, and explicit commit step.
+
+## Current implementation notes
+
+- Admin shell now renders a responsive operations dashboard in English and Arabic/RTL.
+- Implemented visible sections for dashboard metrics, lot management, auction operations, final-bid/deposit approval queue, and audit trail.
+- High-risk operation copy explicitly references reason, confirmation, correlation/audit requirements.
+- All visible strings are in `apps/admin/i18n/messages.ts`.
+- Current data is seed-style static UI data until PostgreSQL/API-backed admin read models are available.
 
 ## Acceptance criteria
 

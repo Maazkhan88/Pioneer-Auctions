@@ -17,14 +17,112 @@ export default async function LocalePage({ params }: LocalePageProperties) {
 
   return (
     <section className="workspace">
-      <aside className="rail" aria-label={messages.brand}>
-        <strong>{messages.brand}</strong>
-        <Link href={messages.localeSwitchHref}>{messages.localeSwitch}</Link>
+      <aside className="rail" aria-label={messages.shellLabel}>
+        <div>
+          <strong className="brand-mark">{messages.brand}</strong>
+          <p>{messages.adminRole}</p>
+        </div>
+        <nav aria-label={messages.dashboardTitle}>
+          <a href="#dashboard">{messages.dashboardTitle}</a>
+          <a href="#lots">{messages.lotsTitle}</a>
+          <a href="#auctions">{messages.auctionsTitle}</a>
+          <a href="#approvals">{messages.approvalsTitle}</a>
+          <a href="#audit">{messages.auditTitle}</a>
+        </nav>
+        <Link className="locale-link" href={messages.localeSwitchHref}>
+          {messages.localeSwitch}
+        </Link>
       </aside>
+
       <div className="content">
-        <p className="eyebrow">{messages.eyebrow}</p>
-        <h1>{messages.heading}</h1>
-        <p>{messages.status}</p>
+        <header className="hero" id="dashboard">
+          <p className="eyebrow">{messages.eyebrow}</p>
+          <h1>{messages.heading}</h1>
+          <p>{messages.status}</p>
+        </header>
+
+        <section className="metric-grid" aria-label={messages.dashboardTitle}>
+          {messages.metrics.map((metric) => (
+            <article
+              className={`metric-card tone-${metric.tone}`}
+              key={metric.label}
+            >
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+            </article>
+          ))}
+        </section>
+
+        <div className="operations-grid">
+          <section className="panel" id="lots">
+            <div className="panel-heading">
+              <p className="eyebrow">{messages.actionRequired}</p>
+              <h2>{messages.lotsTitle}</h2>
+            </div>
+            <div className="action-list">
+              {messages.lotsActions.map((action) => (
+                <article className="action-card" key={action.label}>
+                  <h3>{action.label}</h3>
+                  <p>{action.description}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel" id="auctions">
+            <div className="panel-heading">
+              <p className="eyebrow">{messages.actionRequired}</p>
+              <h2>{messages.auctionsTitle}</h2>
+            </div>
+            <div className="action-list">
+              {messages.auctionsActions.map((action) => (
+                <article className="action-card" key={action.label}>
+                  <h3>{action.label}</h3>
+                  <p>{action.description}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <section className="panel" id="approvals">
+          <div className="panel-heading horizontal">
+            <div>
+              <p className="eyebrow">{messages.actionRequired}</p>
+              <h2>{messages.approvalsTitle}</h2>
+            </div>
+          </div>
+          <div className="queue-list">
+            {messages.approvalQueue.map((item) => (
+              <article
+                className="queue-item"
+                key={`${item.title}-${item.meta}`}
+              >
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.meta}</p>
+                </div>
+                <div className="queue-meta">
+                  <strong>{item.amount}</strong>
+                  <span>{item.sla}</span>
+                </div>
+                <button type="button">{messages.reviewButton}</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel audit-panel" id="audit">
+          <div className="panel-heading">
+            <p className="eyebrow">{messages.actionRequired}</p>
+            <h2>{messages.auditTitle}</h2>
+          </div>
+          <ol>
+            {messages.auditEvents.map((event) => (
+              <li key={event}>{event}</li>
+            ))}
+          </ol>
+        </section>
       </div>
     </section>
   );
