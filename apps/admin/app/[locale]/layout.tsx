@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { HtmlAttributesSync } from "../../components/html-attributes-sync";
 import { directionFor, isLocale, locales } from "../../i18n/messages";
 
 interface LocaleLayoutProperties {
@@ -23,6 +24,7 @@ export default async function LocaleLayout({
 
   return (
     <main className="locale-shell" dir={directionFor(locale)} lang={locale}>
+      <HtmlAttributesSync dir={directionFor(locale)} lang={locale} />
       {children}
     </main>
   );

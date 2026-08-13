@@ -458,6 +458,56 @@ button:disabled:hover {
   gap: var(--pa-space-2);
 }
 
+.m3-live-status {
+  border-radius: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0;
+  padding-block: var(--pa-space-2);
+  padding-inline: var(--pa-space-3);
+  width: fit-content;
+}
+
+.m3-live-status.is-pending {
+  background: rgb(217 119 6 / 12%);
+  color: var(--pa-color-warning);
+}
+
+.m3-live-status.is-success {
+  background: rgb(22 163 74 / 12%);
+  color: var(--pa-color-success);
+}
+
+.m3-live-status.is-error {
+  background: rgb(220 38 38 / 12%);
+  color: var(--pa-color-danger);
+}
+
+.auction-operations {
+  display: grid;
+  gap: var(--pa-space-5);
+}
+
+.auction-row {
+  background: var(--pa-color-background);
+  border: 1px solid var(--pa-color-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: var(--pa-space-3);
+  padding: var(--pa-space-3);
+}
+
+.auction-row .lot-row {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.auction-row .decision-controls {
+  border-block-start: 1px solid var(--pa-color-border);
+  padding-block-start: var(--pa-space-3);
+}
+
 .audit-panel ol {
   display: grid;
   gap: var(--pa-space-3);

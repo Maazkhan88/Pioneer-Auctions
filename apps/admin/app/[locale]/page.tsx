@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ApprovalQueuePanel } from "../../components/approval-queue-panel";
+import { AuctionOperationsPanel } from "../../components/auction-operations-panel";
+import { LotManagementPanel } from "../../components/lot-management-panel";
 import { isLocale, messagesFor } from "../../i18n/messages";
 import { loadAdminOperationsData } from "../../lib/admin-data";
 
@@ -69,61 +72,13 @@ export default async function LocalePage({ params }: LocalePageProperties) {
                 </article>
               ))}
             </div>
-            <div className="backend-lots">
-              <h3>{messages.lotListTitle}</h3>
-              {operationsData.lots.length === 0 ? (
-                <p>{messages.lotListEmpty}</p>
-              ) : (
-                <div className="lot-list">
-                  {operationsData.lots.map((lot) => (
-                    <article className="lot-row" key={lot.lotNumber}>
-                      <div>
-                        <strong>Lot #{lot.lotNumber}</strong>
-                        <span>{lot.title}</span>
-                      </div>
-                      <div>
-                        <strong>{lot.amount}</strong>
-                        <span>
-                          {lot.lifecycle} · +{lot.increment}
-                        </span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-            <form className="lot-form" aria-label={messages.lotFormTitle}>
-              <h3>{messages.lotFormTitle}</h3>
-              <div className="form-grid">
-                {messages.lotFormFields.map((field) => (
-                  <label
-                    className={field.type === "checkbox" ? "check-field" : ""}
-                    key={field.name}
-                  >
-                    <span>{field.label}</span>
-                    {field.type === "select" ? (
-                      <select disabled name={field.name}>
-                        <option>{field.placeholder}</option>
-                        <option>Custom lot increment</option>
-                      </select>
-                    ) : (
-                      <input
-                        disabled
-                        name={field.name}
-                        placeholder={field.placeholder}
-                        type={field.type}
-                      />
-                    )}
-                  </label>
-                ))}
-              </div>
-              <div className="form-footer">
-                <p>{messages.lotFormStaticNotice}</p>
-                <button disabled type="button">
-                  {messages.lotFormSaveButton}
-                </button>
-              </div>
-            </form>
+            <LotManagementPanel
+              auctions={operationsData.auctions}
+              initialLots={operationsData.lots}
+              locale={locale}
+              messages={messages}
+              session={operationsData.session}
+            />
           </section>
 
           <section className="panel" id="auctions">
@@ -139,6 +94,12 @@ export default async function LocalePage({ params }: LocalePageProperties) {
                 </article>
               ))}
             </div>
+            <AuctionOperationsPanel
+              initialAuctions={operationsData.auctions}
+              locale={locale}
+              messages={messages}
+              session={operationsData.session}
+            />
           </section>
         </div>
 
@@ -149,46 +110,11 @@ export default async function LocalePage({ params }: LocalePageProperties) {
               <h2>{messages.approvalsTitle}</h2>
             </div>
           </div>
-          <div className="queue-list">
-            {operationsData.queue.map((item) => (
-              <article
-                className="queue-item"
-                key={`${item.title}-${item.meta}`}
-              >
-                <div>
-                  <h3>{item.title}</h3>
-                  <p>{item.meta}</p>
-                </div>
-                <div className="queue-meta">
-                  <strong>{item.amount}</strong>
-                  <span>{item.sla}</span>
-                </div>
-                <form
-                  className="decision-controls"
-                  data-approve-endpoint={item.approveEndpoint ?? ""}
-                  data-reject-endpoint={item.rejectEndpoint ?? ""}
-                >
-                  <label>
-                    <span>{messages.rejectionReasonLabel}</span>
-                    <select disabled name="reasonCode">
-                      {messages.rejectionReasons.map((reason) => (
-                        <option key={reason.label}>{reason.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="decision-buttons">
-                    <button disabled type="button">
-                      {messages.approveButton}
-                    </button>
-                    <button className="button-secondary" disabled type="button">
-                      {messages.rejectButton}
-                    </button>
-                  </div>
-                  <p>{messages.staticPreviewActionNotice}</p>
-                </form>
-              </article>
-            ))}
-          </div>
+          <ApprovalQueuePanel
+            initialQueue={operationsData.queue}
+            messages={messages}
+            session={operationsData.session}
+          />
         </section>
 
         <section className="panel audit-panel" id="audit">

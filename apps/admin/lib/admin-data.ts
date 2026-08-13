@@ -1,10 +1,13 @@
 import type {
+  AdminAuctionItem,
   AdminLotItem,
   Locale,
   Messages,
   Metric,
   QueueItem,
 } from "../i18n/messages";
+import { getAdminSessionConfig } from "./admin-session";
+import type { AdminSessionConfig } from "./admin-session";
 
 type DashboardMetricKey =
   "FEATURED_LOTS" | "HIGH_RISK_ALERTS" | "LIVE_AUCTIONS" | "PENDING_APPROVALS";
@@ -50,10 +53,21 @@ interface AdminLotApiResponse {
   readonly titleEn: string;
 }
 
+interface AdminAuctionApiResponse {
+  readonly closesAt: string;
+  readonly id: string;
+  readonly lifecycle: string;
+  readonly startsAt: string;
+  readonly titleAr: string;
+  readonly titleEn: string;
+}
+
 export interface AdminOperationsData {
+  readonly auctions: readonly AdminAuctionItem[];
   readonly lots: readonly AdminLotItem[];
   readonly metrics: readonly Metric[];
   readonly queue: readonly QueueItem[];
+  readonly session: AdminSessionConfig | null;
   readonly source: "api" | "static-fallback";
 }
 
@@ -83,22 +97,33 @@ export async function loadAdminOperationsData(
   locale: Locale,
   messages: Messages,
 ): Promise<AdminOperationsData> {
-  const baseUrl = process.env.PIONEER_ADMIN_API_BASE_URL;
-  if (baseUrl === undefined || baseUrl.length === 0) {
-    return staticFallback(messages);
+  const session = getAdminSessionConfig();
+  if (session === null) {
+    return staticFallback(messages, null);
   }
 
   try {
-    const [dashboard, approvals, lots] = await Promise.all([
-      fetchAdminJson<AdminDashboardApiResponse>(baseUrl, "/admin/dashboard"),
+    const [dashboard, approvals, lots, auctions] = await Promise.all([
+      fetchAdminJson<AdminDashboardApiResponse>(session, "/admin/dashboard"),
       fetchAdminJson<FinalBidApprovalsApiResponse>(
-        baseUrl,
+        session,
         "/admin/final-bid-approvals",
       ),
-      fetchAdminJson<readonly AdminLotApiResponse[]>(baseUrl, "/admin/lots"),
+      fetchAdminJson<readonly AdminLotApiResponse[]>(session, "/admin/lots"),
+      fetchAdminJson<readonly AdminAuctionApiResponse[]>(
+        session,
+        "/admin/auctions",
+      ),
     ]);
 
     return {
+      auctions: auctions.map((auction) => ({
+        closesAt: auction.closesAt,
+        id: auction.id,
+        lifecycle: auction.lifecycle,
+        startsAt: auction.startsAt,
+        title: locale === "ar" ? auction.titleAr : auction.titleEn,
+      })),
       lots: lots.map((lot) => ({
         amount: formatAed(locale, lot.currentBidFils ?? 0),
         increment: formatAed(locale, lot.minimumIncrementFils),
@@ -126,32 +151,36 @@ export async function loadAdminOperationsData(
             ? messages.reserveMetApprovalTitle
             : messages.finalBidApprovalTitle,
       })),
+      session,
       source: "api",
     };
   } catch {
-    return staticFallback(messages);
+    return staticFallback(messages, session);
   }
 }
 
-function staticFallback(messages: Messages): AdminOperationsData {
+function staticFallback(
+  messages: Messages,
+  session: AdminSessionConfig | null,
+): AdminOperationsData {
   return {
+    auctions: [],
     lots: [],
     metrics: messages.metrics,
     queue: messages.approvalQueue,
+    session,
     source: "static-fallback",
   };
 }
 
 async function fetchAdminJson<TResponse>(
-  baseUrl: string,
+  session: AdminSessionConfig,
   path: string,
 ): Promise<TResponse> {
-  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/v1${path}`, {
+  const response = await fetch(`${session.apiBaseUrl}/api/v1${path}`, {
     cache: "no-store",
     headers: {
-      "x-pioneer-test-account-id":
-        process.env.PIONEER_ADMIN_TEST_ACCOUNT_ID ??
-        "00000000-0000-4000-8000-000000000001",
+      "x-pioneer-test-account-id": session.testAccountId,
     },
   });
   if (!response.ok) {

@@ -2,7 +2,7 @@
 
 Recommended owner: Antigravity
 
-Status: In progress on `agent/task-007-admin-core` (started 2026-08-12). First static admin operations UI slice, protected dashboard/final-bid approval read endpoints, API-backed UI data adapter with static fallback, audited final-bid approve/reject command skeletons, safe final-bid decision UI controls, auction pause/resume/cancel skeletons, backend dummy lots, and the lot create/edit form shell are implemented without requiring local PostgreSQL execution.
+Status: In progress on `agent/task-007-admin-core` (started 2026-08-12, write actions wired 2026-08-13). Every previously-disabled admin control now submits real commands: final-bid approve/reject, auction pause/resume/cancel, auction create, and lot create are all live-wired to the real API when `PIONEER_ADMIN_API_BASE_URL` is configured, with the pre-existing static-preview fallback preserved when it is not. Several acceptance criteria remain out of reach because the underlying server capability was never built -- see "Explicitly not implemented" below, not silently skipped.
 
 ## Goal
 
@@ -52,19 +52,34 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - Admin UI data loading now fetches `/admin/lots` when the protected API is configured and renders a backend lot list in the Lot Management panel.
 - Added a disabled static lot create/edit form shell with English/Arabic title fields, lot number, starting bid, reserve, increment mode, custom increment, soft-close extension minutes, and featured flag.
 - Added `submitFinalBidDecision` runtime helper for future authenticated approve/reject actions; static Cloudflare controls remain disabled until a safe admin session runtime exists.
+- On 2026-08-13, added `apps/admin/lib/admin-session.ts` (mirrors the buyer web app's `bid-session.ts` pattern) so the test-account/API-base-URL config used to be inlined `process.env` reads in `admin-data.ts` is now one shared, typed source resolved once per server render and passed down as a prop -- never imported by value into a client component (only its type is), since a raw `process.env` read has no meaning once bundled into browser JS.
+- On 2026-08-13, extended `admin-data.ts` to also fetch `GET /api/v1/admin/auctions` (needed so the auction panel has something to list/control and so the lot form has real auctions to attach a new lot to) and to return the resolved session alongside the read data.
+- On 2026-08-13, fixed a real type drift in `admin-actions.ts`: `FinalBidDecisionResponse` declared a `lifecycle` field the real `POST /api/v1/admin/final-bid-approvals/:lotId/approve|reject` response does not have, and was missing the real `auditId` field it does have.
+- On 2026-08-13, added `submitAuctionControl` (pause/resume/cancel), `submitCreateAuction`, and `submitCreateLot` to `admin-actions.ts`, matching the real Zod DTOs in `apps/api/src/auctions/auction.dto.ts` and `lot.dto.ts` field-for-field -- including `lot.dto.ts`'s "exactly one of `minimumIncrementFils` or `minimumIncrementPercentBps`" rule, and the fact that `createLotSchema` has no "featured" field at all.
+- On 2026-08-13, replaced every disabled static control with a real client component: `apps/admin/components/approval-queue-panel.tsx`, `auction-operations-panel.tsx` (new auction list + lifecycle-gated pause/resume/cancel + schedule-auction form), and `lot-management-panel.tsx` (lot form rebuilt to match `createLotSchema` exactly; the old "Featured lot" checkbox was removed rather than wired to a contract field that does not exist). All three still show the original static-preview disabled notice when no admin session is configured.
+- On 2026-08-13, found and fixed a second real, pre-existing Arabic/RTL bug (same class as the one already fixed in `apps/web`): `apps/admin/app/layout.tsx` hardcoded `<html lang="en">` with no `dir` at all, so `/ar` never got a correct `<html>` element. Fixed with `apps/admin/components/html-attributes-sync.tsx`, the same pattern already used in `apps/web`.
 
 ## Acceptance criteria
 
-- UI permission hiding is backed by server authorization tests.
-- High-risk actions require reason, confirmation, correlation ID, and audit record; configured actions require step-up authentication.
-- Final approval cannot alter hammer price; rejection requires an approved reason code.
-- All forms support English/Arabic content and expose validation accessibly.
-- Live monitor recovers sequence gaps and clearly distinguishes stale/disconnected state.
-- Bulk import cannot partially and silently create invalid lots.
+- UI permission hiding is backed by server authorization tests. **Partially met**: server-side authorization is real and tested (`AdminPermissionGuard` + `admin-operations.spec.ts`'s "rejects restricted accounts"), but the admin UI has no way to query its own account's permission set, so it cannot hide write controls a lower-privileged account would 403 on. No endpoint for "my permissions" exists to build this against.
+- High-risk actions require reason, confirmation, correlation ID, and audit record; configured actions require step-up authentication. **Partially met**: reason/correlation ID/audit record are real end-to-end for every write action (server-enforced, not just UI copy). Step-up authentication does not exist anywhere in the codebase and was not built this pass.
+- Final approval cannot alter hammer price; rejection requires an approved reason code. **Met** -- unchanged since it was already true of the server-side skeletons; the UI now actually calls them.
+- All forms support English/Arabic content and expose validation accessibly. **Met** for the three wired forms (labeled fields, required-field/XOR client-side checks before submit, server validation errors surfaced as a generic status message).
+- Live monitor recovers sequence gaps and clearly distinguishes stale/disconnected state. **Not implemented.** No admin-facing Socket.IO namespace or gateway exists server-side (only the buyer-facing `/auctions/v1` namespace does); building one is separate, larger scope than wiring already-implemented REST commands.
+- Bulk import cannot partially and silently create invalid lots. **Not implemented.** No bulk-import endpoint exists server-side.
+
+## Explicitly not implemented (confirmed absent server-side, not silently skipped)
+
+- Step-up authentication for high-risk actions.
+- Live monitor / realtime admin gateway with sequence-gap recovery.
+- Safe bulk import (dry-run, row validation, error export, explicit commit).
+- Offer and consignment review queue shells (no corresponding endpoints exist).
+- Lot edit (only `POST /api/v1/admin/lots` create exists; there is no update/PATCH endpoint, so the lot form is create-only).
+- UI-side permission hiding (no "my permissions" endpoint to build it against).
 
 ## Validation
 
-Run role-matrix API tests, Playwright admin journeys, accessibility/RTL checks, audit assertions, and a live pause/resume/close rehearsal against seeded data.
+Run role-matrix API tests, Playwright admin journeys, accessibility/RTL checks, audit assertions, and a live pause/resume/close rehearsal against seeded data. As of 2026-08-13: `apps/admin`'s own `test`/`typecheck`/`lint`/`build` (both normal and Cloudflare static-export modes) pass, and the write flows were exercised live in a browser against a real `next dev` server with a deliberately unreachable API base URL (confirming gating, client-side guards, and the pending -> error path all work correctly) -- no Playwright suite exists in this repo, no live NestJS+PostgreSQL backend was reachable in this environment, and no accepted/2xx response from any of the four new write commands has been verified end-to-end.
 
 ## Out of scope
 

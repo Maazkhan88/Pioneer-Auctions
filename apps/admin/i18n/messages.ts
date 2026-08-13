@@ -1,3 +1,5 @@
+import type { FinalBidRejectionReasonCode } from "../lib/admin-actions";
+
 export const locales = ["en", "ar"] as const;
 export type Locale = (typeof locales)[number];
 
@@ -22,11 +24,18 @@ export interface ActionItem {
   readonly label: string;
 }
 
+export interface RejectionReasonOption {
+  readonly code: FinalBidRejectionReasonCode;
+  readonly description: string;
+  readonly label: string;
+}
+
 export interface LotFormField {
   readonly label: string;
   readonly name: string;
+  readonly optional?: boolean;
   readonly placeholder: string;
-  readonly type: "checkbox" | "number" | "select" | "text";
+  readonly type: "datetime-local" | "number" | "text";
 }
 
 export interface AdminLotItem {
@@ -37,36 +46,73 @@ export interface AdminLotItem {
   readonly title: string;
 }
 
+export interface AdminAuctionItem {
+  readonly closesAt: string;
+  readonly id: string;
+  readonly lifecycle: string;
+  readonly startsAt: string;
+  readonly title: string;
+}
+
 export interface Messages {
+  readonly actionErrorLabel: string;
+  readonly actionPendingLabel: string;
   readonly actionRequired: string;
   readonly adminRole: string;
   readonly approveButton: string;
+  readonly approveSuccessLabel: string;
   readonly approvalQueue: readonly QueueItem[];
   readonly approvalsTitle: string;
+  readonly auctionClosesAtLabel: string;
+  readonly auctionCreateButton: string;
+  readonly auctionCreateTitle: string;
+  readonly auctionListEmpty: string;
+  readonly auctionListTitle: string;
+  readonly auctionNoteLabel: string;
+  readonly auctionReasonLabel: string;
+  readonly auctionReasonPlaceholder: string;
+  readonly auctionStartsAtLabel: string;
+  readonly auctionTitleArLabel: string;
+  readonly auctionTitleEnLabel: string;
   readonly auditEvents: readonly string[];
   readonly auditTitle: string;
   readonly auctionsActions: readonly ActionItem[];
   readonly auctionsTitle: string;
   readonly brand: string;
+  readonly cancelAuctionButton: string;
   readonly dashboardTitle: string;
+  readonly decisionNoteLabel: string;
+  readonly decisionNotePlaceholder: string;
   readonly eyebrow: string;
   readonly finalBidApprovalTitle: string;
+  readonly formValidationError: string;
   readonly heading: string;
   readonly localeSwitch: string;
   readonly localeSwitchHref: string;
+  readonly lotAuctionLabel: string;
+  readonly lotAuctionPlaceholder: string;
+  readonly lotCreateSuccess: string;
   readonly lotFormFields: readonly LotFormField[];
   readonly lotFormSaveButton: string;
   readonly lotFormStaticNotice: string;
   readonly lotFormTitle: string;
+  readonly lotIncrementModeCustomLabel: string;
+  readonly lotIncrementModeLabel: string;
+  readonly lotIncrementModePercentLabel: string;
+  readonly lotIncrementValueLabel: string;
   readonly lotListEmpty: string;
+  readonly lotNoAuctionsNotice: string;
   readonly lotListTitle: string;
   readonly lotsActions: readonly ActionItem[];
   readonly lotsTitle: string;
   readonly metrics: readonly Metric[];
+  readonly pauseButton: string;
+  readonly resumeButton: string;
   readonly reviewButton: string;
   readonly rejectButton: string;
+  readonly rejectSuccessLabel: string;
   readonly rejectionReasonLabel: string;
-  readonly rejectionReasons: readonly ActionItem[];
+  readonly rejectionReasons: readonly RejectionReasonOption[];
   readonly reserveMetApprovalTitle: string;
   readonly shellLabel: string;
   readonly staticPreviewActionNotice: string;
@@ -74,6 +120,7 @@ export interface Messages {
 }
 
 const lotFormFieldsEn: readonly LotFormField[] = [
+  { label: "Lot #", name: "lotNumber", placeholder: "214", type: "text" },
   {
     label: "Title English",
     name: "titleEn",
@@ -86,7 +133,18 @@ const lotFormFieldsEn: readonly LotFormField[] = [
     placeholder: "تويوتا لاند كروزر 2019",
     type: "text",
   },
-  { label: "Lot #", name: "lotNumber", placeholder: "214", type: "text" },
+  {
+    label: "Starts at",
+    name: "startsAt",
+    placeholder: "2026-09-08T14:00",
+    type: "datetime-local",
+  },
+  {
+    label: "Closes at",
+    name: "closesAt",
+    placeholder: "2026-09-08T18:00",
+    type: "datetime-local",
+  },
   {
     label: "Starting bid AED",
     name: "startingBid",
@@ -96,36 +154,35 @@ const lotFormFieldsEn: readonly LotFormField[] = [
   {
     label: "Reserve AED",
     name: "reservePrice",
+    optional: true,
     placeholder: "540000",
     type: "number",
   },
   {
-    label: "Bid increment mode",
-    name: "incrementMode",
-    placeholder: "Default percentage of starting price",
-    type: "select",
-  },
-  {
-    label: "Custom increment AED",
-    name: "customIncrement",
-    placeholder: "1000",
+    label: "Soft-close window minutes",
+    name: "softCloseWindowMinutes",
+    optional: true,
+    placeholder: "2",
     type: "number",
   },
   {
     label: "Soft-close extension minutes",
     name: "softCloseExtensionMinutes",
+    optional: true,
     placeholder: "2",
     type: "number",
   },
   {
-    label: "Featured lot",
-    name: "featured",
-    placeholder: "Promote on homepage",
-    type: "checkbox",
+    label: "Maximum soft-close extensions",
+    name: "softCloseMaximumExtensions",
+    optional: true,
+    placeholder: "5",
+    type: "number",
   },
 ];
 
 const lotFormFieldsAr: readonly LotFormField[] = [
+  { label: "رقم القطعة", name: "lotNumber", placeholder: "214", type: "text" },
   {
     label: "العنوان بالإنجليزية",
     name: "titleEn",
@@ -138,7 +195,18 @@ const lotFormFieldsAr: readonly LotFormField[] = [
     placeholder: "تويوتا لاند كروزر 2019",
     type: "text",
   },
-  { label: "رقم القطعة", name: "lotNumber", placeholder: "214", type: "text" },
+  {
+    label: "وقت البدء",
+    name: "startsAt",
+    placeholder: "2026-09-08T14:00",
+    type: "datetime-local",
+  },
+  {
+    label: "وقت الإغلاق",
+    name: "closesAt",
+    placeholder: "2026-09-08T18:00",
+    type: "datetime-local",
+  },
   {
     label: "سعر البداية AED",
     name: "startingBid",
@@ -148,40 +216,41 @@ const lotFormFieldsAr: readonly LotFormField[] = [
   {
     label: "الاحتياطي AED",
     name: "reservePrice",
+    optional: true,
     placeholder: "540000",
     type: "number",
   },
   {
-    label: "طريقة زيادة المزايدة",
-    name: "incrementMode",
-    placeholder: "النسبة الافتراضية من سعر البداية",
-    type: "select",
-  },
-  {
-    label: "زيادة مخصصة AED",
-    name: "customIncrement",
-    placeholder: "1000",
+    label: "نافذة الإغلاق الناعم بالدقائق",
+    name: "softCloseWindowMinutes",
+    optional: true,
+    placeholder: "2",
     type: "number",
   },
   {
     label: "تمديد الإغلاق بالدقائق",
     name: "softCloseExtensionMinutes",
+    optional: true,
     placeholder: "2",
     type: "number",
   },
   {
-    label: "قطعة مميزة",
-    name: "featured",
-    placeholder: "عرض في الواجهة",
-    type: "checkbox",
+    label: "الحد الأقصى لعدد التمديدات",
+    name: "softCloseMaximumExtensions",
+    optional: true,
+    placeholder: "5",
+    type: "number",
   },
 ];
 
 const messages: Record<Locale, Messages> = {
   ar: {
+    actionErrorLabel: "فشل الإجراء. حاول مرة أخرى.",
+    actionPendingLabel: "جارٍ الإرسال…",
     actionRequired: "يتطلب سبباً وتأكيداً وسجل تدقيق",
     adminRole: "مدير العمليات",
     approveButton: "اعتماد",
+    approveSuccessLabel: "تم الاعتماد",
     approvalQueue: [
       {
         amount: "AED 560,000",
@@ -203,6 +272,17 @@ const messages: Record<Locale, Messages> = {
       },
     ],
     approvalsTitle: "قائمة الاعتمادات",
+    auctionClosesAtLabel: "وقت الإغلاق",
+    auctionCreateButton: "جدولة",
+    auctionCreateTitle: "جدولة مزاد جديد",
+    auctionListEmpty: "لا توجد مزادات من واجهة API بعد.",
+    auctionListTitle: "المزادات المباشرة",
+    auctionNoteLabel: "ملاحظة (اختياري)",
+    auctionReasonLabel: "السبب",
+    auctionReasonPlaceholder: "سبب تشغيلي موثق",
+    auctionStartsAtLabel: "وقت البدء",
+    auctionTitleArLabel: "العنوان بالعربية",
+    auctionTitleEnLabel: "العنوان بالإنجليزية",
     auditEvents: [
       "تم إنشاء مزاد السيارات الأسبوعي بواسطة ops.admin",
       "تم تعديل زيادة المزايدة للقطعة #214 مع سبب موثق",
@@ -222,18 +302,31 @@ const messages: Record<Locale, Messages> = {
     ],
     auctionsTitle: "إدارة المزادات",
     brand: "بايونير للمزادات",
+    cancelAuctionButton: "إلغاء",
     dashboardTitle: "لوحة العمليات",
+    decisionNoteLabel: "ملاحظة (اختياري)",
+    decisionNotePlaceholder: "سياق إضافي للقرار",
     eyebrow: "مساحة إدارة المزادات",
     finalBidApprovalTitle: "اعتماد عرض نهائي",
+    formValidationError: "تحقق من الحقول المطلوبة وحاول مرة أخرى.",
     heading: "تحكم آمن في المزادات والقطع والاعتمادات.",
     localeSwitch: "English",
     localeSwitchHref: "/en",
+    lotAuctionLabel: "المزاد",
+    lotAuctionPlaceholder: "اختر مزاداً",
+    lotCreateSuccess: "تم إنشاء القطعة",
     lotFormFields: lotFormFieldsAr,
-    lotFormSaveButton: "حفظ كمسودة",
+    lotFormSaveButton: "إنشاء القطعة",
     lotFormStaticNotice:
       "نموذج القطعة معطل في المعاينة حتى يتم توصيل جلسة إدارة موثقة.",
-    lotFormTitle: "نموذج إنشاء / تعديل قطعة",
+    lotFormTitle: "نموذج إنشاء قطعة",
+    lotIncrementModeCustomLabel: "قيمة مخصصة (fils)",
+    lotIncrementModeLabel: "طريقة زيادة المزايدة",
+    lotIncrementModePercentLabel: "نسبة من سعر البداية (basis points)",
+    lotIncrementValueLabel: "قيمة الزيادة",
     lotListEmpty: "لا توجد قطع من واجهة API بعد.",
+    lotNoAuctionsNotice:
+      "أنشئ مزاداً أولاً — يجب أن تنتمي القطعة إلى مزاد قائم.",
     lotListTitle: "قطع من الخلفية",
     lotsActions: [
       {
@@ -257,18 +350,38 @@ const messages: Record<Locale, Messages> = {
       { label: "قطع مميزة", tone: "brand", value: "42" },
       { label: "تنبيهات عالية الخطورة", tone: "danger", value: "2" },
     ],
+    pauseButton: "إيقاف",
+    resumeButton: "استئناف",
     reviewButton: "مراجعة",
     rejectButton: "رفض",
+    rejectSuccessLabel: "تم الرفض",
     rejectionReasonLabel: "سبب الرفض",
     rejectionReasons: [
       {
+        code: "BUYER_ELIGIBILITY_FAILED",
         description: "لم يجتز المشتري متطلبات الأهلية.",
         label: "أهلية المشتري",
       },
-      { description: "المستندات المطلوبة غير مكتملة.", label: "المستندات" },
-      { description: "لم يتحقق سعر الاحتياطي.", label: "الاحتياطي" },
-      { description: "تم سحب الأصل من البائع.", label: "سحب البائع" },
-      { description: "سبب تشغيلي آخر مع ملاحظة.", label: "أخرى" },
+      {
+        code: "DOCUMENTATION_INCOMPLETE",
+        description: "المستندات المطلوبة غير مكتملة.",
+        label: "المستندات",
+      },
+      {
+        code: "RESERVE_NOT_MET",
+        description: "لم يتحقق سعر الاحتياطي.",
+        label: "الاحتياطي",
+      },
+      {
+        code: "SELLER_WITHDRAWN",
+        description: "تم سحب الأصل من البائع.",
+        label: "سحب البائع",
+      },
+      {
+        code: "OTHER",
+        description: "سبب تشغيلي آخر مع ملاحظة.",
+        label: "أخرى",
+      },
     ],
     reserveMetApprovalTitle: "الاحتياطي تحقق",
     shellLabel: "لوحة إدارة بايونير",
@@ -278,9 +391,12 @@ const messages: Record<Locale, Messages> = {
       "هذه واجهة تشغيل أولية تعمل ببيانات نموذجية حتى تتوفر قاعدة PostgreSQL.",
   },
   en: {
+    actionErrorLabel: "Action failed. Try again.",
+    actionPendingLabel: "Submitting…",
     actionRequired: "Requires reason, confirmation, and audit record",
     adminRole: "Operations admin",
     approveButton: "Approve",
+    approveSuccessLabel: "Approved",
     approvalQueue: [
       {
         amount: "AED 560,000",
@@ -302,6 +418,17 @@ const messages: Record<Locale, Messages> = {
       },
     ],
     approvalsTitle: "Approval queue",
+    auctionClosesAtLabel: "Closes at",
+    auctionCreateButton: "Schedule",
+    auctionCreateTitle: "Schedule a new auction",
+    auctionListEmpty: "No backend auctions returned yet.",
+    auctionListTitle: "Live auctions",
+    auctionNoteLabel: "Note (optional)",
+    auctionReasonLabel: "Reason",
+    auctionReasonPlaceholder: "Documented operational reason",
+    auctionStartsAtLabel: "Starts at",
+    auctionTitleArLabel: "Title Arabic",
+    auctionTitleEnLabel: "Title English",
     auditEvents: [
       "Weekly car auction created by ops.admin",
       "Lot #214 bid increment changed with documented reason",
@@ -322,18 +449,31 @@ const messages: Record<Locale, Messages> = {
     ],
     auctionsTitle: "Auction operations",
     brand: "Pioneer Auctions",
+    cancelAuctionButton: "Cancel",
     dashboardTitle: "Operations dashboard",
+    decisionNoteLabel: "Note (optional)",
+    decisionNotePlaceholder: "Additional context for this decision",
     eyebrow: "Auction admin workspace",
     finalBidApprovalTitle: "Final-bid approval",
+    formValidationError: "Check the required fields and try again.",
     heading: "Safe control for auctions, lots, and approvals.",
     localeSwitch: "العربية",
     localeSwitchHref: "/ar",
+    lotAuctionLabel: "Auction",
+    lotAuctionPlaceholder: "Select an auction",
+    lotCreateSuccess: "Lot created",
     lotFormFields: lotFormFieldsEn,
-    lotFormSaveButton: "Save draft",
+    lotFormSaveButton: "Create lot",
     lotFormStaticNotice:
       "Lot form is disabled in the static preview until an authenticated admin runtime session is connected.",
-    lotFormTitle: "Create / edit lot form",
+    lotFormTitle: "Create lot form",
+    lotIncrementModeCustomLabel: "Custom value (fils)",
+    lotIncrementModeLabel: "Bid increment mode",
+    lotIncrementModePercentLabel: "Percentage of starting price (basis points)",
+    lotIncrementValueLabel: "Increment value",
     lotListEmpty: "No backend lots returned yet.",
+    lotNoAuctionsNotice:
+      "Create an auction first — a lot must belong to an existing auction.",
     lotListTitle: "Backend lots",
     lotsActions: [
       {
@@ -359,21 +499,38 @@ const messages: Record<Locale, Messages> = {
       { label: "Featured lots", tone: "brand", value: "42" },
       { label: "High-risk alerts", tone: "danger", value: "2" },
     ],
+    pauseButton: "Pause",
+    resumeButton: "Resume",
     reviewButton: "Review",
     rejectButton: "Reject",
+    rejectSuccessLabel: "Rejected",
     rejectionReasonLabel: "Rejection reason",
     rejectionReasons: [
       {
+        code: "BUYER_ELIGIBILITY_FAILED",
         description: "Buyer did not pass final eligibility checks.",
         label: "Buyer eligibility",
       },
       {
+        code: "DOCUMENTATION_INCOMPLETE",
         description: "Required documents are incomplete.",
         label: "Documentation",
       },
-      { description: "Reserve price was not met.", label: "Reserve not met" },
-      { description: "Seller withdrew the asset.", label: "Seller withdrawn" },
-      { description: "Other operational reason with note.", label: "Other" },
+      {
+        code: "RESERVE_NOT_MET",
+        description: "Reserve price was not met.",
+        label: "Reserve not met",
+      },
+      {
+        code: "SELLER_WITHDRAWN",
+        description: "Seller withdrew the asset.",
+        label: "Seller withdrawn",
+      },
+      {
+        code: "OTHER",
+        description: "Other operational reason with note.",
+        label: "Other",
+      },
     ],
     reserveMetApprovalTitle: "Reserve met",
     shellLabel: "Pioneer admin console",

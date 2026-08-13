@@ -18,6 +18,7 @@ describe("admin operations data adapter", () => {
     expect(data.source).toBe("static-fallback");
     expect(data.metrics).toBe(messages.metrics);
     expect(data.queue).toBe(messages.approvalQueue);
+    expect(data.session).toBeNull();
   });
 
   it("maps protected admin API read models into localized UI data", async () => {
@@ -53,6 +54,18 @@ describe("admin operations data adapter", () => {
           },
         ]);
       }
+      if (String(input).endsWith("/auctions")) {
+        return jsonResponse([
+          {
+            closesAt: "2026-09-08T18:00:00.000Z",
+            id: "22222222-2222-4222-8222-222222222222",
+            lifecycle: "LIVE",
+            startsAt: "2026-09-08T14:00:00.000Z",
+            titleAr: "مزاد السيارات الأسبوعي",
+            titleEn: "Weekly car auction",
+          },
+        ]);
+      }
       return jsonResponse({
         contractVersion: 1,
         generatedAt: "2026-09-01T16:00:00.000Z",
@@ -76,6 +89,13 @@ describe("admin operations data adapter", () => {
     const data = await loadAdminOperationsData("en", messagesFor("en"));
 
     expect(data).toMatchObject({
+      auctions: [
+        {
+          id: "22222222-2222-4222-8222-222222222222",
+          lifecycle: "LIVE",
+          title: "Weekly car auction",
+        },
+      ],
       metrics: [
         { label: "Live auctions", tone: "success", value: "4" },
         { label: "Pending approvals", tone: "warning", value: "7" },
@@ -102,6 +122,10 @@ describe("admin operations data adapter", () => {
       source: "api",
     });
     expect(data.queue[0]?.amount).toContain("560,000");
+    expect(data.session).toEqual({
+      apiBaseUrl: "https://api.test",
+      testAccountId: "00000000-0000-4000-8000-000000000001",
+    });
   });
 
   it("falls back to static data when the admin API is unavailable", async () => {
