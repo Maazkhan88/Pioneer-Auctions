@@ -72,7 +72,7 @@ function staticFallback(): BuyerHomeData {
       {
         badge: "Live",
         bids: "Live bidding",
-        category: "Automotive",
+        category: "Cars",
         closesIn: "14d",
         imageClass: "m3-lot-car",
         increment: "AED 561,000",
@@ -86,7 +86,7 @@ function staticFallback(): BuyerHomeData {
       {
         badge: "Upcoming",
         bids: "0 bids",
-        category: "Real estate",
+        category: "Real Estate",
         closesIn: "16d",
         imageClass: "m3-lot-material",
         increment: "AED 2,200,000",
@@ -100,7 +100,7 @@ function staticFallback(): BuyerHomeData {
       {
         badge: "Live",
         bids: "Live bidding",
-        category: "Heavy equipment",
+        category: "Equipment",
         closesIn: "18d",
         imageClass: "m3-lot-equipment",
         increment: "AED 190,000",
@@ -123,10 +123,19 @@ function badgeFor(locale: Locale, lifecycle: string): string {
   return lifecycle === "SCHEDULED" ? "Upcoming" : "Live";
 }
 
+/**
+ * Matches `Messages.categories` in `apps/web/i18n/messages.ts` (skipping
+ * index 0, "All"/"الكل") so the homepage's category filter chips can match
+ * lots by exact string equality -- see `LotBrowser`
+ * (`apps/web/components/lot-browser.tsx`). Before this fix, this function
+ * returned a differently-worded vocabulary ("Automotive"/"Heavy equipment")
+ * than the chip labels ("Cars"/"Equipment"), so no lot could ever match a
+ * clicked category chip.
+ */
 function categoryFor(locale: Locale, index: number): string {
-  const english = ["Automotive", "Real estate", "Heavy equipment"];
-  const arabic = ["سيارات", "عقارات", "معدات ثقيلة"];
-  return (locale === "ar" ? arabic : english)[index % 3] ?? "Automotive";
+  const english = ["Cars", "Equipment", "Real Estate"];
+  const arabic = ["سيارات", "معدات", "عقارات"];
+  return (locale === "ar" ? arabic : english)[index % 3] ?? "Cars";
 }
 
 function formatAed(locale: Locale, amountFils: number): string {

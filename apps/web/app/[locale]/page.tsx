@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-import { WatchButton } from "../../components/watch-button";
-import { isLocale, messagesFor, type PreviewLot } from "../../i18n/messages";
+import { LotBrowser } from "../../components/lot-browser";
+import { isLocale, messagesFor } from "../../i18n/messages";
 import { loadBuyerHomeData } from "../../lib/home-data";
 
 interface LocalePageProperties {
@@ -20,58 +21,35 @@ function GavelMark() {
   );
 }
 
-function LotCard({
-  bidNow,
-  currentBid,
-  locale,
-  lot,
-  nextBid,
-}: {
-  readonly bidNow: string;
-  readonly currentBid: string;
-  readonly locale: string;
-  readonly lot: PreviewLot;
-  readonly nextBid: string;
-}) {
-  const detailHref = `/${locale}/lots/${encodeURIComponent(lot.lotId)}`;
+export async function generateMetadata({
+  params,
+}: LocalePageProperties): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) {
+    return {};
+  }
+  const messages = messagesFor(locale);
 
-  return (
-    <article className={`m3-lot-card ${lot.status}`}>
-      <div className={`m3-lot-media ${lot.imageClass}`}>
-        <span className="m3-live-chip">{lot.badge}</span>
-        <WatchButton lotId={lot.lotId} />
-      </div>
-      <div className="m3-lot-body">
-        <div className="m3-meta-row">
-          <span>{lot.lotNumber}</span>
-          <span>{lot.category}</span>
-        </div>
-        <h2>
-          <Link href={detailHref}>{lot.title}</Link>
-        </h2>
-        <div className="m3-status-row">
-          <span className="m3-timer" dir="ltr">
-            {lot.closesIn}
-          </span>
-          <span>{lot.bids}</span>
-          <span>{lot.reserve}</span>
-        </div>
-        <div className="m3-bid-panel">
-          <div>
-            <span>{currentBid}</span>
-            <strong dir="ltr">{lot.price}</strong>
-          </div>
-          <div>
-            <span>{nextBid}</span>
-            <strong dir="ltr">{lot.increment}</strong>
-          </div>
-        </div>
-        <Link className="m3-bid-button" href={detailHref}>
-          {bidNow}
-        </Link>
-      </div>
-    </article>
-  );
+  return {
+    alternates: {
+      languages: { ar: "/ar", en: "/en" },
+      canonical: `/${locale}`,
+    },
+    description: messages.siteDescription,
+    openGraph: {
+      description: messages.siteDescription,
+      locale: locale === "ar" ? "ar_AE" : "en_AE",
+      title: "Pioneer Auctions",
+      type: "website",
+      url: `/${locale}`,
+    },
+    title: "Pioneer Auctions",
+    twitter: {
+      card: "summary",
+      description: messages.siteDescription,
+      title: "Pioneer Auctions",
+    },
+  };
 }
 
 export default async function LocalePage({ params }: LocalePageProperties) {
@@ -93,6 +71,7 @@ export default async function LocalePage({ params }: LocalePageProperties) {
         <nav className="m3-nav" aria-label="Primary">
           <a href="#lots">{messages.activeLots}</a>
           <a href="#detail">{messages.lotDetail}</a>
+          <Link href={`/${locale}/calendar`}>{messages.navCalendar}</Link>
           <a href="#admin">{messages.adminPreview}</a>
         </nav>
         <Link className="m3-language" href={messages.localeSwitchHref}>
@@ -148,29 +127,11 @@ export default async function LocalePage({ params }: LocalePageProperties) {
             <a href="#all">{messages.browseAll}</a>
           </div>
 
-          <div className="m3-search-card">
-            <input placeholder={messages.searchPlaceholder} />
-            <div className="m3-chip-row">
-              {messages.categories.map((category) => (
-                <button key={category} type="button">
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="m3-lot-grid">
-            {homeData.lots.map((lot) => (
-              <LotCard
-                key={lot.lotId}
-                bidNow={messages.bidNow}
-                currentBid={messages.currentBid}
-                locale={locale}
-                lot={lot}
-                nextBid={messages.nextBid}
-              />
-            ))}
-          </div>
+          <LotBrowser
+            locale={locale}
+            lots={homeData.lots}
+            messages={messages}
+          />
         </section>
 
         <section className="m3-detail" id="detail">

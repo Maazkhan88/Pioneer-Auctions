@@ -6,7 +6,7 @@ const isCloudflare =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@pioneer/design-tokens"],
+  transpilePackages: ["@pioneer/contracts", "@pioneer/design-tokens"],
   ...(isGitHubPages || isCloudflare
     ? {
         ...(isGitHubPages

@@ -23,6 +23,10 @@ export interface Messages {
   readonly bidNow: string;
   readonly bidAction: string;
   readonly browseAll: string;
+  readonly calendarBackToLots: string;
+  readonly calendarEmptyState: string;
+  readonly calendarHeading: string;
+  readonly calendarSubtitle: string;
   readonly categories: readonly string[];
   readonly currentBid: string;
   readonly depositReady: string;
@@ -38,8 +42,10 @@ export interface Messages {
   readonly navCalendar: string;
   readonly navSell: string;
   readonly nextBid: string;
+  readonly noResults: string;
   readonly reserveMet: string;
   readonly searchPlaceholder: string;
+  readonly siteDescription: string;
   readonly softClose: string;
   readonly subtitle: string;
   readonly trustedStats: readonly {
@@ -57,6 +63,10 @@ const messages: Record<Locale, Messages> = {
     bidNow: "زايد الآن",
     bidAction: "زايد الآن",
     browseAll: "تصفح الكل",
+    calendarBackToLots: "العودة إلى كل القطع",
+    calendarEmptyState: "لا توجد مزادات مجدولة حالياً.",
+    calendarHeading: "تقويم المزادات",
+    calendarSubtitle: "تصفح القطع المباشرة والقادمة حسب تاريخ الإغلاق.",
     categories: ["الكل", "سيارات", "معدات", "عقارات", "بحري"],
     currentBid: "المزايدة الحالية",
     depositReady: "وديعتك جاهزة للمزايدة",
@@ -71,8 +81,11 @@ const messages: Record<Locale, Messages> = {
     nextBid: "المزايدة التالية",
     navCalendar: "تقويم المزادات",
     navSell: "بيع",
+    noResults: "لا توجد قطع مطابقة لبحثك.",
     reserveMet: "تم بلوغ السعر الاحتياطي",
     searchPlaceholder: "ابحث عن سيارة، معدة، عقار أو رقم قطعة",
+    siteDescription:
+      "مزادات مباشرة عبر الإنترنت للسيارات والمعدات والعقارات في الإمارات، بشفافية كاملة في الأسعار والوقت.",
     softClose: "إغلاق مرن: أي مزايدة في آخر دقيقتين تمدد الوقت للجميع.",
     subtitle:
       "واجهة جديدة تضع الصور الكبيرة، أرقام الدرهم، حالة الاحتياطي، والزر التالي في المقدمة بدون ازدحام.",
@@ -134,6 +147,10 @@ const messages: Record<Locale, Messages> = {
     bidNow: "Bid now",
     bidAction: "Bid now",
     browseAll: "Browse all",
+    calendarBackToLots: "Back to all lots",
+    calendarEmptyState: "No auctions are scheduled right now.",
+    calendarHeading: "Auction calendar",
+    calendarSubtitle: "Browse live and upcoming lots by closing date.",
     categories: ["All", "Cars", "Equipment", "Real Estate", "Marine"],
     currentBid: "Current bid",
     depositReady: "Deposit ready to bid",
@@ -148,8 +165,11 @@ const messages: Record<Locale, Messages> = {
     nextBid: "Next valid bid",
     navCalendar: "Auction calendar",
     navSell: "Sell",
+    noResults: "No lots match your search.",
     reserveMet: "Reserve met",
     searchPlaceholder: "Search cars, equipment, property or lot number",
+    siteDescription:
+      "Live online auctions for cars, equipment, and real estate in the UAE, with fully transparent pricing and timing.",
     softClose:
       "Soft close: any bid in the final 2 minutes extends time for everyone.",
     subtitle:

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 import { BidPanelShell } from "../../../../components/bid-panel-shell";
 import { WatchButton } from "../../../../components/watch-button";
 import { isLocale, messagesFor } from "../../../../i18n/messages";
+import { getBuyerBidSessionConfig } from "../../../../lib/bid-session";
 import { loadLotDetailData } from "../../../../lib/lot-detail-data";
 
 const previewLotIds = [
@@ -27,6 +29,47 @@ interface LotDetailPageProperties {
   }>;
 }
 
+export async function generateMetadata({
+  params,
+}: LotDetailPageProperties): Promise<Metadata> {
+  const { locale, lotId } = await params;
+  if (!isLocale(locale)) {
+    return {};
+  }
+  const detail = await loadLotDetailData(locale, decodeURIComponent(lotId));
+  if (detail === null) {
+    return {};
+  }
+
+  const title = `${detail.lot.title} — ${detail.lot.lotNumber}`;
+  const description = detail.description;
+  const path = `/${locale}/lots/${encodeURIComponent(detail.lot.lotId)}`;
+
+  return {
+    alternates: {
+      languages: {
+        ar: `/ar/lots/${encodeURIComponent(detail.lot.lotId)}`,
+        en: `/en/lots/${encodeURIComponent(detail.lot.lotId)}`,
+      },
+      canonical: path,
+    },
+    description,
+    openGraph: {
+      description,
+      locale: locale === "ar" ? "ar_AE" : "en_AE",
+      title,
+      type: "website",
+      url: path,
+    },
+    title,
+    twitter: {
+      card: "summary",
+      description,
+      title,
+    },
+  };
+}
+
 export default async function LotDetailPage({
   params,
 }: LotDetailPageProperties) {
@@ -40,6 +83,7 @@ export default async function LotDetailPage({
   if (detail === null) {
     notFound();
   }
+  const session = getBuyerBidSessionConfig();
 
   return (
     <main className="m3-shell">
@@ -79,8 +123,10 @@ export default async function LotDetailPage({
           <div className="m3-reserve-pill">{detail.lot.reserve}</div>
           <BidPanelShell
             currentBid={detail.lot.price}
+            locale={locale}
             lotId={detail.lot.lotId}
             nextBid={detail.lot.increment}
+            session={session}
           />
         </article>
       </section>
