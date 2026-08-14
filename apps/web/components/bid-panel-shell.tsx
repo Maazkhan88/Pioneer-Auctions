@@ -209,8 +209,8 @@ export function BidPanelShell({
     }
     const client = new LotSocketClient(sessionProperty, lotId, {
       onBidAccepted: (event) => {
-        setLiveCurrentBidFils(event.data.currentBid.amountFils);
-        setLiveNextMinimumBidFils(event.data.nextMinimumBid.amountFils);
+        setLiveCurrentBidFils(event.currentBid.amountFils);
+        setLiveNextMinimumBidFils(event.nextMinimumBid.amountFils);
       },
       onSnapshot: (snapshot) => {
         setLiveCurrentBidFils(snapshot.state.currentBid?.amountFils ?? null);

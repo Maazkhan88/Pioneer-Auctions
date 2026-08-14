@@ -14,7 +14,23 @@ const previewLotIds = [
   "66666666-6666-4666-8666-666666666666",
 ] as const;
 
-export const dynamicParams = false;
+/**
+ * Next.js requires this to be a literal boolean (its route-segment-config
+ * parser statically analyzes the export and rejects any computed
+ * expression, even one that would resolve to a constant at build time),
+ * so it cannot vary by `CLOUDFLARE_PAGES`/`output: "export"` the way
+ * `next.config.ts`'s own settings do. `true` (the Next.js default; kept
+ * explicit here for clarity) lets a real lot ID from a live API render on
+ * demand in `next dev` and a real Next.js server deployment, instead of
+ * 404ing for anything outside the three dummy IDs below -- confirmed live
+ * that this was previously a real, blocking gap: the underlying bidding
+ * REST/Socket.IO engine worked correctly for a real lot when called
+ * directly, but this page 404'd for that same lot with `dynamicParams:
+ * false`. The Cloudflare static export build (`output: "export"`) still
+ * only ever serves the three pre-generated dummy pages regardless of this
+ * setting, since there is no server there to render anything on demand.
+ */
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return ["en", "ar"].flatMap((locale) =>

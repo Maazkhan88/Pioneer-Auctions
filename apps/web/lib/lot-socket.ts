@@ -9,14 +9,35 @@ import type { BuyerBidSessionConfig } from "./bid-session";
  * `docs/api-contracts.md` §6-§10 and §14 (reconnect algorithm).
  *
  * Event/command payload shapes below are hand-written local mirrors of the
- * real wire contract (`packages/contracts/src/{events,commands,core}.ts`,
- * cross-checked against the actual server implementation in
- * `apps/api/src/bidding/bidding.gateway.ts`) rather than imported at
- * runtime from `@pioneer/contracts` -- see the doc comment at the top of
+ * real wire contract rather than imported at runtime from
+ * `@pioneer/contracts` -- see the doc comment at the top of
  * `bid-command.ts` (DEC-019 in `docs/decisions-log.md`) for why: Next.js/
  * Turbopack cannot currently bundle a runtime value import from that
  * package into `apps/web`. `Money`/`ErrorCode` remain type-only imports,
  * which are erased at compile time and unaffected by that issue.
+ *
+ * `BidAcceptedEvent`/`AuctionStateChangedEvent` are flat objects, NOT
+ * wrapped in a `LotEventEnvelope<TData>` with a nested `data` field --
+ * confirmed live on 2026-08-14 by actually connecting a socket and
+ * receiving a real `bid:accepted` event, which crashed the original
+ * `data`-nested version of this code (`event.data.currentBid` threw
+ * because `event.data` does not exist). `docs/api-contracts.md` §9
+ * documents an enveloped `LotEventEnvelope<Name, Data>` shape and this
+ * file was originally built against that documented contract, but the
+ * real server (`apps/api/src/bidding/bidding.service.ts`,
+ * `auction-close.service.ts`, `auction-open.service.ts`) writes every
+ * outbox payload flat and `bidding-outbox.publisher.ts` emits it
+ * unwrapped -- see DEC-022. `LotSnapshotEvent.state` is a genuine
+ * exception: the server really does nest lot state under a `state` key
+ * for `lot:snapshot`, matching both the doc and the real
+ * `BiddingService.getLotSnapshot()` implementation.
+ *
+ * `auction:extended` and `reserve:status-changed` are never actually
+ * emitted by any code in `apps/api` today (soft-close extension is
+ * reported via `bid:accepted`'s `extended` boolean instead of a separate
+ * event) -- `onAuctionExtended`/`onReserveStatusChanged` are wired up here
+ * for forward compatibility but are unreachable dead code until/unless
+ * the server adds those events for real.
  *
  * Unlike `bid-command.ts`'s bid-acknowledgement parsing (which is
  * hand-validated field-by-field because it directly drives financial
@@ -70,33 +91,44 @@ export interface LotSnapshotEvent {
   readonly state: LotPublicStateLike;
 }
 
-interface LotEventEnvelope<TData> {
+export interface BidAcceptedEvent {
+  readonly amount: Money;
   readonly auctionId: string;
-  readonly data: TData;
+  readonly bidKind: "MANUAL" | "PROXY";
+  readonly currentBid: Money;
+  readonly extended: boolean;
+  readonly lotId: string;
+  readonly nextMinimumBid: Money;
+  readonly reserveStatus: string;
+  readonly sequence: number;
+}
+
+/** Unreachable today -- see the file-level doc comment above. */
+export interface AuctionExtendedEvent {
+  readonly auctionId: string;
+  readonly closesAt: string;
+  readonly extensionCount: number;
   readonly lotId: string;
   readonly sequence: number;
 }
 
-export type BidAcceptedEvent = LotEventEnvelope<{
-  readonly bidCount: number;
-  readonly currentBid: Money;
-  readonly nextMinimumBid: Money;
-  readonly reserveStatus: string;
-}>;
-
-export type AuctionExtendedEvent = LotEventEnvelope<{
-  readonly closesAt: string;
-  readonly extensionCount: number;
-}>;
-
-export type AuctionStateChangedEvent = LotEventEnvelope<{
-  readonly closesAt: string;
+export interface AuctionStateChangedEvent {
+  readonly auctionId: string;
+  readonly closesAt?: string;
   readonly lifecycle: string;
-}>;
+  readonly lotId: string;
+  readonly previousLifecycle: string;
+  readonly sequence: number;
+  readonly startsAt?: string;
+}
 
-export type ReserveStatusChangedEvent = LotEventEnvelope<{
+/** Unreachable today -- see the file-level doc comment above. */
+export interface ReserveStatusChangedEvent {
+  readonly auctionId: string;
+  readonly lotId: string;
   readonly reserveStatus: "MET";
-}>;
+  readonly sequence: number;
+}
 
 /** Personal event -- only delivered to the bidder's own `user:{accountId}` room. */
 export interface MyBidStatusChangedEvent {
