@@ -5,6 +5,7 @@ import type {
   AdminAuctionControlResult,
   AdminAuctionView,
   CreateAuctionInput,
+  UpdateAuctionInput,
 } from "./auction.dto.js";
 
 interface AuctionRow {
@@ -36,6 +37,44 @@ export class AuctionsRepository {
     const row = result.rows[0];
     if (row === undefined) {
       throw new Error("Auction insert did not return a row");
+    }
+    return toAdminAuctionView(row);
+  }
+
+  async update(
+    auctionId: string,
+    input: UpdateAuctionInput,
+  ): Promise<AdminAuctionView> {
+    const result = await this.database.query<AuctionRow>(
+      `
+        UPDATE auctions
+        SET
+          title_en = COALESCE($2, title_en),
+          title_ar = COALESCE($3, title_ar),
+          starts_at = COALESCE($4, starts_at),
+          closes_at = COALESCE($5, closes_at),
+          soft_close_window_ms = COALESCE($6, soft_close_window_ms),
+          soft_close_extension_ms = COALESCE($7, soft_close_extension_ms),
+          soft_close_maximum_extensions = COALESCE($8, soft_close_maximum_extensions),
+          updated_at = now()
+        WHERE id = $1
+        RETURNING id::text, title_en, title_ar, lifecycle, starts_at, closes_at
+      `,
+      [
+        auctionId,
+        input.titleEn ?? null,
+        input.titleAr ?? null,
+        input.startsAt ?? null,
+        input.closesAt ?? null,
+        input.softCloseWindowMs ?? null,
+        input.softCloseExtensionMs ?? null,
+        input.softCloseMaximumExtensions ?? null,
+      ],
+    );
+
+    const row = result.rows[0];
+    if (row === undefined) {
+      throw new Error("Auction update did not return a row");
     }
     return toAdminAuctionView(row);
   }
@@ -84,7 +123,7 @@ export class AuctionsRepository {
       `
         UPDATE auctions
         SET lifecycle = $2, updated_at = now()
-        WHERE id = $1 AND lifecycle = ANY($3::text[])
+        WHERE id = $1 AND lifecycle::text = ANY($3::text[])
         RETURNING id::text, lifecycle, updated_at
       `,
       [auctionId, lifecycle, allowedFrom],

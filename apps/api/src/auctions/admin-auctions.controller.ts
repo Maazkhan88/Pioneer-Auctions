@@ -5,6 +5,7 @@ import {
   Headers,
   Inject,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -15,6 +16,7 @@ import { RequirePermission } from "../identity/permission.decorator.js";
 import {
   parseAuctionControlInput,
   parseCreateAuctionInput,
+  parseUpdateAuctionInput,
 } from "./auction.dto.js";
 import type {
   AdminAuctionControlResult,
@@ -55,6 +57,27 @@ export class AdminAuctionsController {
       subjectType: "auction",
     });
     return created;
+  }
+
+  @Patch(":auctionId")
+  @RequirePermission("admin.auctions.write")
+  async update(
+    @Param("auctionId") auctionId: string,
+    @Body() body: unknown,
+    @Headers("x-correlation-id") correlationId = "missing-correlation-id",
+    @Headers("x-pioneer-test-account-id") actorAccountId: string | undefined,
+  ): Promise<AdminAuctionView> {
+    const input = parseUpdateAuctionInput(body);
+    const updated = await this.auctions.update(auctionId, input);
+    await this.audit.record({
+      action: "admin.auctions.update",
+      actorAccountId: actorAccountId ?? null,
+      correlationId,
+      metadata: { fields: Object.keys(input) },
+      subjectId: updated.id,
+      subjectType: "auction",
+    });
+    return updated;
   }
 
   @Post(":auctionId/pause")

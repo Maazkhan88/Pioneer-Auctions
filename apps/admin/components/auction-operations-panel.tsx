@@ -6,6 +6,7 @@ import type { AdminAuctionItem, Locale, Messages } from "../i18n/messages";
 import {
   submitAuctionControl,
   submitCreateAuction,
+  submitUpdateAuction,
 } from "../lib/admin-actions";
 import type { AdminSessionConfig } from "../lib/admin-session";
 
@@ -16,6 +17,13 @@ type ActionState =
   | { readonly status: "pending" }
   | { readonly status: "error"; readonly message: string }
   | { readonly status: "done" };
+
+interface EditFormState {
+  readonly closesAt: string;
+  readonly startsAt: string;
+  readonly titleAr: string;
+  readonly titleEn: string;
+}
 
 const NON_CANCELLABLE_LIFECYCLES = new Set(["CANCELLED", "CLOSED"]);
 
@@ -38,6 +46,16 @@ export function AuctionOperationsPanel({
   const [controlStateById, setControlStateById] = useState<
     Record<string, ActionState>
   >({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditFormState>({
+    closesAt: "",
+    startsAt: "",
+    titleAr: "",
+    titleEn: "",
+  });
+  const [editStateById, setEditStateById] = useState<
+    Record<string, ActionState>
+  >({});
   const [createForm, setCreateForm] = useState({
     closesAt: "",
     startsAt: "",
@@ -47,6 +65,91 @@ export function AuctionOperationsPanel({
   const [createState, setCreateState] = useState<ActionState>({
     status: "idle",
   });
+
+  function startEdit(auction: AdminAuctionItem) {
+    setEditingId(auction.id);
+    setEditForm({
+      closesAt: toDatetimeLocal(auction.closesAt),
+      startsAt: toDatetimeLocal(auction.startsAt),
+      titleAr: auction.titleAr,
+      titleEn: auction.titleEn,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(auctionId: string) {
+    if (session === null) {
+      return;
+    }
+    if (
+      editForm.titleEn.trim().length === 0 ||
+      editForm.titleAr.trim().length === 0 ||
+      editForm.startsAt.length === 0 ||
+      editForm.closesAt.length === 0
+    ) {
+      setEditStateById((current) => ({
+        ...current,
+        [auctionId]: { message: messages.formValidationError, status: "error" },
+      }));
+      return;
+    }
+    const startsAtIso = new Date(editForm.startsAt).toISOString();
+    const closesAtIso = new Date(editForm.closesAt).toISOString();
+    if (new Date(startsAtIso) >= new Date(closesAtIso)) {
+      setEditStateById((current) => ({
+        ...current,
+        [auctionId]: { message: messages.formValidationError, status: "error" },
+      }));
+      return;
+    }
+
+    setEditStateById((current) => ({
+      ...current,
+      [auctionId]: { status: "pending" },
+    }));
+    try {
+      const updated = await submitUpdateAuction({
+        apiBaseUrl: session.apiBaseUrl,
+        auctionId,
+        closesAt: closesAtIso,
+        correlationId: crypto.randomUUID(),
+        startsAt: startsAtIso,
+        testAccountId: session.testAccountId,
+        titleAr: editForm.titleAr.trim(),
+        titleEn: editForm.titleEn.trim(),
+      });
+      setAuctions((current) =>
+        current.map((entry) =>
+          entry.id === auctionId
+            ? {
+                ...entry,
+                closesAt: updated.closesAt,
+                startsAt: updated.startsAt,
+                title: locale === "ar" ? updated.titleAr : updated.titleEn,
+                titleAr: updated.titleAr,
+                titleEn: updated.titleEn,
+              }
+            : entry,
+        ),
+      );
+      setEditStateById((current) => ({
+        ...current,
+        [auctionId]: { status: "done" },
+      }));
+      setEditingId(null);
+    } catch (error) {
+      setEditStateById((current) => ({
+        ...current,
+        [auctionId]: {
+          message: error instanceof Error ? error.message : "failed",
+          status: "error",
+        },
+      }));
+    }
+  }
 
   async function runControl(auction: AdminAuctionItem, type: ControlType) {
     if (session === null) {
@@ -148,6 +251,8 @@ export function AuctionOperationsPanel({
           lifecycle: created.lifecycle,
           startsAt: created.startsAt,
           title: locale === "ar" ? created.titleAr : created.titleEn,
+          titleAr: created.titleAr,
+          titleEn: created.titleEn,
         },
       ]);
       setCreateForm({ closesAt: "", startsAt: "", titleAr: "", titleEn: "" });
@@ -173,6 +278,9 @@ export function AuctionOperationsPanel({
             {auctions.map((auction) => {
               const state = controlStateById[auction.id] ?? { status: "idle" };
               const rowDisabled = disabled || state.status === "pending";
+              const isEditing = editingId === auction.id;
+              const editState = editStateById[auction.id] ?? { status: "idle" };
+
               return (
                 <article className="auction-row" key={auction.id}>
                   <div className="lot-row">
@@ -187,81 +295,190 @@ export function AuctionOperationsPanel({
                       <strong>{auction.lifecycle}</strong>
                     </div>
                   </div>
-                  <div className="decision-controls">
-                    <label>
-                      <span>{messages.auctionReasonLabel}</span>
-                      <input
-                        disabled={rowDisabled}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setReasonById((current) => ({
-                            ...current,
-                            [auction.id]: value,
-                          }));
-                        }}
-                        placeholder={messages.auctionReasonPlaceholder}
-                        type="text"
-                        value={reasonById[auction.id] ?? ""}
-                      />
-                    </label>
-                    <label>
-                      <span>{messages.auctionNoteLabel}</span>
-                      <input
-                        disabled={rowDisabled}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setNoteById((current) => ({
-                            ...current,
-                            [auction.id]: value,
-                          }));
-                        }}
-                        type="text"
-                        value={noteById[auction.id] ?? ""}
-                      />
-                    </label>
-                    <div className="decision-buttons">
-                      <button
-                        disabled={rowDisabled || auction.lifecycle !== "LIVE"}
-                        onClick={() => {
-                          void runControl(auction, "pause");
-                        }}
-                        type="button"
-                      >
-                        {messages.pauseButton}
-                      </button>
-                      <button
-                        disabled={rowDisabled || auction.lifecycle !== "PAUSED"}
-                        onClick={() => {
-                          void runControl(auction, "resume");
-                        }}
-                        type="button"
-                      >
-                        {messages.resumeButton}
-                      </button>
-                      <button
-                        className="button-secondary"
-                        disabled={
-                          rowDisabled ||
-                          NON_CANCELLABLE_LIFECYCLES.has(auction.lifecycle)
-                        }
-                        onClick={() => {
-                          void runControl(auction, "cancel");
-                        }}
-                        type="button"
-                      >
-                        {messages.cancelAuctionButton}
-                      </button>
+
+                  {isEditing ? (
+                    <div className="decision-controls">
+                      <div className="form-grid">
+                        <label>
+                          <span>{messages.auctionTitleEnLabel}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setEditForm((current) => ({
+                                ...current,
+                                titleEn: value,
+                              }));
+                            }}
+                            type="text"
+                            value={editForm.titleEn}
+                          />
+                        </label>
+                        <label>
+                          <span>{messages.auctionTitleArLabel}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setEditForm((current) => ({
+                                ...current,
+                                titleAr: value,
+                              }));
+                            }}
+                            type="text"
+                            value={editForm.titleAr}
+                          />
+                        </label>
+                        <label>
+                          <span>{messages.auctionStartsAtLabel}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setEditForm((current) => ({
+                                ...current,
+                                startsAt: value,
+                              }));
+                            }}
+                            type="datetime-local"
+                            value={editForm.startsAt}
+                          />
+                        </label>
+                        <label>
+                          <span>{messages.auctionClosesAtLabel}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setEditForm((current) => ({
+                                ...current,
+                                closesAt: value,
+                              }));
+                            }}
+                            type="datetime-local"
+                            value={editForm.closesAt}
+                          />
+                        </label>
+                      </div>
+                      <div className="decision-buttons">
+                        <button
+                          disabled={rowDisabled}
+                          onClick={() => {
+                            void saveEdit(auction.id);
+                          }}
+                          type="button"
+                        >
+                          {messages.saveButton}
+                        </button>
+                        <button
+                          className="button-secondary"
+                          disabled={rowDisabled}
+                          onClick={cancelEdit}
+                          type="button"
+                        >
+                          {messages.cancelButton}
+                        </button>
+                      </div>
+                      {editState.status === "error" ? (
+                        <p className="m3-live-status is-error">
+                          {editState.message}
+                        </p>
+                      ) : editState.status === "pending" ? (
+                        <p className="m3-live-status is-pending">
+                          {messages.actionPendingLabel}
+                        </p>
+                      ) : null}
                     </div>
-                    {session === null ? (
-                      <p>{messages.staticPreviewActionNotice}</p>
-                    ) : state.status === "pending" ? (
-                      <p className="m3-live-status is-pending">
-                        {messages.actionPendingLabel}
-                      </p>
-                    ) : state.status === "error" ? (
-                      <p className="m3-live-status is-error">{state.message}</p>
-                    ) : null}
-                  </div>
+                  ) : (
+                    <div className="decision-controls">
+                      <label>
+                        <span>{messages.auctionReasonLabel}</span>
+                        <input
+                          disabled={rowDisabled}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setReasonById((current) => ({
+                              ...current,
+                              [auction.id]: value,
+                            }));
+                          }}
+                          placeholder={messages.auctionReasonPlaceholder}
+                          type="text"
+                          value={reasonById[auction.id] ?? ""}
+                        />
+                      </label>
+                      <label>
+                        <span>{messages.auctionNoteLabel}</span>
+                        <input
+                          disabled={rowDisabled}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setNoteById((current) => ({
+                              ...current,
+                              [auction.id]: value,
+                            }));
+                          }}
+                          type="text"
+                          value={noteById[auction.id] ?? ""}
+                        />
+                      </label>
+                      <div className="decision-buttons">
+                        <button
+                          disabled={rowDisabled}
+                          onClick={() => {
+                            startEdit(auction);
+                          }}
+                          type="button"
+                        >
+                          {messages.editButton}
+                        </button>
+                        <button
+                          disabled={rowDisabled || auction.lifecycle !== "LIVE"}
+                          onClick={() => {
+                            void runControl(auction, "pause");
+                          }}
+                          type="button"
+                        >
+                          {messages.pauseButton}
+                        </button>
+                        <button
+                          disabled={
+                            rowDisabled || auction.lifecycle !== "PAUSED"
+                          }
+                          onClick={() => {
+                            void runControl(auction, "resume");
+                          }}
+                          type="button"
+                        >
+                          {messages.resumeButton}
+                        </button>
+                        <button
+                          className="button-secondary"
+                          disabled={
+                            rowDisabled ||
+                            NON_CANCELLABLE_LIFECYCLES.has(auction.lifecycle)
+                          }
+                          onClick={() => {
+                            void runControl(auction, "cancel");
+                          }}
+                          type="button"
+                        >
+                          {messages.cancelAuctionButton}
+                        </button>
+                      </div>
+                      {session === null ? (
+                        <p>{messages.staticPreviewActionNotice}</p>
+                      ) : state.status === "pending" ? (
+                        <p className="m3-live-status is-pending">
+                          {messages.actionPendingLabel}
+                        </p>
+                      ) : state.status === "error" ? (
+                        <p className="m3-live-status is-error">
+                          {state.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -361,4 +578,10 @@ function formatDateTime(locale: Locale, iso: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));
+}
+
+function toDatetimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

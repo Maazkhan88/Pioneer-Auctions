@@ -508,6 +508,29 @@ button:disabled:hover {
   padding-block-start: var(--pa-space-3);
 }
 
+.lot-form textarea {
+  background: white;
+  border: 1px solid var(--pa-color-border);
+  border-radius: 0.85rem;
+  color: var(--pa-color-ink);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.82rem;
+  padding: var(--pa-space-3);
+  resize: vertical;
+}
+
+.bulk-import-results ul {
+  display: grid;
+  gap: var(--pa-space-1);
+  margin: 0;
+  padding-inline-start: var(--pa-space-5);
+}
+
+.bulk-import-results li {
+  color: var(--pa-color-muted);
+  font-size: 0.82rem;
+}
+
 .audit-panel ol {
   display: grid;
   gap: var(--pa-space-3);

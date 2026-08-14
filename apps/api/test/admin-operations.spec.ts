@@ -92,6 +92,48 @@ describe("admin operations read models and final-bid decisions", () => {
     expect(JSON.stringify(response.body)).not.toContain("proxy");
   });
 
+  it("returns filtered immutable audit events for authorized admin users", async () => {
+    app = await createApp({
+      ...activeAccount,
+      permissions: [...activeAccount.permissions, "admin.audit.read"],
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    const response = await request(server)
+      .get("/api/v1/admin/audit-events")
+      .set("x-pioneer-test-account-id", activeAccount.id)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      contractVersion: 1,
+      events: [
+        {
+          action: "admin.auctions.pause",
+          actorAccountId: activeAccount.id,
+          correlationId: "corr-audit-1",
+          id: "audit-event-1",
+          reasonCode: null,
+          subjectId: "22222222-2222-4222-8222-222222222222",
+          subjectType: "auction",
+        },
+      ],
+    });
+    expect(response.body.generatedAt).toEqual(expect.any(String));
+    expect(operations?.listAuditEvents).toHaveBeenCalled();
+  });
+
+  it("requires admin.audit.read to view audit events even with auction permissions", async () => {
+    app = await createApp(activeAccount);
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .get("/api/v1/admin/audit-events")
+      .set("x-pioneer-test-account-id", activeAccount.id)
+      .expect(403);
+
+    expect(operations?.listAuditEvents).not.toHaveBeenCalled();
+  });
+
   it("rejects restricted accounts", async () => {
     app = await createApp({ ...activeAccount, status: "RESTRICTED" });
     const server = app.getHttpServer() as Parameters<typeof request>[0];
@@ -243,6 +285,7 @@ describe("admin operations read models and final-bid decisions", () => {
 interface MockAdminOperationsRepository {
   readonly approveFinalBid: ReturnType<typeof vi.fn>;
   readonly getDashboardMetrics: ReturnType<typeof vi.fn>;
+  readonly listAuditEvents: ReturnType<typeof vi.fn>;
   readonly listFinalBidApprovals: ReturnType<typeof vi.fn>;
   readonly rejectFinalBid: ReturnType<typeof vi.fn>;
 }
@@ -259,6 +302,19 @@ function createRepository(): MockAdminOperationsRepository {
       },
       { key: "FEATURED_LOTS", label: "Featured lots", value: 42 },
       { key: "HIGH_RISK_ALERTS", label: "High-risk alerts", value: 2 },
+    ]),
+    listAuditEvents: vi.fn().mockResolvedValue([
+      {
+        action: "admin.auctions.pause",
+        actorAccountId: "00000000-0000-4000-8000-000000000001",
+        correlationId: "corr-audit-1",
+        id: "audit-event-1",
+        metadata: { reason: "Operations hold" },
+        occurredAt: "2026-09-01T13:00:00.000Z",
+        reasonCode: null,
+        subjectId: "22222222-2222-4222-8222-222222222222",
+        subjectType: "auction",
+      },
     ]),
     listFinalBidApprovals: vi.fn().mockResolvedValue([
       {

@@ -210,7 +210,13 @@ async function insertTerms(client: { query: Pool["query"] }): Promise<string> {
 
 function withSearchPath(databaseUrl: string, schemaName: string): string {
   const url = new URL(databaseUrl);
-  url.searchParams.set("options", `-c search_path=${schemaName}`);
+  // `public` must stay on the search path: extensions (e.g. `citext`) are
+  // installed once per database, and their types/functions live in
+  // whatever schema was current when `CREATE EXTENSION` ran (`public`,
+  // from the main migration). Without it, unqualified `citext` references
+  // in the isolated schema's own migration run can't resolve. `schemaName`
+  // stays first so new objects still default into the isolated schema.
+  url.searchParams.set("options", `-c search_path=${schemaName},public`);
   return url.toString();
 }
 

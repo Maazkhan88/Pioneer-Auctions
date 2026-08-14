@@ -101,6 +101,38 @@ export async function submitCreateAuction(
   });
 }
 
+export interface UpdateAuctionCommand extends AdminActionRuntime {
+  readonly auctionId: string;
+  readonly closesAt?: string;
+  readonly softCloseExtensionMs?: number;
+  readonly softCloseMaximumExtensions?: number;
+  readonly softCloseWindowMs?: number;
+  readonly startsAt?: string;
+  readonly titleAr?: string;
+  readonly titleEn?: string;
+}
+
+export async function submitUpdateAuction(
+  command: UpdateAuctionCommand,
+): Promise<AdminAuctionView> {
+  return postAdminJson<AdminAuctionView>(
+    command,
+    `/admin/auctions/${command.auctionId}`,
+    {
+      body: {
+        closesAt: command.closesAt,
+        softCloseExtensionMs: command.softCloseExtensionMs,
+        softCloseMaximumExtensions: command.softCloseMaximumExtensions,
+        softCloseWindowMs: command.softCloseWindowMs,
+        startsAt: command.startsAt,
+        titleAr: command.titleAr,
+        titleEn: command.titleEn,
+      },
+      method: "PATCH",
+    },
+  );
+}
+
 export type CreateLotIncrement =
   | { readonly mode: "custom"; readonly minimumIncrementFils: number }
   | { readonly mode: "percent"; readonly minimumIncrementPercentBps: number };
@@ -171,10 +203,75 @@ export async function submitCreateLot(
   });
 }
 
+export interface BulkImportRowResult {
+  readonly errors?: unknown;
+  readonly index: number;
+  readonly lot?: AdminLotView;
+  readonly ok: boolean;
+}
+
+export interface BulkImportLotsResponse {
+  readonly committed: boolean;
+  readonly contractVersion: 1;
+  readonly results: readonly BulkImportRowResult[];
+  readonly rowCount: number;
+  readonly validCount: number;
+}
+
+export interface BulkImportLotsCommand extends AdminActionRuntime {
+  readonly dryRun: boolean;
+  readonly rows: readonly unknown[];
+}
+
+export async function submitBulkImportLots(
+  command: BulkImportLotsCommand,
+): Promise<BulkImportLotsResponse> {
+  return postAdminJson<BulkImportLotsResponse>(
+    command,
+    "/admin/lots/bulk-import",
+    {
+      body: { dryRun: command.dryRun, rows: command.rows },
+    },
+  );
+}
+
+export interface UpdateLotCommand extends AdminActionRuntime {
+  readonly closesAt?: string;
+  readonly lotId: string;
+  readonly lotNumber?: string;
+  readonly softCloseExtensionMs?: number;
+  readonly softCloseMaximumExtensions?: number;
+  readonly softCloseWindowMs?: number;
+  readonly startsAt?: string;
+  readonly titleAr?: string;
+  readonly titleEn?: string;
+}
+
+export async function submitUpdateLot(
+  command: UpdateLotCommand,
+): Promise<AdminLotView> {
+  return postAdminJson<AdminLotView>(command, `/admin/lots/${command.lotId}`, {
+    body: {
+      closesAt: command.closesAt,
+      lotNumber: command.lotNumber,
+      softCloseExtensionMs: command.softCloseExtensionMs,
+      softCloseMaximumExtensions: command.softCloseMaximumExtensions,
+      softCloseWindowMs: command.softCloseWindowMs,
+      startsAt: command.startsAt,
+      titleAr: command.titleAr,
+      titleEn: command.titleEn,
+    },
+    method: "PATCH",
+  });
+}
+
 async function postAdminJson<TResponse>(
   runtime: AdminActionRuntime,
   endpoint: string,
-  options: { readonly body: Record<string, unknown> },
+  options: {
+    readonly body: Record<string, unknown>;
+    readonly method?: "PATCH" | "POST";
+  },
 ): Promise<TResponse> {
   const response = await fetch(buildAdminApiUrl(runtime.apiBaseUrl, endpoint), {
     body: JSON.stringify(options.body),
@@ -184,7 +281,7 @@ async function postAdminJson<TResponse>(
       "x-correlation-id": runtime.correlationId,
       "x-pioneer-test-account-id": runtime.testAccountId,
     },
-    method: "POST",
+    method: options.method ?? "POST",
   });
 
   if (!response.ok) {

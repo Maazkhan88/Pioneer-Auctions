@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 
 import { ApprovalQueuePanel } from "../../components/approval-queue-panel";
 import { AuctionOperationsPanel } from "../../components/auction-operations-panel";
+import { BulkImportPanel } from "../../components/bulk-import-panel";
 import { LotManagementPanel } from "../../components/lot-management-panel";
 import { isLocale, messagesFor } from "../../i18n/messages";
-import { loadAdminOperationsData } from "../../lib/admin-data";
+import {
+  formatAuditEvent,
+  loadAdminOperationsData,
+} from "../../lib/admin-data";
 
 interface LocalePageProperties {
   readonly params: Promise<{ readonly locale: string }>;
@@ -79,6 +83,10 @@ export default async function LocalePage({ params }: LocalePageProperties) {
               messages={messages}
               session={operationsData.session}
             />
+            <BulkImportPanel
+              messages={messages}
+              session={operationsData.session}
+            />
           </section>
 
           <section className="panel" id="auctions">
@@ -122,11 +130,19 @@ export default async function LocalePage({ params }: LocalePageProperties) {
             <p className="eyebrow">{messages.actionRequired}</p>
             <h2>{messages.auditTitle}</h2>
           </div>
-          <ol>
-            {messages.auditEvents.map((event) => (
-              <li key={event}>{event}</li>
-            ))}
-          </ol>
+          {operationsData.auditEvents.length === 0 ? (
+            <ol>
+              {messages.auditEvents.map((event) => (
+                <li key={event}>{event}</li>
+              ))}
+            </ol>
+          ) : (
+            <ol>
+              {operationsData.auditEvents.map((event) => (
+                <li key={event.id}>{formatAuditEvent(locale, event)}</li>
+              ))}
+            </ol>
+          )}
         </section>
       </div>
     </section>

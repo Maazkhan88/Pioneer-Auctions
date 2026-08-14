@@ -78,6 +78,24 @@ export interface RejectFinalBidInput {
   readonly reasonCode: FinalBidRejectionReasonCode;
 }
 
+export interface AdminAuditEventView {
+  readonly action: string;
+  readonly actorAccountId: string | null;
+  readonly correlationId: string;
+  readonly id: string;
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly occurredAt: string;
+  readonly reasonCode: string | null;
+  readonly subjectId: string | null;
+  readonly subjectType: string;
+}
+
+export interface AdminAuditEventsView {
+  readonly contractVersion: 1;
+  readonly events: readonly AdminAuditEventView[];
+  readonly generatedAt: string;
+}
+
 export function toMoney(amountFils: number): Money {
   return money(amountFils);
 }

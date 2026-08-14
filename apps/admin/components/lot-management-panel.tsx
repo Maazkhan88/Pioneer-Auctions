@@ -8,7 +8,11 @@ import type {
   Locale,
   Messages,
 } from "../i18n/messages";
-import { submitCreateLot, type CreateLotIncrement } from "../lib/admin-actions";
+import {
+  submitCreateLot,
+  submitUpdateLot,
+  type CreateLotIncrement,
+} from "../lib/admin-actions";
 import type { AdminSessionConfig } from "../lib/admin-session";
 
 type ActionState =
@@ -32,6 +36,28 @@ interface LotFormState {
   readonly titleAr: string;
   readonly titleEn: string;
 }
+
+interface LotEditFormState {
+  readonly closesAt: string;
+  readonly lotNumber: string;
+  readonly softCloseExtensionMinutes: string;
+  readonly softCloseMaximumExtensions: string;
+  readonly softCloseWindowMinutes: string;
+  readonly startsAt: string;
+  readonly titleAr: string;
+  readonly titleEn: string;
+}
+
+const emptyEditForm: LotEditFormState = {
+  closesAt: "",
+  lotNumber: "",
+  softCloseExtensionMinutes: "",
+  softCloseMaximumExtensions: "",
+  softCloseWindowMinutes: "",
+  startsAt: "",
+  titleAr: "",
+  titleEn: "",
+};
 
 const emptyForm: LotFormState = {
   auctionId: "",
@@ -67,6 +93,11 @@ export function LotManagementPanel({
   const [lots, setLots] = useState(initialLots);
   const [form, setForm] = useState<LotFormState>(emptyForm);
   const [state, setState] = useState<ActionState>({ status: "idle" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<LotEditFormState>(emptyEditForm);
+  const [editStateById, setEditStateById] = useState<
+    Record<string, ActionState>
+  >({});
 
   const disabled = session === null || auctions.length === 0;
 
@@ -75,6 +106,120 @@ export function LotManagementPanel({
     value: LotFormState[TKey],
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateEditField<TKey extends keyof LotEditFormState>(
+    key: TKey,
+    value: LotEditFormState[TKey],
+  ) {
+    setEditForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function startLotEdit(lot: AdminLotItem) {
+    setEditingId(lot.id);
+    setEditForm({
+      closesAt: toDatetimeLocal(lot.closesAt),
+      lotNumber: lot.lotNumber,
+      softCloseExtensionMinutes: msToMinutes(lot.softCloseExtensionMs),
+      softCloseMaximumExtensions:
+        lot.softCloseMaximumExtensions?.toString() ?? "",
+      softCloseWindowMinutes: msToMinutes(lot.softCloseWindowMs),
+      startsAt: toDatetimeLocal(lot.startsAt),
+      titleAr: lot.titleAr,
+      titleEn: lot.titleEn,
+    });
+  }
+
+  function cancelLotEdit() {
+    setEditingId(null);
+  }
+
+  async function saveLotEdit(lotId: string) {
+    if (session === null) {
+      return;
+    }
+    if (
+      editForm.lotNumber.trim().length === 0 ||
+      editForm.titleEn.trim().length === 0 ||
+      editForm.titleAr.trim().length === 0 ||
+      editForm.startsAt.length === 0 ||
+      editForm.closesAt.length === 0
+    ) {
+      setEditStateById((current) => ({
+        ...current,
+        [lotId]: { message: messages.formValidationError, status: "error" },
+      }));
+      return;
+    }
+    const startsAtIso = new Date(editForm.startsAt).toISOString();
+    const closesAtIso = new Date(editForm.closesAt).toISOString();
+    if (new Date(startsAtIso) >= new Date(closesAtIso)) {
+      setEditStateById((current) => ({
+        ...current,
+        [lotId]: { message: messages.formValidationError, status: "error" },
+      }));
+      return;
+    }
+
+    const softCloseWindowMs = toMs(editForm.softCloseWindowMinutes);
+    const softCloseExtensionMs = toMs(editForm.softCloseExtensionMinutes);
+    const softCloseMaximumExtensions = toInt(
+      editForm.softCloseMaximumExtensions,
+    );
+
+    setEditStateById((current) => ({
+      ...current,
+      [lotId]: { status: "pending" },
+    }));
+    try {
+      const updated = await submitUpdateLot({
+        apiBaseUrl: session.apiBaseUrl,
+        closesAt: closesAtIso,
+        correlationId: crypto.randomUUID(),
+        lotId,
+        lotNumber: editForm.lotNumber.trim(),
+        startsAt: startsAtIso,
+        testAccountId: session.testAccountId,
+        titleAr: editForm.titleAr.trim(),
+        titleEn: editForm.titleEn.trim(),
+        ...(softCloseWindowMs !== null ? { softCloseWindowMs } : {}),
+        ...(softCloseExtensionMs !== null ? { softCloseExtensionMs } : {}),
+        ...(softCloseMaximumExtensions !== null
+          ? { softCloseMaximumExtensions }
+          : {}),
+      });
+      setLots((current) =>
+        current.map((entry) =>
+          entry.id === lotId
+            ? {
+                ...entry,
+                closesAt: updated.closesAt,
+                lotNumber: updated.lotNumber,
+                softCloseExtensionMs: updated.softCloseExtensionMs,
+                softCloseMaximumExtensions: updated.softCloseMaximumExtensions,
+                softCloseWindowMs: updated.softCloseWindowMs,
+                startsAt: updated.startsAt,
+                title: locale === "ar" ? updated.titleAr : updated.titleEn,
+                titleAr: updated.titleAr,
+                titleEn: updated.titleEn,
+              }
+            : entry,
+        ),
+      );
+      setEditStateById((current) => ({
+        ...current,
+        [lotId]: { status: "done" },
+      }));
+      setEditingId(null);
+    } catch (error) {
+      setEditStateById((current) => ({
+        ...current,
+        [lotId]: {
+          message: error instanceof Error ? error.message : "failed",
+          status: "error",
+        },
+      }));
+    }
   }
 
   async function submit() {
@@ -149,9 +294,17 @@ export function LotManagementPanel({
             locale,
             created.currentBidFils ?? created.startingBidFils,
           ),
+          closesAt: created.closesAt,
+          id: created.id,
           increment: formatAedFils(locale, created.minimumIncrementFils),
           lifecycle: created.lifecycle,
           lotNumber: created.lotNumber,
+          softCloseExtensionMs: created.softCloseExtensionMs,
+          softCloseMaximumExtensions: created.softCloseMaximumExtensions,
+          softCloseWindowMs: created.softCloseWindowMs,
+          startsAt: created.startsAt,
+          titleAr: created.titleAr,
+          titleEn: created.titleEn,
           title: locale === "ar" ? created.titleAr : created.titleEn,
         },
       ]);
@@ -173,20 +326,185 @@ export function LotManagementPanel({
           <p>{messages.lotListEmpty}</p>
         ) : (
           <div className="lot-list">
-            {lots.map((lot) => (
-              <article className="lot-row" key={lot.lotNumber}>
-                <div>
-                  <strong>Lot #{lot.lotNumber}</strong>
-                  <span>{lot.title}</span>
-                </div>
-                <div>
-                  <strong>{lot.amount}</strong>
-                  <span>
-                    {lot.lifecycle} · +{lot.increment}
-                  </span>
-                </div>
-              </article>
-            ))}
+            {lots.map((lot) => {
+              const isEditing = editingId === lot.id;
+              const editState = editStateById[lot.id] ?? { status: "idle" };
+              const rowDisabled =
+                session === null || editState.status === "pending";
+
+              return (
+                <article className="auction-row" key={lot.id}>
+                  <div className="lot-row">
+                    <div>
+                      <strong>Lot #{lot.lotNumber}</strong>
+                      <span>{lot.title}</span>
+                    </div>
+                    <div>
+                      <strong>{lot.amount}</strong>
+                      <span>
+                        {lot.lifecycle} · +{lot.increment}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isEditing ? (
+                    <div className="decision-controls">
+                      <p>{messages.lotEditMoneyNotice}</p>
+                      <div className="form-grid">
+                        <label>
+                          <span>{fieldLabel(messages, "lotNumber")}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("lotNumber", value);
+                            }}
+                            type="text"
+                            value={editForm.lotNumber}
+                          />
+                        </label>
+                        <label>
+                          <span>{fieldLabel(messages, "titleEn")}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("titleEn", value);
+                            }}
+                            type="text"
+                            value={editForm.titleEn}
+                          />
+                        </label>
+                        <label>
+                          <span>{fieldLabel(messages, "titleAr")}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("titleAr", value);
+                            }}
+                            type="text"
+                            value={editForm.titleAr}
+                          />
+                        </label>
+                        <label>
+                          <span>{fieldLabel(messages, "startsAt")}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("startsAt", value);
+                            }}
+                            type="datetime-local"
+                            value={editForm.startsAt}
+                          />
+                        </label>
+                        <label>
+                          <span>{fieldLabel(messages, "closesAt")}</span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("closesAt", value);
+                            }}
+                            type="datetime-local"
+                            value={editForm.closesAt}
+                          />
+                        </label>
+                        <label>
+                          <span>
+                            {fieldLabel(messages, "softCloseWindowMinutes")}
+                          </span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField("softCloseWindowMinutes", value);
+                            }}
+                            type="number"
+                            value={editForm.softCloseWindowMinutes}
+                          />
+                        </label>
+                        <label>
+                          <span>
+                            {fieldLabel(messages, "softCloseExtensionMinutes")}
+                          </span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField(
+                                "softCloseExtensionMinutes",
+                                value,
+                              );
+                            }}
+                            type="number"
+                            value={editForm.softCloseExtensionMinutes}
+                          />
+                        </label>
+                        <label>
+                          <span>
+                            {fieldLabel(messages, "softCloseMaximumExtensions")}
+                          </span>
+                          <input
+                            disabled={rowDisabled}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              updateEditField(
+                                "softCloseMaximumExtensions",
+                                value,
+                              );
+                            }}
+                            type="number"
+                            value={editForm.softCloseMaximumExtensions}
+                          />
+                        </label>
+                      </div>
+                      <div className="decision-buttons">
+                        <button
+                          disabled={rowDisabled}
+                          onClick={() => {
+                            void saveLotEdit(lot.id);
+                          }}
+                          type="button"
+                        >
+                          {messages.saveButton}
+                        </button>
+                        <button
+                          className="button-secondary"
+                          disabled={rowDisabled}
+                          onClick={cancelLotEdit}
+                          type="button"
+                        >
+                          {messages.cancelButton}
+                        </button>
+                      </div>
+                      {editState.status === "error" ? (
+                        <p className="m3-live-status is-error">
+                          {editState.message}
+                        </p>
+                      ) : editState.status === "pending" ? (
+                        <p className="m3-live-status is-pending">
+                          {messages.actionPendingLabel}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="decision-buttons">
+                      <button
+                        disabled={session === null}
+                        onClick={() => {
+                          startLotEdit(lot);
+                        }}
+                        type="button"
+                      >
+                        {messages.editButton}
+                      </button>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
@@ -338,4 +656,20 @@ function formatAedFils(locale: Locale, amountFils: number): string {
     maximumFractionDigits: 0,
     style: "currency",
   }).format(amountFils / 100);
+}
+
+function fieldLabel(messages: Messages, name: string): string {
+  return (
+    messages.lotFormFields.find((field) => field.name === name)?.label ?? name
+  );
+}
+
+function msToMinutes(valueMs: number | null): string {
+  return valueMs === null ? "" : String(Math.round(valueMs / 60_000));
+}
+
+function toDatetimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

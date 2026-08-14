@@ -40,10 +40,27 @@ export interface LotFormField {
 
 export interface AdminLotItem {
   readonly amount: string;
+  readonly closesAt: string;
+  readonly id: string;
   readonly increment: string;
   readonly lifecycle: string;
   readonly lotNumber: string;
+  readonly softCloseExtensionMs: number | null;
+  readonly softCloseMaximumExtensions: number | null;
+  readonly softCloseWindowMs: number | null;
+  readonly startsAt: string;
   readonly title: string;
+  readonly titleAr: string;
+  readonly titleEn: string;
+}
+
+export interface AdminAuditEventItem {
+  readonly action: string;
+  readonly actorAccountId: string | null;
+  readonly id: string;
+  readonly occurredAt: string;
+  readonly subjectId: string | null;
+  readonly subjectType: string;
 }
 
 export interface AdminAuctionItem {
@@ -52,6 +69,8 @@ export interface AdminAuctionItem {
   readonly lifecycle: string;
   readonly startsAt: string;
   readonly title: string;
+  readonly titleAr: string;
+  readonly titleEn: string;
 }
 
 export interface Messages {
@@ -79,10 +98,20 @@ export interface Messages {
   readonly auctionsActions: readonly ActionItem[];
   readonly auctionsTitle: string;
   readonly brand: string;
+  readonly bulkImportCommitButton: string;
+  readonly bulkImportCommittedLabel: string;
+  readonly bulkImportNotCommittedLabel: string;
+  readonly bulkImportParseError: string;
+  readonly bulkImportPlaceholder: string;
+  readonly bulkImportPreviewButton: string;
+  readonly bulkImportRowsLabel: string;
+  readonly bulkImportTitle: string;
   readonly cancelAuctionButton: string;
+  readonly cancelButton: string;
   readonly dashboardTitle: string;
   readonly decisionNoteLabel: string;
   readonly decisionNotePlaceholder: string;
+  readonly editButton: string;
   readonly eyebrow: string;
   readonly finalBidApprovalTitle: string;
   readonly formValidationError: string;
@@ -92,6 +121,7 @@ export interface Messages {
   readonly lotAuctionLabel: string;
   readonly lotAuctionPlaceholder: string;
   readonly lotCreateSuccess: string;
+  readonly lotEditMoneyNotice: string;
   readonly lotFormFields: readonly LotFormField[];
   readonly lotFormSaveButton: string;
   readonly lotFormStaticNotice: string;
@@ -114,6 +144,7 @@ export interface Messages {
   readonly rejectionReasonLabel: string;
   readonly rejectionReasons: readonly RejectionReasonOption[];
   readonly reserveMetApprovalTitle: string;
+  readonly saveButton: string;
   readonly shellLabel: string;
   readonly staticPreviewActionNotice: string;
   readonly status: string;
@@ -302,10 +333,22 @@ const messages: Record<Locale, Messages> = {
     ],
     auctionsTitle: "إدارة المزادات",
     brand: "بايونير للمزادات",
+    bulkImportCommitButton: "استيراد",
+    bulkImportCommittedLabel: "تم إنشاء جميع القطع",
+    bulkImportNotCommittedLabel:
+      "لم يتم إنشاء أي قطعة. أصلح الصفوف التي بها أخطاء وحاول مرة أخرى.",
+    bulkImportParseError: "يجب أن يكون النص مصفوفة JSON صالحة من صفوف القطع.",
+    bulkImportPlaceholder:
+      '[\n  {\n    "auctionId": "...",\n    "lotNumber": "301",\n    "titleEn": "...",\n    "titleAr": "...",\n    "startsAt": "2026-09-08T14:00:00.000Z",\n    "closesAt": "2026-09-08T18:00:00.000Z",\n    "startingBidFils": 5000000,\n    "minimumIncrementPercentBps": 500\n  }\n]',
+    bulkImportPreviewButton: "معاينة (فحص جاف)",
+    bulkImportRowsLabel: "صفوف القطع (مصفوفة JSON)",
+    bulkImportTitle: "استيراد جماعي",
     cancelAuctionButton: "إلغاء",
+    cancelButton: "إلغاء الأمر",
     dashboardTitle: "لوحة العمليات",
     decisionNoteLabel: "ملاحظة (اختياري)",
     decisionNotePlaceholder: "سياق إضافي للقرار",
+    editButton: "تعديل",
     eyebrow: "مساحة إدارة المزادات",
     finalBidApprovalTitle: "اعتماد عرض نهائي",
     formValidationError: "تحقق من الحقول المطلوبة وحاول مرة أخرى.",
@@ -315,6 +358,8 @@ const messages: Record<Locale, Messages> = {
     lotAuctionLabel: "المزاد",
     lotAuctionPlaceholder: "اختر مزاداً",
     lotCreateSuccess: "تم إنشاء القطعة",
+    lotEditMoneyNotice:
+      "لا يمكن تعديل سعر البداية والاحتياطي وطريقة الزيادة بعد الإنشاء في هذه النسخة.",
     lotFormFields: lotFormFieldsAr,
     lotFormSaveButton: "إنشاء القطعة",
     lotFormStaticNotice:
@@ -384,6 +429,7 @@ const messages: Record<Locale, Messages> = {
       },
     ],
     reserveMetApprovalTitle: "الاحتياطي تحقق",
+    saveButton: "حفظ",
     shellLabel: "لوحة إدارة بايونير",
     staticPreviewActionNotice:
       "الأزرار معطلة في المعاينة الثابتة حتى يتم تفعيل جلسة إدارة موثقة.",
@@ -449,10 +495,22 @@ const messages: Record<Locale, Messages> = {
     ],
     auctionsTitle: "Auction operations",
     brand: "Pioneer Auctions",
+    bulkImportCommitButton: "Import",
+    bulkImportCommittedLabel: "All lots were created",
+    bulkImportNotCommittedLabel:
+      "No lots were created. Fix the rows with errors and try again.",
+    bulkImportParseError: "Text must be a valid JSON array of lot rows.",
+    bulkImportPlaceholder:
+      '[\n  {\n    "auctionId": "...",\n    "lotNumber": "301",\n    "titleEn": "...",\n    "titleAr": "...",\n    "startsAt": "2026-09-08T14:00:00.000Z",\n    "closesAt": "2026-09-08T18:00:00.000Z",\n    "startingBidFils": 5000000,\n    "minimumIncrementPercentBps": 500\n  }\n]',
+    bulkImportPreviewButton: "Preview (dry run)",
+    bulkImportRowsLabel: "Lot rows (JSON array)",
+    bulkImportTitle: "Bulk import",
     cancelAuctionButton: "Cancel",
+    cancelButton: "Cancel",
     dashboardTitle: "Operations dashboard",
     decisionNoteLabel: "Note (optional)",
     decisionNotePlaceholder: "Additional context for this decision",
+    editButton: "Edit",
     eyebrow: "Auction admin workspace",
     finalBidApprovalTitle: "Final-bid approval",
     formValidationError: "Check the required fields and try again.",
@@ -462,6 +520,8 @@ const messages: Record<Locale, Messages> = {
     lotAuctionLabel: "Auction",
     lotAuctionPlaceholder: "Select an auction",
     lotCreateSuccess: "Lot created",
+    lotEditMoneyNotice:
+      "Starting bid, reserve, and increment cannot be edited after creation yet.",
     lotFormFields: lotFormFieldsEn,
     lotFormSaveButton: "Create lot",
     lotFormStaticNotice:
@@ -533,6 +593,7 @@ const messages: Record<Locale, Messages> = {
       },
     ],
     reserveMetApprovalTitle: "Reserve met",
+    saveButton: "Save",
     shellLabel: "Pioneer admin console",
     staticPreviewActionNotice:
       "Actions are disabled in the static preview until an authenticated admin runtime session is available.",

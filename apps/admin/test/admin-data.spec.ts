@@ -45,10 +45,16 @@ describe("admin operations data adapter", () => {
       if (String(input).endsWith("/lots")) {
         return jsonResponse([
           {
+            closesAt: "2026-09-08T18:00:00.000Z",
             currentBidFils: 56000000,
+            id: "33333333-3333-4333-8333-333333333333",
             lifecycle: "LIVE",
             lotNumber: "214",
             minimumIncrementFils: 100000,
+            softCloseExtensionMs: 120000,
+            softCloseMaximumExtensions: null,
+            softCloseWindowMs: 120000,
+            startsAt: "2026-09-08T14:00:00.000Z",
             titleAr: "تويوتا لاند كروزر 2019",
             titleEn: "Toyota Land Cruiser 2019",
           },
@@ -65,6 +71,22 @@ describe("admin operations data adapter", () => {
             titleEn: "Weekly car auction",
           },
         ]);
+      }
+      if (String(input).endsWith("/audit-events")) {
+        return jsonResponse({
+          contractVersion: 1,
+          events: [
+            {
+              action: "admin.auctions.pause",
+              actorAccountId: "00000000-0000-4000-8000-000000000001",
+              id: "audit-event-1",
+              occurredAt: "2026-09-08T15:00:00.000Z",
+              subjectId: "22222222-2222-4222-8222-222222222222",
+              subjectType: "auction",
+            },
+          ],
+          generatedAt: "2026-09-08T15:00:00.000Z",
+        });
       }
       return jsonResponse({
         contractVersion: 1,
@@ -96,12 +118,20 @@ describe("admin operations data adapter", () => {
           title: "Weekly car auction",
         },
       ],
+      auditEvents: [
+        {
+          action: "admin.auctions.pause",
+          id: "audit-event-1",
+          subjectType: "auction",
+        },
+      ],
       metrics: [
         { label: "Live auctions", tone: "success", value: "4" },
         { label: "Pending approvals", tone: "warning", value: "7" },
       ],
       lots: [
         {
+          id: "33333333-3333-4333-8333-333333333333",
           lifecycle: "LIVE",
           lotNumber: "214",
           title: "Toyota Land Cruiser 2019",
@@ -126,6 +156,39 @@ describe("admin operations data adapter", () => {
       apiBaseUrl: "https://api.test",
       testAccountId: "00000000-0000-4000-8000-000000000001",
     });
+  });
+
+  it("degrades gracefully when the account lacks admin.audit.read but other endpoints succeed", async () => {
+    vi.stubEnv("PIONEER_ADMIN_API_BASE_URL", "https://api.test");
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      if (String(input).endsWith("/audit-events")) {
+        return new Response("forbidden", { status: 403 });
+      }
+      if (String(input).endsWith("/dashboard")) {
+        return jsonResponse({
+          contractVersion: 1,
+          generatedAt: "2026-09-01T16:00:00.000Z",
+          metrics: [],
+        });
+      }
+      if (
+        String(input).endsWith("/lots") ||
+        String(input).endsWith("/auctions")
+      ) {
+        return jsonResponse([]);
+      }
+      return jsonResponse({
+        contractVersion: 1,
+        generatedAt: "2026-09-01T16:00:00.000Z",
+        items: [],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const data = await loadAdminOperationsData("en", messagesFor("en"));
+
+    expect(data.source).toBe("api");
+    expect(data.auditEvents).toEqual([]);
   });
 
   it("falls back to static data when the admin API is unavailable", async () => {

@@ -3,6 +3,7 @@ import type { QueryResultRow } from "pg";
 
 import { DatabasePool } from "../database/database.pool.js";
 import {
+  type AdminAuditEventView,
   type AdminDashboardMetric,
   type FinalBidApprovalDecisionRecord,
   type FinalBidApprovalView,
@@ -37,6 +38,18 @@ interface FinalBidDecisionRow extends QueryResultRow {
   readonly current_bid_fils: string;
   readonly id: string;
   readonly sequence: number;
+}
+
+interface AuditEventRow extends QueryResultRow {
+  readonly action: string;
+  readonly actor_account_id: string | null;
+  readonly correlation_id: string;
+  readonly id: string;
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly occurred_at: Date;
+  readonly reason_code: string | null;
+  readonly subject_id: string | null;
+  readonly subject_type: string;
 }
 
 @Injectable()
@@ -181,6 +194,41 @@ export class AdminOperationsRepository {
       sequence: row.sequence,
     };
   }
+
+  async listAuditEvents(): Promise<readonly AdminAuditEventView[]> {
+    const result = await this.database.query<AuditEventRow>(
+      `
+        SELECT
+          id::text,
+          actor_account_id::text,
+          action,
+          subject_type,
+          subject_id::text,
+          reason_code,
+          metadata,
+          correlation_id,
+          occurred_at
+        FROM audit_events
+        ORDER BY occurred_at DESC, id DESC
+        LIMIT 100
+      `,
+    );
+    return result.rows.map(toAdminAuditEventView);
+  }
+}
+
+function toAdminAuditEventView(row: AuditEventRow): AdminAuditEventView {
+  return {
+    action: row.action,
+    actorAccountId: row.actor_account_id,
+    correlationId: row.correlation_id,
+    id: row.id,
+    metadata: row.metadata,
+    occurredAt: row.occurred_at.toISOString(),
+    reasonCode: row.reason_code,
+    subjectId: row.subject_id,
+    subjectType: row.subject_type,
+  };
 }
 
 function toFinalBidApprovalView(

@@ -713,7 +713,7 @@ export class BiddingService {
         WHERE lot_id = $1
           AND account_id = $2
           AND status = 'ACTIVE'
-        ORDER BY registered_at DESC
+        ORDER BY priority_at DESC
         LIMIT 1
       `,
       [command.lotId, command.accountId],

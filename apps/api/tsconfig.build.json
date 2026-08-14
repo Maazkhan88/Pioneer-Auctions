@@ -4,5 +4,5 @@
     "noEmit": false,
     "rootDir": "src"
   },
-  "exclude": ["test", "**/*.spec.ts", "vitest.config.ts"]
+  "exclude": ["test", "**/*.spec.ts", "vitest.config.ts", "worker"]
 }

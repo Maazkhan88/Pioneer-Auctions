@@ -31,6 +31,7 @@ let auctionsRepository:
       readonly list: ReturnType<typeof vi.fn>;
       readonly pause: ReturnType<typeof vi.fn>;
       readonly resume: ReturnType<typeof vi.fn>;
+      readonly update: ReturnType<typeof vi.fn>;
     }
   | undefined;
 
@@ -77,6 +78,63 @@ describe("admin auctions foundation", () => {
       .get("/api/v1/admin/auctions")
       .set("x-pioneer-test-account-id", activeAdmin.id)
       .expect(403);
+  });
+
+  it("updates an auction's title/schedule/soft-close fields", async () => {
+    app = await createApp(activeAdmin);
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    const response = await request(server)
+      .patch(`/api/v1/admin/auctions/${auctionId}`)
+      .set("x-pioneer-test-account-id", activeAdmin.id)
+      .set("x-correlation-id", "corr-auction-update")
+      .send({ titleEn: "Weekly car auction (rescheduled)" })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      id: auctionId,
+      titleEn: "Weekly car auction (rescheduled)",
+    });
+    expect(auctionsRepository?.update).toHaveBeenCalledWith(auctionId, {
+      titleEn: "Weekly car auction (rescheduled)",
+    });
+    expect(auditRecord).toHaveBeenCalledWith({
+      action: "admin.auctions.update",
+      actorAccountId: activeAdmin.id,
+      correlationId: "corr-auction-update",
+      metadata: { fields: ["titleEn"] },
+      subjectId: auctionId,
+      subjectType: "auction",
+    });
+  });
+
+  it("rejects auction update commands with no fields", async () => {
+    app = await createApp(activeAdmin);
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .patch(`/api/v1/admin/auctions/${auctionId}`)
+      .set("x-pioneer-test-account-id", activeAdmin.id)
+      .send({})
+      .expect(400);
+
+    expect(auctionsRepository?.update).not.toHaveBeenCalled();
+  });
+
+  it("requires write permission for auction update commands", async () => {
+    app = await createApp({
+      ...activeAdmin,
+      permissions: ["admin.auctions.read"],
+    });
+    const server = app.getHttpServer() as Parameters<typeof request>[0];
+
+    await request(server)
+      .patch(`/api/v1/admin/auctions/${auctionId}`)
+      .set("x-pioneer-test-account-id", activeAdmin.id)
+      .send({ titleEn: "New title" })
+      .expect(403);
+
+    expect(auctionsRepository?.update).not.toHaveBeenCalled();
   });
 
   it("pauses a live auction with an audit reason", async () => {
@@ -196,6 +254,14 @@ async function createApp(account: AccountSummary): Promise<INestApplication> {
       decidedAt: "2026-09-01T13:01:00.000Z",
       decision: "RESUMED",
       lifecycle: "LIVE",
+    }),
+    update: vi.fn().mockResolvedValue({
+      closesAt: "2026-09-01T16:00:00.000Z",
+      id: auctionId,
+      lifecycle: "DRAFT",
+      startsAt: "2026-09-01T12:00:00.000Z",
+      titleAr: "مزاد تجريبي",
+      titleEn: "Weekly car auction (rescheduled)",
     }),
   };
   auditRecord = audit;

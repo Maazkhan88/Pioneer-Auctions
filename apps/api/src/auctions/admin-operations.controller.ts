@@ -13,6 +13,7 @@ import { AuditService } from "../audit/audit.service.js";
 import { AdminPermissionGuard } from "../identity/admin-permission.guard.js";
 import { RequirePermission } from "../identity/permission.decorator.js";
 import {
+  type AdminAuditEventsView,
   type AdminDashboardView,
   type FinalBidDecisionResult,
   type FinalBidApprovalsView,
@@ -38,6 +39,16 @@ export class AdminOperationsController {
       contractVersion: 1,
       generatedAt: new Date().toISOString(),
       metrics: await this.operations.getDashboardMetrics(),
+    };
+  }
+
+  @Get("audit-events")
+  @RequirePermission("admin.audit.read")
+  async auditEvents(): Promise<AdminAuditEventsView> {
+    return {
+      contractVersion: 1,
+      events: await this.operations.listAuditEvents(),
+      generatedAt: new Date().toISOString(),
     };
   }
 

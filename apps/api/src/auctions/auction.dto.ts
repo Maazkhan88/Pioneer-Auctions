@@ -30,6 +30,30 @@ export interface AuctionControlInput {
   readonly reason: string;
 }
 
+export const updateAuctionSchema = z
+  .object({
+    closesAt: z.iso.datetime().optional(),
+    softCloseExtensionMs: z.number().int().positive().optional(),
+    softCloseMaximumExtensions: z.number().int().positive().optional(),
+    softCloseWindowMs: z.number().int().positive().optional(),
+    startsAt: z.iso.datetime().optional(),
+    titleAr: z.string().trim().min(1).optional(),
+    titleEn: z.string().trim().min(1).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "at least one field is required",
+  });
+
+export interface UpdateAuctionInput {
+  readonly closesAt?: Date;
+  readonly softCloseExtensionMs?: number;
+  readonly softCloseMaximumExtensions?: number;
+  readonly softCloseWindowMs?: number;
+  readonly startsAt?: Date;
+  readonly titleAr?: string;
+  readonly titleEn?: string;
+}
+
 export interface AdminAuctionView {
   readonly id: string;
   readonly titleEn: string;
@@ -62,6 +86,29 @@ export function parseCreateAuctionInput(input: unknown): CreateAuctionInput {
     startsAt: new Date(parsed.startsAt),
     titleAr: parsed.titleAr,
     titleEn: parsed.titleEn,
+  };
+}
+
+export function parseUpdateAuctionInput(input: unknown): UpdateAuctionInput {
+  const parsed = parseWithBadRequest(updateAuctionSchema, input);
+  return {
+    ...(parsed.closesAt !== undefined
+      ? { closesAt: new Date(parsed.closesAt) }
+      : {}),
+    ...(parsed.softCloseExtensionMs !== undefined
+      ? { softCloseExtensionMs: parsed.softCloseExtensionMs }
+      : {}),
+    ...(parsed.softCloseMaximumExtensions !== undefined
+      ? { softCloseMaximumExtensions: parsed.softCloseMaximumExtensions }
+      : {}),
+    ...(parsed.softCloseWindowMs !== undefined
+      ? { softCloseWindowMs: parsed.softCloseWindowMs }
+      : {}),
+    ...(parsed.startsAt !== undefined
+      ? { startsAt: new Date(parsed.startsAt) }
+      : {}),
+    ...(parsed.titleAr !== undefined ? { titleAr: parsed.titleAr } : {}),
+    ...(parsed.titleEn !== undefined ? { titleEn: parsed.titleEn } : {}),
   };
 }
 

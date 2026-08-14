@@ -1,5 +1,6 @@
 import type {
   AdminAuctionItem,
+  AdminAuditEventItem,
   AdminLotItem,
   Locale,
   Messages,
@@ -45,10 +46,16 @@ interface FinalBidApprovalsApiResponse {
 }
 
 interface AdminLotApiResponse {
+  readonly closesAt: string;
   readonly currentBidFils: number | null;
+  readonly id: string;
   readonly lifecycle: string;
   readonly lotNumber: string;
   readonly minimumIncrementFils: number;
+  readonly softCloseExtensionMs: number | null;
+  readonly softCloseMaximumExtensions: number | null;
+  readonly softCloseWindowMs: number | null;
+  readonly startsAt: string;
   readonly titleAr: string;
   readonly titleEn: string;
 }
@@ -62,8 +69,24 @@ interface AdminAuctionApiResponse {
   readonly titleEn: string;
 }
 
+interface AdminAuditEventApiResponse {
+  readonly action: string;
+  readonly actorAccountId: string | null;
+  readonly id: string;
+  readonly occurredAt: string;
+  readonly subjectId: string | null;
+  readonly subjectType: string;
+}
+
+interface AdminAuditEventsApiResponse {
+  readonly contractVersion: 1;
+  readonly events: readonly AdminAuditEventApiResponse[];
+  readonly generatedAt: string;
+}
+
 export interface AdminOperationsData {
   readonly auctions: readonly AdminAuctionItem[];
+  readonly auditEvents: readonly AdminAuditEventItem[];
   readonly lots: readonly AdminLotItem[];
   readonly metrics: readonly Metric[];
   readonly queue: readonly QueueItem[];
@@ -123,13 +146,24 @@ export async function loadAdminOperationsData(
         lifecycle: auction.lifecycle,
         startsAt: auction.startsAt,
         title: locale === "ar" ? auction.titleAr : auction.titleEn,
+        titleAr: auction.titleAr,
+        titleEn: auction.titleEn,
       })),
+      auditEvents: await fetchAuditEvents(session),
       lots: lots.map((lot) => ({
         amount: formatAed(locale, lot.currentBidFils ?? 0),
+        closesAt: lot.closesAt,
+        id: lot.id,
         increment: formatAed(locale, lot.minimumIncrementFils),
         lifecycle: lot.lifecycle,
         lotNumber: lot.lotNumber,
+        softCloseExtensionMs: lot.softCloseExtensionMs,
+        softCloseMaximumExtensions: lot.softCloseMaximumExtensions,
+        softCloseWindowMs: lot.softCloseWindowMs,
+        startsAt: lot.startsAt,
         title: locale === "ar" ? lot.titleAr : lot.titleEn,
+        titleAr: lot.titleAr,
+        titleEn: lot.titleEn,
       })),
       metrics: dashboard.metrics.map((metric) => ({
         label: metricLabels[locale][metric.key],
@@ -165,12 +199,41 @@ function staticFallback(
 ): AdminOperationsData {
   return {
     auctions: [],
+    auditEvents: [],
     lots: [],
     metrics: messages.metrics,
     queue: messages.approvalQueue,
     session,
     source: "static-fallback",
   };
+}
+
+/**
+ * `admin.audit.read` is a separate permission from `admin.auctions.read`
+ * -- the seeded `operations` role does not have it, only `super_admin`
+ * does. Fetched independently so a 403 here (a real, expected outcome for
+ * most admin test accounts) does not collapse the rest of the page back
+ * to static fallback.
+ */
+async function fetchAuditEvents(
+  session: AdminSessionConfig,
+): Promise<readonly AdminAuditEventItem[]> {
+  try {
+    const response = await fetchAdminJson<AdminAuditEventsApiResponse>(
+      session,
+      "/admin/audit-events",
+    );
+    return response.events.map((event) => ({
+      action: event.action,
+      actorAccountId: event.actorAccountId,
+      id: event.id,
+      occurredAt: event.occurredAt,
+      subjectId: event.subjectId,
+      subjectType: event.subjectType,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 async function fetchAdminJson<TResponse>(
@@ -195,6 +258,24 @@ function formatAed(locale: Locale, amountFils: number): string {
     maximumFractionDigits: 0,
     style: "currency",
   }).format(amountFils / 100);
+}
+
+export function formatAuditEvent(
+  locale: Locale,
+  event: AdminAuditEventItem,
+): string {
+  const when = new Intl.DateTimeFormat(locale === "ar" ? "ar-AE" : "en-AE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(event.occurredAt));
+  const actor =
+    event.actorAccountId ?? (locale === "ar" ? "غير معروف" : "unknown");
+  const subject =
+    event.subjectId === null
+      ? event.subjectType
+      : `${event.subjectType} ${event.subjectId.slice(0, 8)}`;
+
+  return `${event.action} · ${subject} · ${actor.slice(0, 8)} · ${when}`;
 }
 
 function formatSla(

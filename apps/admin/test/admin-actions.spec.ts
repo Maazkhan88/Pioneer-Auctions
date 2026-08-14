@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   submitAuctionControl,
+  submitBulkImportLots,
   submitCreateAuction,
   submitCreateLot,
   submitFinalBidDecision,
+  submitUpdateAuction,
+  submitUpdateLot,
 } from "../lib/admin-actions";
 
 describe("admin action runtime helper", () => {
@@ -201,6 +204,95 @@ describe("admin action runtime helper", () => {
         titleEn: "Toyota Land Cruiser 2019",
       }),
     ).resolves.toMatchObject({ id: "lot-new" });
+  });
+
+  it("submits an auction update command as a PATCH with only changed fields", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe(
+        "https://api.test/api/v1/admin/auctions/auction-1",
+      );
+      expect(init?.method).toBe("PATCH");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        titleEn: "Weekly car auction (rescheduled)",
+      });
+      return jsonResponse({
+        closesAt: "2026-09-08T18:00:00.000Z",
+        id: "auction-1",
+        lifecycle: "SCHEDULED",
+        startsAt: "2026-09-08T14:00:00.000Z",
+        titleAr: "مزاد السيارات الأسبوعي",
+        titleEn: "Weekly car auction (rescheduled)",
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      submitUpdateAuction({
+        apiBaseUrl: "https://api.test",
+        auctionId: "auction-1",
+        correlationId: "corr-update-auction",
+        testAccountId: "admin-1",
+        titleEn: "Weekly car auction (rescheduled)",
+      }),
+    ).resolves.toMatchObject({ titleEn: "Weekly car auction (rescheduled)" });
+  });
+
+  it("submits a lot update command as a PATCH with only changed fields", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe("https://api.test/api/v1/admin/lots/lot-1");
+      expect(init?.method).toBe("PATCH");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        titleEn: "Toyota Land Cruiser 2020",
+      });
+      return jsonResponse({
+        auctionId: "auction-1",
+        id: "lot-1",
+        lifecycle: "SCHEDULED",
+        lotNumber: "214",
+        titleEn: "Toyota Land Cruiser 2020",
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      submitUpdateLot({
+        apiBaseUrl: "https://api.test",
+        correlationId: "corr-update-lot",
+        lotId: "lot-1",
+        testAccountId: "admin-1",
+        titleEn: "Toyota Land Cruiser 2020",
+      }),
+    ).resolves.toMatchObject({ titleEn: "Toyota Land Cruiser 2020" });
+  });
+
+  it("submits a bulk-import dry run", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe(
+        "https://api.test/api/v1/admin/lots/bulk-import",
+      );
+      expect(JSON.parse(String(init?.body))).toEqual({
+        dryRun: true,
+        rows: [{ lotNumber: "301" }],
+      });
+      return jsonResponse({
+        committed: false,
+        contractVersion: 1,
+        results: [{ index: 0, ok: true }],
+        rowCount: 1,
+        validCount: 1,
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      submitBulkImportLots({
+        apiBaseUrl: "https://api.test",
+        correlationId: "corr-bulk-import",
+        dryRun: true,
+        rows: [{ lotNumber: "301" }],
+        testAccountId: "admin-1",
+      }),
+    ).resolves.toMatchObject({ committed: false, validCount: 1 });
   });
 
   it("submits a create-lot command with a percent increment and omits the custom field", async () => {
