@@ -177,17 +177,17 @@ Provider webhooks live under authenticated provider-specific paths and are not c
 
 Socket commands are preferred while connected. Equivalent REST commands support accessibility, recovery, and clients without a healthy socket.
 
-| Method | Path                        | Purpose                                          |
-| ------ | --------------------------- | ------------------------------------------------ |
-| POST   | `/lots/:lotId/bids`         | Place manual/custom bid                          |
-| PUT    | `/lots/:lotId/proxy-bid`    | Create/raise proxy maximum                       |
-| GET    | `/lots/:lotId/my-proxy-bid` | Private active proxy status/max                  |
-| DELETE | `/lots/:lotId/proxy-bid`    | Planned; MVP rejects live-lot proxy cancellation |
-| POST   | `/lots/:lotId/offers`       | Submit an eligible make-an-offer                 |
-| GET    | `/me/bids`                  | Active/won/lost activity                         |
-| GET    | `/me/offers`                | Pending/accepted/rejected offers                 |
-| GET    | `/me/watchlist`             | Watched lots                                     |
-| GET    | `/me/notifications`         | In-app notification feed                         |
+| Method | Path                        | Purpose                                      |
+| ------ | --------------------------- | -------------------------------------------- |
+| POST   | `/lots/:lotId/bids`         | Place manual/custom bid                      |
+| PUT    | `/lots/:lotId/proxy-bid`    | Create/raise proxy maximum                   |
+| GET    | `/lots/:lotId/my-proxy-bid` | Private active proxy status/max              |
+| DELETE | `/lots/:lotId/proxy-bid`    | MVP endpoint exists and rejects cancellation |
+| POST   | `/lots/:lotId/offers`       | Submit an eligible make-an-offer             |
+| GET    | `/me/bids`                  | Active/won/lost activity                     |
+| GET    | `/me/offers`                | Pending/accepted/rejected offers             |
+| GET    | `/me/watchlist`             | Watched lots                                 |
+| GET    | `/me/notifications`         | In-app notification feed                     |
 
 ### Seller MVP/v1 boundary
 
@@ -645,6 +645,8 @@ These carry the relevant entity ID, state, display amount, timestamp, and deep-l
 - The engine exposes only the minimum visible amount needed for the highest-priority maximum to lead, bounded by that maximum.
 - Tie rule: earlier registered equal maximum has priority.
 - For MVP, an active proxy maximum may be created or raised only. Lowering or cancelling an active proxy maximum while the lot is live is not supported.
+- `GET /lots/:lotId/my-proxy-bid` returns only the authenticated bidder's active proxy maximum, if one exists, plus latest public lot state needed to render the status. It never exposes another bidder's proxy maximum.
+- `DELETE /lots/:lotId/proxy-bid` exists so clients receive an explicit versioned command rejection instead of a 404. For MVP it always rejects with non-retryable `VALIDATION_FAILED` because live proxy cancellation is not supported.
 - A user receives immediate `OUTBID` if a higher/equal-priority proxy already defeats their maximum.
 - Public history may label system-generated visible bids as `PROXY` without identifying remaining headroom.
 

@@ -1703,7 +1703,7 @@
         "tags": [
           "lots"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
           "501": {
             "description": "Contract inventory entry; implementation is planned"
@@ -1728,7 +1728,7 @@
         "tags": [
           "lots"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
           "501": {
             "description": "Contract inventory entry; implementation is planned"
@@ -1939,6 +1939,22 @@
           "seller"
         ],
         "x-implementation-status": "planned",
+        "responses": {
+          "501": {
+            "description": "Contract inventory entry; implementation is planned"
+          }
+        }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "operationId": "get_adminDashboard",
+        "parameters": [],
+        "summary": "Get admin dashboard",
+        "tags": [
+          "admin"
+        ],
+        "x-implementation-status": "contracted",
         "responses": {
           "501": {
             "description": "Contract inventory entry; implementation is planned"

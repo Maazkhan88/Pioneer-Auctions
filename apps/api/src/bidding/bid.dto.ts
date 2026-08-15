@@ -126,6 +126,14 @@ export interface LotReplayEvent {
   readonly sequence: number;
 }
 
+export interface ProxyBidStatus {
+  readonly contractVersion: 1;
+  readonly lotId: string;
+  readonly activeProxyMaximum: Money | null;
+  readonly latest: BidLatestState | null;
+  readonly status: "ACTIVE" | "NONE";
+}
+
 export type PlaceBidAck =
   | {
       readonly contractVersion: 1;
@@ -190,6 +198,20 @@ export type SetProxyBidAck =
       };
       readonly latest?: BidLatestState;
     };
+
+export type CancelProxyBidAck = {
+  readonly commandId: string;
+  readonly contractVersion: 1;
+  readonly correlationId: string;
+  readonly error: {
+    readonly code: "VALIDATION_FAILED";
+    readonly message: string;
+    readonly retryable: false;
+  };
+  readonly latest?: BidLatestState;
+  readonly serverTime: string;
+  readonly status: "REJECTED";
+};
 
 export function parsePlaceBidInput(input: unknown): PlaceBidInput {
   const parsed = placeBidSchema.parse(input);

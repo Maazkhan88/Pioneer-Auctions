@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   Headers,
   Inject,
   Param,
@@ -15,7 +17,9 @@ import { SessionService } from "../identity/session.service.js";
 import {
   parsePlaceBidInput,
   parseSetProxyBidInput,
+  type CancelProxyBidAck,
   type PlaceBidAck,
+  type ProxyBidStatus,
   type SetProxyBidAck,
 } from "./bid.dto.js";
 import { BiddingService } from "./bidding.service.js";
@@ -61,6 +65,34 @@ export class BiddingController {
       commandId: commandId ?? randomUUID(),
       correlationId,
       input: parseSetProxyBidInput(body),
+      lotId,
+    });
+  }
+
+  @Get("my-proxy-bid")
+  async getMyProxyBid(
+    @Param("lotId") lotId: string,
+    @Req() request: Request,
+  ): Promise<ProxyBidStatus> {
+    const account = await this.session.requireTestHeaderAccount(request);
+    return this.bidding.getActiveProxyBid({
+      accountId: account.id,
+      lotId,
+    });
+  }
+
+  @Delete("proxy-bid")
+  async cancelProxyBid(
+    @Param("lotId") lotId: string,
+    @Req() request: Request,
+    @Headers("idempotency-key") commandId: string | undefined,
+    @Headers("x-correlation-id") correlationId = "missing-correlation-id",
+  ): Promise<CancelProxyBidAck> {
+    const account = await this.session.requireTestHeaderAccount(request);
+    return this.bidding.rejectProxyCancellation({
+      accountId: account.id,
+      commandId: commandId ?? randomUUID(),
+      correlationId,
       lotId,
     });
   }

@@ -5,10 +5,12 @@ import { DatabasePool } from "../database/database.pool.js";
 import {
   money,
   type BidLatestState,
+  type CancelProxyBidAck,
   type LotReplayEvent,
   type LotSnapshot,
   type PlaceBidAck,
   type PlaceBidInput,
+  type ProxyBidStatus,
   type SetProxyBidAck,
   type SetProxyBidInput,
 } from "./bid.dto.js";
@@ -33,6 +35,16 @@ interface SetProxyBidCommand {
   readonly correlationId: string;
   readonly input: SetProxyBidInput;
   readonly lotId: string;
+}
+
+interface ProxyBidQuery {
+  readonly accountId: string;
+  readonly lotId: string;
+}
+
+interface CancelProxyBidCommand extends ProxyBidQuery {
+  readonly commandId: string;
+  readonly correlationId: string;
 }
 
 interface SavedCommandRow extends QueryResultRow {
@@ -71,6 +83,15 @@ interface ActiveProxyRow extends QueryResultRow {
   readonly account_id: string;
   readonly maximum_fils: string;
   readonly registered_at: Date;
+}
+
+interface ActiveProxyStatusRow extends QueryResultRow {
+  readonly closes_at: Date | null;
+  readonly current_bid_fils: string | null;
+  readonly lot_exists: boolean;
+  readonly maximum_fils: string | null;
+  readonly next_minimum_bid_fils: string | null;
+  readonly sequence: number | null;
 }
 
 interface LotSnapshotRow extends QueryResultRow {
@@ -601,6 +622,80 @@ export class BiddingService {
     } finally {
       client.release();
     }
+  }
+
+  async getActiveProxyBid(query: ProxyBidQuery): Promise<ProxyBidStatus> {
+    const result = await this.database.query<ActiveProxyStatusRow>(
+      `
+        SELECT
+          true AS lot_exists,
+          lots.sequence,
+          lots.current_bid_fils::text,
+          lots.next_minimum_bid_fils::text,
+          lots.closes_at,
+          proxy_bids.maximum_fils::text
+        FROM lots
+        LEFT JOIN proxy_bids ON proxy_bids.lot_id = lots.id
+          AND proxy_bids.account_id = $2
+          AND proxy_bids.status = 'ACTIVE'
+        WHERE lots.id = $1
+        ORDER BY proxy_bids.priority_at DESC NULLS LAST
+        LIMIT 1
+      `,
+      [query.lotId, query.accountId],
+    );
+    const row = result.rows[0];
+    if (row === undefined || !row.lot_exists) {
+      return {
+        activeProxyMaximum: null,
+        contractVersion: 1,
+        latest: null,
+        lotId: query.lotId,
+        status: "NONE",
+      };
+    }
+
+    return {
+      activeProxyMaximum:
+        row.maximum_fils === null ? null : money(Number(row.maximum_fils)),
+      contractVersion: 1,
+      latest:
+        row.sequence === null ||
+        row.next_minimum_bid_fils === null ||
+        row.closes_at === null
+          ? null
+          : {
+              closesAt: row.closes_at.toISOString(),
+              currentBid:
+                row.current_bid_fils === null
+                  ? null
+                  : money(Number(row.current_bid_fils)),
+              lotId: query.lotId,
+              nextMinimumBid: money(Number(row.next_minimum_bid_fils)),
+              sequence: row.sequence,
+            },
+      lotId: query.lotId,
+      status: row.maximum_fils === null ? "NONE" : "ACTIVE",
+    };
+  }
+
+  async rejectProxyCancellation(
+    command: CancelProxyBidCommand,
+  ): Promise<CancelProxyBidAck> {
+    const proxyStatus = await this.getActiveProxyBid(command);
+    return {
+      commandId: command.commandId,
+      contractVersion: 1,
+      correlationId: command.correlationId,
+      error: {
+        code: "VALIDATION_FAILED",
+        message: "Proxy cancellation is not supported for live MVP lots.",
+        retryable: false,
+      },
+      ...(proxyStatus.latest === null ? {} : { latest: proxyStatus.latest }),
+      serverTime: new Date().toISOString(),
+      status: "REJECTED",
+    };
   }
 
   private async findSavedCommand<TAck extends PlaceBidAck | SetProxyBidAck>(

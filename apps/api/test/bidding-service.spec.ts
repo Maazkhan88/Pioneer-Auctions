@@ -76,6 +76,21 @@ class FakeClient {
         },
       ]);
     }
+    if (text.includes("true AS lot_exists")) {
+      return rows<T>([
+        {
+          closes_at: new Date("2026-09-01T16:00:00.000Z"),
+          current_bid_fils: "5500000",
+          lot_exists: true,
+          maximum_fils:
+            this.options.existingProxyMaximumFils === undefined
+              ? null
+              : String(this.options.existingProxyMaximumFils),
+          next_minimum_bid_fils: "5600000",
+          sequence: 12,
+        },
+      ]);
+    }
     if (
       text.includes("FROM proxy_bids") &&
       text.includes("ORDER BY maximum_fils DESC")
@@ -457,6 +472,52 @@ describe("bidding service persistence boundary", () => {
     });
     vi.useRealTimers();
   });
+
+  it("returns active proxy status without exposing other bidders", async () => {
+    const client = new FakeClient({ existingProxyMaximumFils: 6000000 });
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.getActiveProxyBid({
+      accountId: "00000000-0000-4000-8000-000000000001",
+      lotId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(result).toMatchObject({
+      activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
+      latest: {
+        currentBid: { amountFils: 5500000, currency: "AED" },
+        nextMinimumBid: { amountFils: 5600000, currency: "AED" },
+        sequence: 12,
+      },
+      status: "ACTIVE",
+    });
+  });
+
+  it("rejects proxy cancellation explicitly for MVP", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-01T15:59:30.000Z"));
+    const client = new FakeClient({ existingProxyMaximumFils: 6000000 });
+    const service = new BiddingService(databaseFor(client));
+
+    const result = await service.rejectProxyCancellation({
+      accountId: "00000000-0000-4000-8000-000000000001",
+      commandId: "835cb208-e936-4e0c-9863-c85a96f2ff62",
+      correlationId: "corr-test",
+      lotId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(result).toMatchObject({
+      commandId: "835cb208-e936-4e0c-9863-c85a96f2ff62",
+      error: {
+        code: "VALIDATION_FAILED",
+        message: "Proxy cancellation is not supported for live MVP lots.",
+        retryable: false,
+      },
+      latest: { sequence: 12 },
+      status: "REJECTED",
+    });
+    vi.useRealTimers();
+  });
 });
 
 function accountOutboxWrites(client: FakeClient): readonly QueryCall[] {
@@ -498,6 +559,10 @@ function proxyCommand(input: { readonly maximumFils: number }) {
 function databaseFor(client: FakeClient): DatabasePool {
   return {
     connect: async () => client,
+    query: async <T>(
+      text: string,
+      values: readonly unknown[] = [],
+    ): Promise<{ rows: T[] }> => client.query<T>(text, values),
   } as unknown as DatabasePool;
 }
 
