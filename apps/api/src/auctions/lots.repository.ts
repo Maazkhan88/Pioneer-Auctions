@@ -167,6 +167,43 @@ export class LotsRepository {
     );
     return result.rows.map(toAdminLotView);
   }
+
+  async findById(id: string): Promise<AdminLotView | null> {
+    if (process.env.PIONEER_ADMIN_DUMMY_LOTS === "1") {
+      return dummyAdminLots.find((lot) => lot.id === id) ?? null;
+    }
+
+    const result = await this.database.query<LotRow>(
+      `
+        SELECT
+          id::text,
+          auction_id::text,
+          lot_number,
+          title_en,
+          title_ar,
+          lifecycle,
+          starts_at,
+          closes_at,
+          starting_bid_fils::text,
+          current_bid_fils::text,
+          next_minimum_bid_fils::text,
+          minimum_increment_fils::text,
+          bid_increment_source,
+          minimum_increment_percent_bps,
+          reserve_price_fils::text,
+          reserve_status,
+          sequence,
+          soft_close_window_ms,
+          soft_close_extension_ms,
+          soft_close_maximum_extensions
+        FROM lots
+        WHERE id = $1
+      `,
+      [id],
+    );
+    const row = result.rows[0];
+    return row === undefined ? null : toAdminLotView(row);
+  }
 }
 
 async function insertLot(

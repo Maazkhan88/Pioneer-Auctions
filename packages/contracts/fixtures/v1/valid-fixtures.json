@@ -71,13 +71,11 @@
       "sequence": 43,
       "occurredAt": "2026-07-15T08:00:01.000Z",
       "correlationId": "corr-extended",
-      "data": {
-        "previousClosesAt": "2026-07-15T08:02:00.000Z",
-        "closesAt": "2026-07-15T08:04:00.000Z",
-        "extensionMs": 120000,
-        "extensionCount": 1,
-        "reason": "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW"
-      }
+      "previousClosesAt": "2026-07-15T08:02:00.000Z",
+      "closesAt": "2026-07-15T08:04:00.000Z",
+      "extensionMs": 120000,
+      "extensionCount": 1,
+      "reason": "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW"
     },
     "auction:state-changed": {
       "contractVersion": 1,
@@ -88,12 +86,10 @@
       "sequence": 44,
       "occurredAt": "2026-07-15T08:00:01.000Z",
       "correlationId": "corr-state",
-      "data": {
-        "previousLifecycle": "LIVE",
-        "lifecycle": "PAUSED",
-        "closesAt": "2026-07-15T08:04:00.000Z",
-        "reasonCode": "OPERATOR_PAUSE"
-      }
+      "previousLifecycle": "LIVE",
+      "lifecycle": "PAUSED",
+      "closesAt": "2026-07-15T08:04:00.000Z",
+      "reasonCode": "OPERATOR_PAUSE"
     },
     "bid:accepted": {
       "contractVersion": 1,
@@ -104,16 +100,15 @@
       "sequence": 42,
       "occurredAt": "2026-07-15T08:00:01.000Z",
       "correlationId": "corr-bid",
-      "data": {
-        "bidId": "66666666-6666-4666-8666-666666666666",
-        "amount": { "currency": "AED", "amountFils": 5200000 },
-        "bidderAlias": "Bidder 027",
-        "bidKind": "MANUAL",
-        "currentBid": { "currency": "AED", "amountFils": 5200000 },
-        "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
-        "bidCount": 12,
-        "reserveStatus": "MET"
-      }
+      "bidId": "66666666-6666-4666-8666-666666666666",
+      "amount": { "currency": "AED", "amountFils": 5200000 },
+      "bidderAlias": "Bidder 027",
+      "bidKind": "MANUAL",
+      "currentBid": { "currency": "AED", "amountFils": 5200000 },
+      "nextMinimumBid": { "currency": "AED", "amountFils": 5300000 },
+      "bidCount": 12,
+      "reserveStatus": "MET",
+      "extended": false
     },
     "bid:status-changed": {
       "contractVersion": 1,
@@ -171,7 +166,7 @@
       "sequence": 45,
       "occurredAt": "2026-07-15T08:00:01.000Z",
       "correlationId": "corr-presence",
-      "data": { "approximateViewerCount": 84 }
+      "approximateViewerCount": 84
     },
     "lot:snapshot": {
       "contractVersion": 1,
@@ -268,7 +263,7 @@
       "sequence": 42,
       "occurredAt": "2026-07-15T08:00:01.000Z",
       "correlationId": "corr-reserve",
-      "data": { "reserveStatus": "MET" }
+      "reserveStatus": "MET"
     },
     "server:hello": {
       "contractVersion": 1,

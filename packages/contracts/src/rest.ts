@@ -22,8 +22,8 @@ export const restOperations = [
   operation("get", "/auctions", "List auctions"),
   operation("get", "/auctions/{auctionId}", "Get auction"),
   operation("get", "/auctions/{auctionId}/lots", "List auction lots"),
-  operation("get", "/lots", "Search lots"),
-  operation("get", "/lots/{lotId}", "Get lot details"),
+  operation("get", "/lots", "Search lots", "contracted"),
+  operation("get", "/lots/{lotId}", "Get lot details", "contracted"),
   operation("get", "/lots/{lotId}/bids", "Get public bid history"),
   operation(
     "get",

@@ -276,34 +276,25 @@ export interface AuthoritativeLotState {
  * call sites' evolution); `apps/api/src/auctions/public-lots.controller.ts`
  * is the real source of truth for this shape.
  */
-interface PublicLotsResponse {
+interface PublicLotResponse {
+  readonly closesAt: string;
   readonly contractVersion: 1;
-  readonly items: readonly {
-    readonly closesAt: string;
-    readonly currentBid: {
-      readonly amountFils: number;
-      readonly currency: "AED";
-    };
-    readonly lifecycle: string;
-    readonly lotId?: string;
-    readonly lotNumber: string;
-    readonly nextMinimumBid: {
-      readonly amountFils: number;
-      readonly currency: "AED";
-    };
-  }[];
+  readonly currentBid: {
+    readonly amountFils: number;
+    readonly currency: "AED";
+  };
+  readonly lifecycle: string;
+  readonly lotId: string;
+  readonly lotNumber: string;
+  readonly nextMinimumBid: {
+    readonly amountFils: number;
+    readonly currency: "AED";
+  };
 }
 
 /**
- * Fetches the public sanitized lot list and returns the authoritative
- * current/next bid, lifecycle, and close time for one lot.
- *
- * There is no `GET /lots/:lotId` or `GET /lots/:lotId/snapshot` REST route
- * implemented in `apps/api` yet (only `PublicLotsController`'s list route
- * and the Socket.IO `lot:subscribe`/`lot:sync` snapshot exist), so this
- * reuses the same endpoint `apps/web/lib/home-data.ts` already calls. A
- * dedicated single-lot endpoint would make this more efficient once it
- * exists; tracked in `docs/current-state.md`.
+ * Fetches the authoritative public state for a single lot via `GET /api/v1/lots/:lotId`.
+ * Returns `null` if the request fails, the lot is not found, or the response is invalid.
  */
 export async function fetchAuthoritativeLotState(
   session: BuyerBidSessionConfig,
@@ -311,9 +302,12 @@ export async function fetchAuthoritativeLotState(
 ): Promise<AuthoritativeLotState | null> {
   let response: Response;
   try {
-    response = await fetch(`${session.apiBaseUrl}/api/v1/lots`, {
-      cache: "no-store",
-    });
+    response = await fetch(
+      `${session.apiBaseUrl}/api/v1/lots/${encodeURIComponent(lotId)}`,
+      {
+        cache: "no-store",
+      },
+    );
   } catch {
     return null;
   }
@@ -322,15 +316,20 @@ export async function fetchAuthoritativeLotState(
     return null;
   }
 
-  let body: PublicLotsResponse;
+  let lot: PublicLotResponse;
   try {
-    body = (await response.json()) as PublicLotsResponse;
+    lot = (await response.json()) as PublicLotResponse;
   } catch {
     return null;
   }
 
-  const lot = body.items.find((item) => item.lotId === lotId);
-  if (lot === undefined) {
+  if (
+    typeof lot !== "object" ||
+    lot === null ||
+    typeof lot.closesAt !== "string" ||
+    typeof lot.lifecycle !== "string" ||
+    !isMoneyLike(lot.nextMinimumBid)
+  ) {
     return null;
   }
 

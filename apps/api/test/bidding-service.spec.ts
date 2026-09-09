@@ -310,6 +310,8 @@ describe("bidding service persistence boundary", () => {
   });
 
   it("rejects a proxy maximum that does not raise the active maximum", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-01T15:59:30.000Z"));
     const client = new FakeClient({ existingProxyMaximumFils: 6000000 });
     const service = new BiddingService(databaseFor(client));
 
@@ -326,9 +328,12 @@ describe("bidding service persistence boundary", () => {
         query.text.includes("INSERT INTO proxy_bids"),
       ),
     ).toBe(false);
+    vi.useRealTimers();
   });
 
   it("raises a proxy maximum without a new visible bid when the user already leads", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-01T15:59:30.000Z"));
     const client = new FakeClient({
       existingProxyMaximumFils: 5500000,
       leadingAccountId: "00000000-0000-4000-8000-000000000001",
@@ -357,6 +362,7 @@ describe("bidding service persistence boundary", () => {
         query.text.includes("INSERT INTO bid_ledger"),
       ),
     ).toBe(false);
+    vi.useRealTimers();
   });
 
   it("replays saved proxy command results without new writes", async () => {

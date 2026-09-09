@@ -100,6 +100,43 @@ describe("bidding gateway", () => {
     });
   });
 
+  it("syncs lot state on lot:sync with afterSequence", async () => {
+    const replayPayload = {
+      event: "bid:accepted",
+      lotId,
+      sequence: 5,
+    };
+    const gateway = gatewayFor({
+      getLotEventsAfter: vi.fn().mockResolvedValue([
+        {
+          event: "bid:accepted",
+          payload: replayPayload,
+          sequence: 5,
+        },
+      ]),
+      getLotSnapshot: vi.fn().mockResolvedValue({
+        ...lotSnapshot(),
+        sequence: 5,
+      }),
+    });
+
+    const result = await gateway.syncLot({
+      afterSequence: 4,
+      commandId,
+      contractVersion: 1,
+      lotId,
+      sentAt: "2026-09-01T15:59:30.000Z",
+    });
+
+    expect(result).toMatchObject({
+      result: {
+        replay: [replayPayload],
+        sequence: 5,
+      },
+      status: "ACCEPTED",
+    });
+  });
+
   it("routes socket manual bid commands to the durable bidding service", async () => {
     const placeManualBid = vi.fn().mockResolvedValue({
       commandId,

@@ -432,21 +432,18 @@ Transport timeout means “unknown,” not “rejected.” The client retries th
 
 ## 9. Server events
 
-All lot-scoped events include this envelope:
+All lot-scoped events emitted to `lot:{lotId}` are flat payloads containing domain data and sequence identifiers directly on the event object (unlike personal events in §10 which nest domain state under `data`).
 
-```ts
-interface LotEventEnvelope<TName extends string, TData> {
-  contractVersion: 1;
-  eventId: Uuid;
-  event: TName;
-  lotId: Uuid;
-  auctionId: Uuid;
-  sequence: number;
-  occurredAt: IsoDateTime;
-  correlationId: string;
-  data: TData;
-}
-```
+Common lot event fields:
+
+- `event`: event name (e.g. `"bid:accepted"`, `"auction:state-changed"`)
+- `auctionId`: Uuid
+- `lotId`: Uuid
+- `sequence`: monotonic per-lot sequence integer
+- `contractVersion`: optional contract version (default 1)
+- `occurredAt`: optional ISO timestamp
+- `correlationId`: optional correlation ID
+- `eventId`: optional unique event ID
 
 Clients apply only an event whose sequence is exactly the current sequence + 1. Equal/older events are duplicates. A larger gap triggers `lot:sync`.
 
@@ -502,19 +499,21 @@ interface MyBidState {
 ### `bid:accepted`
 
 ```ts
-type BidAcceptedEvent = LotEventEnvelope<
-  "bid:accepted",
-  {
-    bidId: Uuid;
-    amount: Money;
-    bidderAlias: string;
-    bidKind: "MANUAL" | "PROXY";
-    currentBid: Money;
-    nextMinimumBid: Money;
-    bidCount: number;
-    reserveStatus: ReserveStatus;
-  }
->;
+interface BidAcceptedEvent {
+  event: "bid:accepted";
+  lotId: Uuid;
+  auctionId: Uuid;
+  sequence: number;
+  amount: Money;
+  currentBid: Money;
+  nextMinimumBid: Money;
+  bidKind: "MANUAL" | "PROXY";
+  reserveStatus: ReserveStatus;
+  extended: boolean;
+  bidId?: Uuid;
+  bidderAlias?: string;
+  bidCount?: number;
+}
 ```
 
 One command may produce multiple ordered `bid:accepted` events while resolving proxies. The command acknowledgement points to the final resulting sequence/state.
@@ -522,42 +521,48 @@ One command may produce multiple ordered `bid:accepted` events while resolving p
 ### `auction:extended`
 
 ```ts
-type AuctionExtendedEvent = LotEventEnvelope<
-  "auction:extended",
-  {
-    previousClosesAt: IsoDateTime;
-    closesAt: IsoDateTime;
-    extensionMs: number;
-    extensionCount: number;
-    reason: "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW";
-  }
->;
+interface AuctionExtendedEvent {
+  event: "auction:extended";
+  lotId: Uuid;
+  auctionId: Uuid;
+  sequence: number;
+  closesAt: IsoDateTime;
+  extensionCount: number;
+  previousClosesAt?: IsoDateTime;
+  extensionMs?: number;
+  reason?: "QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW";
+}
 ```
 
-Extension is emitted as its own sequence after the bid event that caused it.
+Soft-close extension is surfaced either directly via `extended: true` on `bid:accepted` or via `auction:extended`.
 
 ### `auction:state-changed`
 
 ```ts
-type AuctionStateChangedEvent = LotEventEnvelope<
-  "auction:state-changed",
-  {
-    previousLifecycle: LotPublicState["lifecycle"];
-    lifecycle: LotPublicState["lifecycle"];
-    closesAt: IsoDateTime;
-    reasonCode?: string;
-    approvalSlaDueAt?: IsoDateTime;
-  }
->;
+interface AuctionStateChangedEvent {
+  event: "auction:state-changed";
+  lotId: Uuid;
+  auctionId: Uuid;
+  sequence: number;
+  previousLifecycle: LotPublicState["lifecycle"];
+  lifecycle: LotPublicState["lifecycle"];
+  closesAt?: IsoDateTime;
+  startsAt?: IsoDateTime;
+  reasonCode?: string;
+  approvalSlaDueAt?: IsoDateTime;
+}
 ```
 
 ### `reserve:status-changed`
 
 ```ts
-type ReserveStatusChangedEvent = LotEventEnvelope<
-  "reserve:status-changed",
-  { reserveStatus: "MET" }
->;
+interface ReserveStatusChangedEvent {
+  event: "reserve:status-changed";
+  lotId: Uuid;
+  auctionId: Uuid;
+  sequence: number;
+  reserveStatus: "MET";
+}
 ```
 
 Only the one-way public transition to `MET` is normally emitted. Reserve amount remains private.
@@ -565,10 +570,13 @@ Only the one-way public transition to `MET` is normally emitted. Reserve amount 
 ### `lot:presence-changed`
 
 ```ts
-type LotPresenceChangedEvent = LotEventEnvelope<
-  "lot:presence-changed",
-  { approximateViewerCount: number }
->;
+interface LotPresenceChangedEvent {
+  event: "lot:presence-changed";
+  lotId: Uuid;
+  auctionId: Uuid;
+  sequence: number;
+  approximateViewerCount: number;
+}
 ```
 
 This event may be sampled and coalesced. Clients must not infer bid demand or guaranteed exact people counts.

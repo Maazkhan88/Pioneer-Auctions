@@ -181,3 +181,16 @@ Record durable product and architecture decisions here. New entries are append-o
 - Status: accepted for MVP implementation
 - Decision: Implement `GET /api/v1/lots/:lotId/my-proxy-bid` and `DELETE /api/v1/lots/:lotId/proxy-bid` in the API. `GET` returns only the authenticated bidder's active maximum and latest public lot state. `DELETE` exists but always returns a versioned non-retryable `REJECTED` acknowledgement with `VALIDATION_FAILED` because live proxy cancellation is not supported for MVP.
 - Why: The routes were already documented in the contract inventory, but only `PUT /proxy-bid` existed in the server. Returning an explicit rejection for cancellation is safer than a 404 and keeps client behavior deterministic while preserving the current raise-only proxy policy.
+
+## DEC-024 — Realtime event contract drift resolution, single-lot REST endpoint, and live verification
+
+- Date: 2026-09-09
+- Status: accepted
+- Decision:
+  - Formally aligned `docs/api-contracts.md` §9 and `packages/contracts/src/events.ts` with the flat lot event outbox payloads (`bid:accepted`, `auction:state-changed`, `auction:extended`, `reserve:status-changed`, `lot:presence-changed`). Personal events (`bid:status-changed`) on `user:{accountId}` rooms remain enveloped under `data` for account-scoped delivery. Golden fixtures, OpenAPI schema, and Dart models were updated and regenerated with zero drift.
+  - Implemented `GET /api/v1/lots/:lotId` returning `PublicLotCard` in both `apps/api/src/auctions/public-lots.controller.ts` (with `LotsRepository.findById`) and the preview Cloudflare worker `apps/api/worker/public-preview.ts`. Returns 404 with `LOT_NOT_FOUND` if nonexistent or if lot lifecycle is `DRAFT`. Marked `GET /lots` and `GET /lots/{lotId}` as `contracted` in `packages/contracts/src/rest.ts`.
+  - Updated `apps/web/lib/bid-command.ts`'s `fetchAuthoritativeLotState` to fetch `GET /api/v1/lots/:lotId` directly instead of fetching and filtering the full public lot array.
+  - Added database integration test verifying soft-close extension (`extended: true`, `extensionCount` increments, `closes_at` extended by 120s) against real PostgreSQL row locks and transactions in `apps/api/test/bidding-integration.spec.ts`.
+  - Added test coverage in `apps/web/test/lot-socket.spec.ts` for socket reconnect with `afterSequence` catch-up and sequence gap detection triggering `lot:sync` and snapshot application. Added `lot:sync` with `replay` coverage to `apps/api/test/bidding-gateway.spec.ts`.
+  - Successfully redeployed all three Cloudflare previews: API preview worker (`8adf2ea1-d058-475f-acba-7cb5a25f207a`), buyer web preview (`8d96c41f-608c-4f70-98bf-8cc59031f8ee`), and admin preview (`bf43f3f9-91c4-4e7a-bd06-b9b890a25a11`).
+- Why: Closes DEC-022's documented drift, brings executable contracts in sync with production behavior, eliminates inefficient full-list refetch on the buyer detail page, and verifies real database and socket resilience under edge cases.

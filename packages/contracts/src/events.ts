@@ -29,21 +29,21 @@ export const ServerHelloSchema = z
   })
   .passthrough();
 
-function lotEventEnvelopeSchema<TName extends string, TData extends z.ZodType>(
+function lotEventSchema<TName extends string, TFields extends z.ZodRawShape>(
   event: TName,
-  data: TData,
+  fields: TFields,
 ) {
   return z
     .object({
       auctionId: UuidSchema,
-      contractVersion: ContractVersionSchema,
-      correlationId: CorrelationIdSchema,
-      data,
+      contractVersion: ContractVersionSchema.optional(),
+      correlationId: CorrelationIdSchema.optional(),
       event: z.literal(event),
-      eventId: UuidSchema,
+      eventId: UuidSchema.optional(),
       lotId: UuidSchema,
-      occurredAt: IsoDateTimeSchema,
+      occurredAt: IsoDateTimeSchema.optional(),
       sequence: NonNegativeIntegerSchema,
+      ...fields,
     })
     .passthrough();
 }
@@ -77,56 +77,50 @@ export const LotSnapshotSchema = z
   })
   .passthrough();
 
-export const BidAcceptedEventSchema = lotEventEnvelopeSchema(
-  "bid:accepted",
-  z
-    .object({
-      amount: MoneySchema,
-      bidCount: NonNegativeIntegerSchema,
-      bidId: UuidSchema,
-      bidderAlias: z.string().min(1).max(64),
-      bidKind: z.enum(["MANUAL", "PROXY"]),
-      currentBid: MoneySchema,
-      nextMinimumBid: MoneySchema,
-      reserveStatus: ReserveStatusSchema,
-    })
-    .passthrough(),
-);
+export const BidAcceptedEventSchema = lotEventSchema("bid:accepted", {
+  amount: MoneySchema,
+  bidCount: NonNegativeIntegerSchema.optional(),
+  bidId: UuidSchema.optional(),
+  bidderAlias: z.string().min(1).max(64).optional(),
+  bidKind: z.enum(["MANUAL", "PROXY"]),
+  currentBid: MoneySchema,
+  extended: z.boolean().default(false),
+  nextMinimumBid: MoneySchema,
+  reserveStatus: ReserveStatusSchema,
+});
 
-export const AuctionExtendedEventSchema = lotEventEnvelopeSchema(
-  "auction:extended",
-  z
-    .object({
-      closesAt: IsoDateTimeSchema,
-      extensionCount: PositiveIntegerSchema,
-      extensionMs: PositiveIntegerSchema,
-      previousClosesAt: IsoDateTimeSchema,
-      reason: z.literal("QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW"),
-    })
-    .passthrough(),
-);
+export const AuctionExtendedEventSchema = lotEventSchema("auction:extended", {
+  closesAt: IsoDateTimeSchema,
+  extensionCount: PositiveIntegerSchema,
+  extensionMs: PositiveIntegerSchema.optional(),
+  previousClosesAt: IsoDateTimeSchema.optional(),
+  reason: z.literal("QUALIFYING_BID_IN_SOFT_CLOSE_WINDOW").optional(),
+});
 
-export const AuctionStateChangedEventSchema = lotEventEnvelopeSchema(
+export const AuctionStateChangedEventSchema = lotEventSchema(
   "auction:state-changed",
-  z
-    .object({
-      approvalSlaDueAt: IsoDateTimeSchema.optional(),
-      closesAt: IsoDateTimeSchema,
-      lifecycle: LotLifecycleSchema,
-      previousLifecycle: LotLifecycleSchema,
-      reasonCode: z.string().min(1).optional(),
-    })
-    .passthrough(),
+  {
+    approvalSlaDueAt: IsoDateTimeSchema.optional(),
+    closesAt: IsoDateTimeSchema.optional(),
+    lifecycle: LotLifecycleSchema,
+    previousLifecycle: LotLifecycleSchema,
+    reasonCode: z.string().min(1).optional(),
+    startsAt: IsoDateTimeSchema.optional(),
+  },
 );
 
-export const ReserveStatusChangedEventSchema = lotEventEnvelopeSchema(
+export const ReserveStatusChangedEventSchema = lotEventSchema(
   "reserve:status-changed",
-  z.object({ reserveStatus: z.literal("MET") }).passthrough(),
+  {
+    reserveStatus: z.literal("MET"),
+  },
 );
 
-export const LotPresenceChangedEventSchema = lotEventEnvelopeSchema(
+export const LotPresenceChangedEventSchema = lotEventSchema(
   "lot:presence-changed",
-  z.object({ approximateViewerCount: NonNegativeIntegerSchema }).passthrough(),
+  {
+    approximateViewerCount: NonNegativeIntegerSchema,
+  },
 );
 
 export const MyBidStatusChangedEventSchema = personalEventSchema(

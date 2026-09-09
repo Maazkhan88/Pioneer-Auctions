@@ -88,6 +88,25 @@ export default {
       return json(listPublicLots());
     }
 
+    const singleLotMatch = url.pathname.match(
+      /^\/api\/v1\/lots\/([a-zA-Z0-9-]+)$/,
+    );
+    if (request.method === "GET" && singleLotMatch) {
+      const lotId = singleLotMatch[1];
+      const lot = publicPreviewLots.find((item) => item.lotId === lotId);
+      if (lot === undefined) {
+        return json(
+          {
+            code: "LOT_NOT_FOUND",
+            contractVersion: 1,
+            message: "Lot not found in Pioneer public preview API.",
+          },
+          404,
+        );
+      }
+      return json(lot);
+    }
+
     return json(
       {
         code: "NOT_FOUND",

@@ -1,6 +1,6 @@
 # Current state
 
-Last updated: 2026-08-14
+Last updated: 2026-09-09
 
 Repository: `https://github.com/Maazkhan88/Pioneer-Auctions` (`main`)
 
@@ -204,10 +204,26 @@ Outstanding from the original list: outbid/rejected/closed bid states beyond wha
 
 ## Next action
 
-With manual and proxy bidding both now live-verified end-to-end (REST and real browser UI), the next highest-value gaps are: (1) live-verify soft-close extension and reconnect/gap-resync under a real network drop, (2) resolve DEC-022's documented-vs-real contract drift for realtime events (`docs/api-contracts.md` §9 vs. the real flat payloads) so future client work isn't built against the wrong shape again, and (3) add a dedicated single-lot/snapshot REST endpoint to replace the current "refetch the whole public lot list" approach in `fetchAuthoritativeLotState`. After that: diagnose the Turbopack/`@pioneer/contracts` bundling gap (DEC-019).
+With realtime contract drift resolved, `GET /api/v1/lots/:lotId` implemented, soft-close and reconnect/gap-resync verified against real database and socket flows, and preview deployments updated: (1) diagnose the Turbopack/`@pioneer/contracts` runtime value bundling gap (DEC-019), (2) complete the remaining Task 007 admin slices (step-up auth for high-risk actions, live monitor, and review queues), and (3) prepare Identity/KYC provider adapter foundations (Task 008).
 
 ## Last validation
 
+- On 2026-09-09, resolved DEC-022 realtime event contract drift and verified database/socket resilience (DEC-024):
+  - Aligned `docs/api-contracts.md` §9 and `packages/contracts/src/events.ts` to flat lot event payloads (`bid:accepted`, `auction:state-changed`, `auction:extended`, `reserve:status-changed`, `lot:presence-changed`) matching server outbox emissions. Retained enveloped personal events (`bid:status-changed`) on `user:{accountId}` rooms. Updated valid/invalid fixtures, regenerated golden schemas, Dart models, and OpenAPI document without drift.
+  - Implemented `GET /api/v1/lots/:lotId` returning `PublicLotCard` in `apps/api/src/auctions/public-lots.controller.ts` (with `LotsRepository.findById`) and Cloudflare preview worker `apps/api/worker/public-preview.ts`. Returns 404 with `LOT_NOT_FOUND` if nonexistent or in `DRAFT` status. Marked `GET /lots` and `GET /lots/{lotId}` as `contracted` in `packages/contracts/src/rest.ts`.
+  - Updated `apps/web/lib/bid-command.ts`'s `fetchAuthoritativeLotState` to fetch `GET /api/v1/lots/:lotId` directly instead of querying and filtering the full public lot array.
+  - Added live soft-close window extension test against real PostgreSQL in `apps/api/test/bidding-integration.spec.ts`: verified `extended: true`, `extensionCount` increments, `closes_at` advances by 120s, and outbox event records `extended: true`.
+  - Added Socket.IO reconnect with `afterSequence` catch-up and sequence gap detection triggering `lot:sync` tests in `apps/web/test/lot-socket.spec.ts`, plus `lot:sync` with `replay` events in `apps/api/test/bidding-gateway.spec.ts`.
+  - `corepack pnpm --filter @pioneer/contracts test` passed (12/12 tests + drift check).
+  - `PIONEER_RUN_DB_TESTS=1 corepack pnpm --filter @pioneer/api test` passed with 0 skipped (19 files / 94 tests, including 100-command race test and DB integration suites).
+  - `corepack pnpm --filter @pioneer/web test` passed (8 files / 50 tests).
+  - `corepack pnpm --filter @pioneer/admin test` passed (5 files / 19 tests).
+  - `typecheck` and `eslint` passed with 0 errors across `@pioneer/api`, `@pioneer/web`, and `@pioneer/admin`.
+  - Production builds (`build` for API, `build:cloudflare` for Web and Admin) succeeded.
+  - Redeployed all three Cloudflare previews via Wrangler:
+    - API preview worker: `https://pioneer-auctions-api.maaz-n-khan.workers.dev` (Version ID `8adf2ea1-d058-475f-acba-7cb5a25f207a`, verified live 200 on `/api/v1/lots/:lotId` and 404 on invalid ID).
+    - Buyer web preview: `https://pioneer-auctions-web.maaz-n-khan.workers.dev` (Version ID `8d96c41f-608c-4f70-98bf-8cc59031f8ee`, verified live 200 on `/en` and `/en/lots/:lotId`).
+    - Admin preview: `https://pioneer-auctions-admin.maaz-n-khan.workers.dev` (Version ID `bf43f3f9-91c4-4e7a-bd06-b9b890a25a11`, verified live 200 on `/en`).
 - On 2026-08-15, closed proxy REST route contract drift: implemented `GET /api/v1/lots/:lotId/my-proxy-bid` and `DELETE /api/v1/lots/:lotId/proxy-bid`, updated `docs/api-contracts.md` and `packages/contracts/src/rest.ts`, regenerated `packages/contracts/openapi/v1.json`, and recorded DEC-023. `DELETE` intentionally returns an explicit non-retryable `VALIDATION_FAILED` rejection for MVP because live proxy cancellation remains unsupported.
 - `corepack pnpm --filter @pioneer/contracts test` passed on 2026-08-15.
 - `corepack pnpm --filter @pioneer/api test:bidding` passed 6 files / 35 tests on 2026-08-15.

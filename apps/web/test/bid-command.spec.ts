@@ -68,20 +68,18 @@ describe("fetchAuthoritativeLotState", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async (input) => {
-        expect(String(input)).toBe("https://api.test/api/v1/lots");
+        expect(String(input)).toBe(
+          "https://api.test/api/v1/lots/11111111-1111-4111-8111-111111111111",
+        );
         return new Response(
           JSON.stringify({
+            closesAt: "2026-07-14T17:02:00.000Z",
             contractVersion: 1,
-            items: [
-              {
-                closesAt: "2026-07-14T17:02:00.000Z",
-                currentBid: { amountFils: 5_200_000, currency: "AED" },
-                lifecycle: "LIVE",
-                lotId: "11111111-1111-4111-8111-111111111111",
-                lotNumber: "214",
-                nextMinimumBid: { amountFils: 5_300_000, currency: "AED" },
-              },
-            ],
+            currentBid: { amountFils: 5_200_000, currency: "AED" },
+            lifecycle: "LIVE",
+            lotId: "11111111-1111-4111-8111-111111111111",
+            lotNumber: "214",
+            nextMinimumBid: { amountFils: 5_300_000, currency: "AED" },
           }),
           { status: 200 },
         );
@@ -101,14 +99,15 @@ describe("fetchAuthoritativeLotState", () => {
     });
   });
 
-  it("returns null when the lot is not in the response", async () => {
+  it("returns null when the lot endpoint returns 404", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(
         async () =>
-          new Response(JSON.stringify({ contractVersion: 1, items: [] }), {
-            status: 200,
-          }),
+          new Response(
+            JSON.stringify({ code: "LOT_NOT_FOUND", message: "Lot not found" }),
+            { status: 404 },
+          ),
       ),
     );
 

@@ -143,49 +143,147 @@ describe("LotSocketClient", () => {
 
     // Sequence 6 (5 + 1) should apply.
     bidAcceptedHandler?.({
+      amount: { amountFils: 200, currency: "AED" },
       auctionId: "auction-1",
-      data: {
-        bidCount: 2,
-        currentBid: { amountFils: 200, currency: "AED" },
-        nextMinimumBid: { amountFils: 300, currency: "AED" },
-        reserveStatus: "MET",
-      },
+      bidKind: "MANUAL",
+      currentBid: { amountFils: 200, currency: "AED" },
+      extended: false,
       lotId: "lot-1",
+      nextMinimumBid: { amountFils: 300, currency: "AED" },
+      reserveStatus: "MET",
       sequence: 6,
     });
     expect(appliedSequences).toEqual([6]);
 
     // Sequence 6 again (duplicate delivery) should be ignored, not re-applied.
     bidAcceptedHandler?.({
+      amount: { amountFils: 200, currency: "AED" },
       auctionId: "auction-1",
-      data: {
-        bidCount: 2,
-        currentBid: { amountFils: 200, currency: "AED" },
-        nextMinimumBid: { amountFils: 300, currency: "AED" },
-        reserveStatus: "MET",
-      },
+      bidKind: "MANUAL",
+      currentBid: { amountFils: 200, currency: "AED" },
+      extended: false,
       lotId: "lot-1",
+      nextMinimumBid: { amountFils: 300, currency: "AED" },
+      reserveStatus: "MET",
       sequence: 6,
     });
     expect(appliedSequences).toEqual([6]);
 
     // Sequence 9 (a gap after 6) should trigger onGapDetected and a lot:sync emit, not apply.
     bidAcceptedHandler?.({
+      amount: { amountFils: 900, currency: "AED" },
       auctionId: "auction-1",
-      data: {
-        bidCount: 3,
-        currentBid: { amountFils: 900, currency: "AED" },
-        nextMinimumBid: { amountFils: 1_000, currency: "AED" },
-        reserveStatus: "MET",
-      },
+      bidKind: "MANUAL",
+      currentBid: { amountFils: 900, currency: "AED" },
+      extended: false,
       lotId: "lot-1",
+      nextMinimumBid: { amountFils: 1_000, currency: "AED" },
+      reserveStatus: "MET",
       sequence: 9,
     });
     expect(appliedSequences).toEqual([6]);
     expect(gapDetected).toBe(true);
-    expect(
-      fakeSocket.emit.mock.calls.some((call) => call[0] === "lot:sync"),
-    ).toBe(true);
+
+    const syncCall = fakeSocket.emit.mock.calls.find(
+      (call) => call[0] === "lot:sync",
+    );
+    expect(syncCall).toBeDefined();
+    expect(syncCall?.[1]).toMatchObject({
+      afterSequence: 6,
+      lotId: "lot-1",
+    });
+
+    // Simulate lot:sync ack resolving with the sequence 9 snapshot
+    const syncAckCallback = syncCall?.[2] as (ack: unknown) => void;
+    syncAckCallback({
+      commandId: "sync-cmd-1",
+      contractVersion: 1,
+      result: {
+        auctionId: "auction-1",
+        lotId: "lot-1",
+        sequence: 9,
+        state: {
+          bidCount: 4,
+          closesAt: "2026-07-14T17:02:00.000Z",
+          currentBid: { amountFils: 900, currency: "AED" },
+          lifecycle: "LIVE",
+          nextMinimumBid: { amountFils: 1_000, currency: "AED" },
+          reserveStatus: "MET",
+        },
+      },
+      serverTime: "2026-07-14T17:01:00.000Z",
+      status: "ACCEPTED",
+    });
+
+    // Sequence 10 should now apply cleanly after the sync restored continuity
+    bidAcceptedHandler?.({
+      amount: { amountFils: 1_000, currency: "AED" },
+      auctionId: "auction-1",
+      bidKind: "MANUAL",
+      currentBid: { amountFils: 1_000, currency: "AED" },
+      extended: false,
+      lotId: "lot-1",
+      nextMinimumBid: { amountFils: 1_100, currency: "AED" },
+      reserveStatus: "MET",
+      sequence: 10,
+    });
+    expect(appliedSequences).toEqual([6, 10]);
+  });
+
+  it("re-subscribes with afterSequence when reconnecting after a disconnect", () => {
+    const connectionChanges: boolean[] = [];
+    const client = new LotSocketClient(session, "lot-1", {
+      onConnectionChange: (connected) => connectionChanges.push(connected),
+    });
+    client.connect();
+
+    // 1. Initial connect
+    fakeSocket.handlers.get("connect")?.();
+
+    // 2. Initial snapshot at sequence 7
+    const subscribeCall = fakeSocket.emit.mock.calls.find(
+      (call) => call[0] === "lot:subscribe",
+    );
+    expect(subscribeCall?.[1].afterSequence).toBeUndefined();
+    const ackCallback = subscribeCall?.[2] as (ack: unknown) => void;
+    ackCallback({
+      commandId: "cmd-sub",
+      contractVersion: 1,
+      result: {
+        auctionId: "auction-1",
+        lotId: "lot-1",
+        sequence: 7,
+        state: {
+          bidCount: 3,
+          closesAt: "2026-07-14T17:02:00.000Z",
+          currentBid: { amountFils: 700, currency: "AED" },
+          lifecycle: "LIVE",
+          nextMinimumBid: { amountFils: 800, currency: "AED" },
+          reserveStatus: "MET",
+        },
+      },
+      status: "ACCEPTED",
+    });
+
+    // 3. Disconnect happens
+    fakeSocket.handlers.get("disconnect")?.();
+    expect(connectionChanges).toEqual([true, false]);
+
+    // Clear previous emit calls to isolate reconnect emit
+    fakeSocket.emit.mockClear();
+
+    // 4. Reconnect event
+    fakeSocket.handlers.get("connect")?.();
+    expect(connectionChanges).toEqual([true, false, true]);
+
+    const reconnectSubscribe = fakeSocket.emit.mock.calls.find(
+      (call) => call[0] === "lot:subscribe",
+    );
+    expect(reconnectSubscribe).toBeDefined();
+    expect(reconnectSubscribe?.[1]).toMatchObject({
+      afterSequence: 7,
+      lotId: "lot-1",
+    });
   });
 
   it("placeBid resolves 'not-connected' when there is no live socket", async () => {

@@ -20,11 +20,11 @@
     },
     "auction:extended": {
       "event": "auction:extended",
-      "data": { "reason": "MANUAL" }
+      "reason": "MANUAL"
     },
     "auction:state-changed": {
       "event": "auction:state-changed",
-      "data": { "lifecycle": "UNKNOWN" }
+      "lifecycle": "UNKNOWN"
     },
     "bid:accepted": { "event": "bid:accepted", "eventId": "not-a-uuid" },
     "bid:status-changed": {
@@ -43,7 +43,7 @@
     },
     "lot:presence-changed": {
       "event": "lot:presence-changed",
-      "data": { "approximateViewerCount": -1 }
+      "approximateViewerCount": -1
     },
     "lot:snapshot": {
       "event": "lot:snapshot",
@@ -67,7 +67,7 @@
     },
     "reserve:status-changed": {
       "event": "reserve:status-changed",
-      "data": { "reserveStatus": "NOT_MET" }
+      "reserveStatus": "NOT_MET"
     },
     "server:hello": {
       "contractVersion": 1,

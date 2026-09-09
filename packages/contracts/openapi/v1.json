@@ -1272,7 +1272,7 @@
         "tags": [
           "lots"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
           "501": {
             "description": "Contract inventory entry; implementation is planned"
@@ -1297,7 +1297,7 @@
         "tags": [
           "lots"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
           "501": {
             "description": "Contract inventory entry; implementation is planned"
