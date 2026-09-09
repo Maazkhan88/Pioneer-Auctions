@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { MyBidStatusChangedEventSchema } from "@pioneer/contracts";
 import { BiddingService } from "../src/bidding/bidding.service.js";
 import type { DatabasePool } from "../src/database/database.pool.js";
 
@@ -203,13 +204,25 @@ describe("bidding service persistence boundary", () => {
     ]);
     expect(accountOutboxInserts[0]?.values[3]).toMatchObject({
       data: { status: "OUTBID" },
+      eventId: expect.any(String),
     });
     expect(accountOutboxInserts[1]?.values[3]).toMatchObject({
       data: {
         activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
         status: "WINNING",
       },
+      eventId: expect.any(String),
     });
+    expect(
+      MyBidStatusChangedEventSchema.safeParse(
+        accountOutboxInserts[0]?.values[3],
+      ).success,
+    ).toBe(true);
+    expect(
+      MyBidStatusChangedEventSchema.safeParse(
+        accountOutboxInserts[1]?.values[3],
+      ).success,
+    ).toBe(true);
     vi.useRealTimers();
   });
 
@@ -469,13 +482,25 @@ describe("bidding service persistence boundary", () => {
         activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
         status: "OUTBID",
       },
+      eventId: expect.any(String),
     });
     expect(accountOutboxInserts[1]?.values[3]).toMatchObject({
       data: {
         activeProxyMaximum: { amountFils: 6000000, currency: "AED" },
         status: "WINNING",
       },
+      eventId: expect.any(String),
     });
+    expect(
+      MyBidStatusChangedEventSchema.safeParse(
+        accountOutboxInserts[0]?.values[3],
+      ).success,
+    ).toBe(true);
+    expect(
+      MyBidStatusChangedEventSchema.safeParse(
+        accountOutboxInserts[1]?.values[3],
+      ).success,
+    ).toBe(true);
     vi.useRealTimers();
   });
 

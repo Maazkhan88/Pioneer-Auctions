@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { Inject, Injectable } from "@nestjs/common";
 import type { PoolClient, QueryResultRow } from "pg";
 
@@ -1090,6 +1092,7 @@ export class BiddingService {
       result?.nextMinimumBidFils ?? Number(lot.next_minimum_bid_fils);
     const closesAt = result?.closesAt ?? lot.closes_at;
     const lotSequence = result?.sequence ?? lot.sequence;
+    const eventId = randomUUID();
 
     await client.query(
       `
@@ -1124,6 +1127,7 @@ export class BiddingService {
             status,
           },
           event: "bid:status-changed",
+          eventId,
           occurredAt: serverTime.toISOString(),
         },
         command.correlationId,

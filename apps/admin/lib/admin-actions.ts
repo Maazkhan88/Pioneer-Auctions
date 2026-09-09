@@ -1,3 +1,5 @@
+import { CONTRACT_VERSION } from "@pioneer/contracts";
+
 export type FinalBidRejectionReasonCode =
   | "BUYER_ELIGIBILITY_FAILED"
   | "DOCUMENTATION_INCOMPLETE"
@@ -279,6 +281,7 @@ async function postAdminJson<TResponse>(
     headers: {
       "content-type": "application/json",
       "x-correlation-id": runtime.correlationId,
+      "x-pioneer-contract-version": String(CONTRACT_VERSION),
       "x-pioneer-test-account-id": runtime.testAccountId,
     },
     method: options.method ?? "POST",
@@ -290,6 +293,8 @@ async function postAdminJson<TResponse>(
 
   return (await response.json()) as TResponse;
 }
+
+export const ADMIN_CONTRACT_VERSION = CONTRACT_VERSION;
 
 function buildAdminApiUrl(apiBaseUrl: string, endpoint: string): string {
   const baseUrl = apiBaseUrl.replace(/\/$/, "");

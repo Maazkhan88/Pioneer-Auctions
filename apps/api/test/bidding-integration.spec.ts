@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { MyBidStatusChangedEventSchema } from "@pioneer/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -129,6 +130,19 @@ describeIfDatabase("bidding service database integration", () => {
       [fixture.lotId],
     );
     expect(outbox.rows[0]?.count).toBe("3");
+
+    const accountOutbox = await fixture.pool.query<{
+      payload: Record<string, unknown>;
+    }>(
+      "SELECT payload FROM outbox_events WHERE aggregate_type = 'account' AND event_name = 'bid:status-changed'",
+    );
+    expect(accountOutbox.rows.length).toBeGreaterThan(0);
+    for (const row of accountOutbox.rows) {
+      expect(MyBidStatusChangedEventSchema.safeParse(row.payload).success).toBe(
+        true,
+      );
+      expect(row.payload.eventId).toBeDefined();
+    }
   });
 
   it("extends closes_at and emits extended=true when a bid is placed inside the soft-close window", async () => {

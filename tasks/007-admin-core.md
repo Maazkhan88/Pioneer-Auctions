@@ -67,6 +67,8 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - On 2026-09-09, updated `apps/web/lib/bid-command.ts`'s `fetchAuthoritativeLotState` to fetch `GET /api/v1/lots/:lotId` directly, replacing the previous full-list scan. Added unit test in `apps/web/test/bid-command.spec.ts`.
 - On 2026-09-09, verified soft-close extension against real PostgreSQL in `apps/api/test/bidding-integration.spec.ts`, verified Socket.IO reconnect/gap-resync in `apps/web/test/lot-socket.spec.ts` and `apps/api/test/bidding-gateway.spec.ts`, and redeployed all three Cloudflare previews (API, web, admin).
 - On 2026-09-09, diagnosed and resolved DEC-019 (`@pioneer/contracts` runtime value bundling in Next.js Turbopack) by configuring `main: ./dist/index.js`, `types: ./dist/index.d.ts`, and conditional exports in `packages/contracts/package.json` to export compiled ESM artifacts. Both `apps/web` and `apps/admin` now build cleanly with runtime imports.
+- On 2026-09-09, added UUID `eventId` server-side to `bid:status-changed` outbox payloads (`BiddingService.writePersonalBidStatusOutbox`), aligned `MyBidStatusChangedEventSchema` with nullable `currentBid`, and verified schema conformance in unit tests and real-PostgreSQL integration tests.
+- On 2026-09-09, proved DEC-019 production runtime imports by importing `CONTRACT_VERSION` from `@pioneer/contracts` in `apps/web/lib/bid-command.ts` and `apps/admin/lib/admin-actions.ts`, passing Next.js Turbopack `build` and Cloudflare static export `build:cloudflare` across both apps.
 
 ## Acceptance criteria
 

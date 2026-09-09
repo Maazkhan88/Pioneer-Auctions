@@ -1,4 +1,8 @@
-import type { ErrorCode, Money } from "@pioneer/contracts";
+import {
+  CONTRACT_VERSION,
+  type ErrorCode,
+  type Money,
+} from "@pioneer/contracts";
 
 import type { BuyerBidSessionConfig } from "./bid-session";
 
@@ -7,22 +11,10 @@ import type { BuyerBidSessionConfig } from "./bid-session";
  * shape `BiddingController.placeBid` returns) and the equivalent
  * `BidCommandAckSchema` in `packages/contracts/src/commands.ts`.
  *
- * This is deliberately a hand-written type plus a manual runtime parser
- * (`parseBidCommandAck` below) rather than importing `BidCommandAckSchema`
- * as a value from `@pioneer/contracts`: Next.js/Turbopack cannot currently
- * bundle any runtime (non-type-only) import from `@pioneer/contracts` into
- * `apps/web` -- `next build` fails with "module has no exports" for every
- * named export, including ones that clearly exist in
- * `packages/contracts/src/index.ts` and resolve fine under `tsc`/Vitest.
- * No app in this repo has bundled a runtime `@pioneer/contracts` value
- * through a Next.js build before (only type-only imports and Vitest, which
- * uses a different resolver); this looks like a pre-existing monorepo/
- * bundler gap around that package's `zod`-based exports, not something
- * introduced here, and is out of scope for Task 005 to fix. Tracked in
- * `docs/current-state.md`. `apps/web/lib/home-data.ts` and
- * `apps/admin/lib/admin-data.ts` already establish the same "define a local
- * type + manual `as`/parse instead of importing a contracts type" pattern
- * for their own API responses, so this follows existing convention.
+ * Runtime packaging note (DEC-019): `@pioneer/contracts` exports compiled
+ * ESM distribution artifacts from `dist/`, resolving the previous Turbopack
+ * packaging gap. Runtime values like `CONTRACT_VERSION` are imported directly
+ * into production code below.
  */
 export type BidCommandAck =
   | {
@@ -72,7 +64,7 @@ function parseBidCommandAck(body: unknown): BidCommandAck | null {
   const record = body as Record<string, unknown>;
   if (
     typeof record.commandId !== "string" ||
-    record.contractVersion !== 1 ||
+    record.contractVersion !== CONTRACT_VERSION ||
     typeof record.correlationId !== "string" ||
     typeof record.serverTime !== "string"
   ) {
@@ -99,7 +91,7 @@ function parseBidCommandAck(body: unknown): BidCommandAck | null {
     }
     return {
       commandId: record.commandId,
-      contractVersion: 1,
+      contractVersion: CONTRACT_VERSION,
       correlationId: record.correlationId,
       result: {
         closesAt: r.closesAt,
@@ -154,7 +146,7 @@ function parseBidCommandAck(body: unknown): BidCommandAck | null {
 
     return {
       commandId: record.commandId,
-      contractVersion: 1,
+      contractVersion: CONTRACT_VERSION,
       correlationId: record.correlationId,
       error: {
         code: e.code as ErrorCode,
@@ -169,6 +161,8 @@ function parseBidCommandAck(body: unknown): BidCommandAck | null {
 
   return null;
 }
+
+export const BUYER_CONTRACT_VERSION = CONTRACT_VERSION;
 
 /**
  * Buyer bid command state machine (pure, framework-independent so it can be

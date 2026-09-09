@@ -208,6 +208,12 @@ With realtime contract drift resolved, `GET /api/v1/lots/:lotId` implemented, DE
 
 ## Last validation
 
+- On 2026-09-09, aligned personal realtime event contract and proved DEC-019 production runtime imports:
+  - Added generated UUID `eventId` server-side to `bid:status-changed` outbox payloads in `BiddingService.writePersonalBidStatusOutbox` (`apps/api/src/bidding/bidding.service.ts`).
+  - Aligned `packages/contracts/src/events.ts` and `docs/api-contracts.md` §10 with `currentBid: MoneySchema.nullable()` on `MyBidStatusChangedEventSchema` to support pre-bid proxy bids on unbid lots. Regenerated schemas with zero drift (`check:generated`).
+  - Added test assertions in `apps/api/test/bidding-service.spec.ts` and real-PostgreSQL `apps/api/test/bidding-integration.spec.ts` proving emitted `bid:status-changed` payloads validate against `MyBidStatusChangedEventSchema`.
+  - Imported `CONTRACT_VERSION` as a production runtime value in `apps/web/lib/bid-command.ts` and `apps/admin/lib/admin-actions.ts`. Verified both `@pioneer/web` and `@pioneer/admin` build cleanly under Next.js Turbopack (`next build`) and Cloudflare static export (`build:cloudflare`).
+  - Documented monorepo package build ordering (Turborepo `dependsOn: ["^build"]` and pnpm recursive topological builds automatically compile `@pioneer/contracts` before apps; standalone app builds require `corepack pnpm --filter @pioneer/contracts build` first).
 - On 2026-09-09, diagnosed and resolved the DEC-019 Turbopack `@pioneer/contracts` runtime value bundling gap:
   - Identified root cause: `packages/contracts/src/index.ts` uses relative `.js` specifiers (`export * from "./core.js"`) mandated by TypeScript `NodeNext` ESM conventions. When `package.json` pointed exports directly to `./src/index.ts`, Turbopack tried to resolve `./core.js` inside `src/` where only `.ts` existed, causing module resolution to fail and reporting "module has no exports at all".
   - Configured `packages/contracts/package.json` with `main: "./dist/index.js"`, `types: "./dist/index.d.ts"`, and conditional exports pointing to compiled ESM distribution files in `dist/`.

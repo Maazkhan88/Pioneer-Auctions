@@ -599,7 +599,7 @@ interface MyBidStatusChangedEvent {
     auctionId: Uuid;
     lotSequence: number;
     status: MyBidStatus;
-    currentBid: Money;
+    currentBid: Money | null;
     nextMinimumBid: Money;
     activeProxyMaximum: Money | null;
     closesAt: IsoDateTime;

@@ -130,7 +130,7 @@ export const MyBidStatusChangedEventSchema = personalEventSchema(
       activeProxyMaximum: MoneySchema.nullable(),
       auctionId: UuidSchema,
       closesAt: IsoDateTimeSchema,
-      currentBid: MoneySchema,
+      currentBid: MoneySchema.nullable(),
       lotId: UuidSchema,
       lotSequence: NonNegativeIntegerSchema,
       nextMinimumBid: MoneySchema,
