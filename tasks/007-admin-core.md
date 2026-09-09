@@ -66,6 +66,7 @@ Give authorized operations staff safe, auditable control over lots, auctions, de
 - On 2026-09-09, added `LotsRepository.findById` and public `GET /api/v1/lots/:lotId` in `apps/api/src/auctions/public-lots.controller.ts`, returning `PublicLotCard` (404 on missing or `DRAFT` lots), and implemented matching route in `apps/api/worker/public-preview.ts`. Marked `GET /lots` and `GET /lots/{lotId}` as `contracted` in `packages/contracts/src/rest.ts`. Added unit tests in `apps/api/test/public-lots.spec.ts` and `apps/api/test/public-preview-worker.spec.ts`.
 - On 2026-09-09, updated `apps/web/lib/bid-command.ts`'s `fetchAuthoritativeLotState` to fetch `GET /api/v1/lots/:lotId` directly, replacing the previous full-list scan. Added unit test in `apps/web/test/bid-command.spec.ts`.
 - On 2026-09-09, verified soft-close extension against real PostgreSQL in `apps/api/test/bidding-integration.spec.ts`, verified Socket.IO reconnect/gap-resync in `apps/web/test/lot-socket.spec.ts` and `apps/api/test/bidding-gateway.spec.ts`, and redeployed all three Cloudflare previews (API, web, admin).
+- On 2026-09-09, diagnosed and resolved DEC-019 (`@pioneer/contracts` runtime value bundling in Next.js Turbopack) by configuring `main: ./dist/index.js`, `types: ./dist/index.d.ts`, and conditional exports in `packages/contracts/package.json` to export compiled ESM artifacts. Both `apps/web` and `apps/admin` now build cleanly with runtime imports.
 
 ## Acceptance criteria
 
