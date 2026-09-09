@@ -3,8 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
     "./fixtures/v1/*": "./fixtures/v1/*",
     "./openapi/v1.json": "./openapi/v1.json",
     "./schemas/v1/*": "./schemas/v1/*"
