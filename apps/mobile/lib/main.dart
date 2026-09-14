@@ -35,6 +35,8 @@ class PioneerMobileApp extends StatelessWidget {
           title: 'Pioneer Auctions',
           debugShowCheckedModeBanner: false,
           theme: PioneerTheme.lightTheme,
+          darkTheme: PioneerTheme.darkTheme,
+          themeMode: ThemeMode.system,
           routerConfig: PioneerRouter.router,
           locale: locale,
           supportedLocales: const [

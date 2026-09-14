@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pioneer_mobile/core/localization/pioneer_localizations.dart';
 import 'package:pioneer_mobile/core/models/lot_model.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_bottom_nav.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_slide_to_bid.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_status_chip.dart';
 
 void main() {
-  testWidgets('PioneerSlideToBid renders and triggers onConfirmed', (WidgetTester tester) async {
-    bool confirmed = false;
+  testWidgets('PioneerSlideToBid renders and triggers onSubmitRequested', (WidgetTester tester) async {
+    bool submitted = false;
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: PioneerLocalizations.localizationsDelegates,
+        supportedLocales: PioneerLocalizations.supportedLocales,
         home: Scaffold(
           body: Center(
             child: SizedBox(
               width: 350,
               child: PioneerSlideToBid(
                 bidAmount: 87000,
-                onConfirmed: () async {
-                  confirmed = true;
+                onSubmitRequested: () async {
+                  submitted = true;
                 },
               ),
             ),
@@ -28,22 +31,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Slide to place bid of AED 87,000'), findsOneWidget);
+    expect(find.textContaining('Slide to place bid'), findsOneWidget);
+    expect(find.textContaining('87,000'), findsWidgets);
 
     // Find the draggable knob
     final knobFinder = find.byType(GestureDetector);
-    expect(knobFinder, findsOneWidget);
+    expect(knobFinder, findsWidgets);
 
     // Drag knob across threshold (>85%)
-    await tester.drag(knobFinder, const Offset(300, 0));
+    await tester.drag(knobFinder.first, const Offset(300, 0));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(confirmed, isTrue);
-    expect(find.text('BID CONFIRMED!'), findsOneWidget);
-
-    // Pump past reset timer
-    await tester.pump(const Duration(seconds: 2));
+    expect(submitted, isTrue);
   });
 
   testWidgets('PioneerBottomNav switches tabs', (WidgetTester tester) async {

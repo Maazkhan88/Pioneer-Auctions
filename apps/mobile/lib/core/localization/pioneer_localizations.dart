@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Global controller to switch application locale between English and Arabic.
 class PioneerLocaleController extends ChangeNotifier {
@@ -40,6 +41,18 @@ class PioneerLocalizations {
   }
 
   static const LocalizationsDelegate<PioneerLocalizations> delegate = _PioneerLocalizationsDelegate();
+
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
+    PioneerLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+
+  static const List<Locale> supportedLocales = [
+    Locale('en'),
+    Locale('ar'),
+  ];
 
   bool get isArabic => locale.languageCode == 'ar';
 

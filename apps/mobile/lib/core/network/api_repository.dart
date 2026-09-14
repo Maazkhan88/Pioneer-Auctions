@@ -2,6 +2,7 @@ import 'package:pioneer_contracts/pioneer_contracts.dart';
 import '../data/pioneer_mock_repository.dart';
 import '../models/auction_model.dart';
 import '../models/lot_model.dart';
+import '../models/public_lot_card.dart';
 import 'api_client.dart';
 import 'api_result.dart';
 
@@ -46,7 +47,7 @@ class PioneerRepository {
   }) async {
     if (_isOnline || forceLive) {
       final result = await _apiClient.fetchLots();
-      if (result is ApiSuccess<List<dynamic>>) {
+      if (result is ApiSuccess<List<PublicLotCard>>) {
         _isOnline = true;
         _isDemoMode = false;
         var liveLots = result.data.map((c) => LotItem.fromPublicCard(c)).toList();
@@ -81,7 +82,7 @@ class PioneerRepository {
   Future<LotItem?> getLotById(String id) async {
     if (_isOnline) {
       final result = await _apiClient.fetchLot(id);
-      if (result is ApiSuccess) {
+      if (result is ApiSuccess<PublicLotCard>) {
         return LotItem.fromPublicCard(result.data);
       }
     }

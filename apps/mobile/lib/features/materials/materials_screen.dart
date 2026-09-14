@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
-import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/models/lot_model.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
@@ -122,8 +121,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               ),
             ),
           ),
-          // 2-Column Grid
-          SliverPadding(
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(PioneerColors.brandPurple),
+                ),
+              ),
+            )
+          else
+            // 2-Column Grid
+            SliverPadding(
             padding: const EdgeInsets.only(
               left: PioneerSpacing.pageMargin,
               right: PioneerSpacing.pageMargin,

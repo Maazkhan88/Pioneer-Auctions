@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 abstract class PioneerSpacing {
   // Page Margins & Gutters
   static const double pageMargin = 16.0;
+  static const double screenPadding = pageMargin;
   static const double cardGutterH = 12.0;
   static const double cardGutterV = 14.0;
   static const double sectionSpacing = 22.0;

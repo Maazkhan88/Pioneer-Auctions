@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (isDemo)
                 Container(
                   width: double.infinity,
-                  color: PioneerColors.orangeEndingSoon.withOpacity(0.12),
+                  color: PioneerColors.orangeEndingSoon.withValues(alpha: 0.12),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Row(
                     children: [

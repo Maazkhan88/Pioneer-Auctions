@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 /// Exact color tokens extracted directly from Pioneer Auctions reference screens.
 abstract class PioneerColors {
@@ -59,4 +59,26 @@ abstract class PioneerColors {
   static const Color bellBadgeRed = Color(0xFFED253E);
   static const Color bannerGradientStart = Color(0xFF1C0632);
   static const Color bannerGradientEnd = Color(0xFF38105E);
+
+  // Dark Theme Tokens
+  static const Color darkBackground = Color(0xFF0F0E17);
+  static const Color darkSurface = Color(0xFF1B1926);
+  static const Color darkSurfaceSubtle = Color(0xFF252336);
+  static const Color darkBorder = Color(0xFF2E2B40);
+  static const Color darkTextPrimary = Color(0xFFF3F3F6);
+  static const Color darkTextSecondary = Color(0xFFA19FB5);
+  static const Color darkTextMuted = Color(0xFF757388);
+
+  // Semantic Aliases
+  static const Color borderCard = border;
+  static const Color cardBackgroundLight = surface;
+  static const Color cardBackgroundDark = darkSurface;
+  static const Color inputFillLight = surfaceSubtle;
+  static const Color orangeEndingSoon = endingSoonOrange;
+  static const Color statusExpiredBg = outbidBadgeBg;
+  static const Color statusExpiredText = outbidBadgeText;
+  static const Color statusPendingBg = brandOrangeLight;
+  static const Color statusPendingText = brandOrange;
+  static const Color statusWonBg = winningBadgeBg;
+  static const Color statusWonText = winningBadgeText;
 }

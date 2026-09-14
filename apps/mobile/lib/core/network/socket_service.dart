@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pioneer_contracts/pioneer_contracts.dart';
 import 'package:socket_io_client/socket_io_client.dart' as socket_io;

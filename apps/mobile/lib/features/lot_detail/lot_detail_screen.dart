@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pioneer_contracts/pioneer_contracts.dart';
+import 'package:pioneer_contracts/pioneer_contracts.dart' hide State;
 import '../../core/bidding/bid_state_machine.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
+import '../../core/localization/pioneer_localizations.dart';
 import '../../core/models/lot_model.dart';
 import '../../core/network/api_repository.dart';
 import '../../core/network/api_result.dart';

@@ -106,6 +106,14 @@ abstract class PioneerTypography {
     color: PioneerColors.textOnPrimary,
   );
 
+  static const TextStyle buttonSmall = TextStyle(
+    fontSize: 12.0,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: 0.1,
+    color: PioneerColors.brandPurple,
+  );
+
   static const TextStyle chipLabel = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w600,

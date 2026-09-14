@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/pioneer_spacing.dart';
-import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/models/lot_model.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';

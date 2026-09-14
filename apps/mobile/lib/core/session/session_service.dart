@@ -29,6 +29,7 @@ class SessionService extends ChangeNotifier {
   SessionService._internal();
 
   SecureSessionStorage _storage = InMemorySecureStorage();
+  SecureSessionStorage get storage => _storage;
   void configureStorage(SecureSessionStorage storage) {
     _storage = storage;
   }

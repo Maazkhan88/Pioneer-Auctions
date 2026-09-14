@@ -20,6 +20,7 @@ import '../../core/utils/formatters.dart';
 class PioneerSlideToBid extends StatefulWidget {
   final int bidAmount;
   final Future<void> Function()? onConfirmed;
+  final Future<void> Function()? onSubmitRequested;
   final bool enabled;
   final bool isSubmitting;
   final bool showTapAlternative;
@@ -28,6 +29,7 @@ class PioneerSlideToBid extends StatefulWidget {
     super.key,
     required this.bidAmount,
     this.onConfirmed,
+    this.onSubmitRequested,
     this.enabled = true,
     this.isSubmitting = false,
     this.showTapAlternative = true,
@@ -92,8 +94,9 @@ class _PioneerSlideToBidState extends State<PioneerSlideToBid>
     if (_dragPosition >= maxDrag * 0.85) {
       // Threshold reached: trigger submit request and snap knob back smoothly
       _animateReset();
-      if (widget.onConfirmed != null) {
-        await widget.onConfirmed!();
+      final callback = widget.onSubmitRequested ?? widget.onConfirmed;
+      if (callback != null) {
+        await callback();
       }
     } else {
       _animateReset();
@@ -111,8 +114,9 @@ class _PioneerSlideToBidState extends State<PioneerSlideToBid>
   void _handleTapToBid() async {
     if (!widget.enabled || widget.isSubmitting) return;
     HapticFeedback.selectionClick();
-    if (widget.onConfirmed != null) {
-      await widget.onConfirmed!();
+    final callback = widget.onSubmitRequested ?? widget.onConfirmed;
+    if (callback != null) {
+      await callback();
     }
   }
 
