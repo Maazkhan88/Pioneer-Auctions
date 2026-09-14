@@ -102,6 +102,27 @@ class PioneerLocalizations {
   String get machinery => isArabic ? 'المعدات الثقيلة' : 'Machinery';
   String get numberPlates => isArabic ? 'لوحات الأرقام' : 'Number Plates';
   String get jewelry => isArabic ? 'المجوهرات والساعات' : 'Jewelry & Watches';
+
+  // Fee Breakdown & Gates
+  String get tapToBid => isArabic ? 'اضغط لتقديم مزايدة' : 'Tap to place bid';
+  String get slideRightToBid => isArabic ? 'مرر لتأكيد المزايدة لمنع المزايدة غير المقصودة.' : 'Slide to confirm bid. This helps prevent accidental bidding.';
+  String get slideSubmitting => isArabic ? 'جاري إرسال المزايدة...' : 'Submitting bid...';
+  String get termsRequiredTitle => isArabic ? 'الموافقة على الشروط والأحكام' : 'Terms & Conditions Required';
+  String get termsRequiredMessage => isArabic ? 'يرجى مراجعة وقبول شروط المزاد للمتابعة.' : 'Please review and accept the auction terms and conditions.';
+  String get acceptTerms => isArabic ? 'أوافق على شروط وأحكام بايونير للمزادات' : 'I accept the Pioneer Auctions Terms & Conditions';
+  String get depositRequiredTitle => isArabic ? 'مطلوب إيداع تأمين' : 'Deposit Required';
+  String get depositRequiredMessage => isArabic ? 'مطلوب إيداع تأمين بنكي للمزايدة على هذا اللوط.' : 'A security deposit is required to bid on this lot.';
+  String get kycRequiredTitle => isArabic ? 'توثيق الحساب مطلوب' : 'Verification Required';
+  String get kycRequiredMessage => isArabic ? 'يرجى مسح بطاقة الهوية الإماراتية لتوثيق حسابك.' : 'Please scan your Emirates ID to verify your account.';
+  String get auctionClosedMessage => isArabic ? 'هذا المزاد مغلق حالياً.' : 'This auction is currently closed.';
+  String get buyersPremium => isArabic ? 'رسوم المشتري (5٪)' : "Buyer's Premium (5%)";
+  String get vat => isArabic ? 'ضريبة القيمة المضافة (5٪)' : 'VAT (5%)';
+  String get totalAmount => isArabic ? 'إجمالي المبلغ المستحق' : 'Total Payable Amount';
+  String get awaitingConfirmation => isArabic ? 'في انتظار تأكيد المزايدة...' : 'Awaiting confirmation...';
+  String get retryBid => isArabic ? 'إعادة المحاولة' : 'Retry Bid';
+  String get outbidMessage => isArabic ? 'تمت المزايدة عليك بسعر أعلى!' : 'You have been outbid!';
+  String get bidAcceptedTitle => isArabic ? 'تم قبول المزايدة بنجاح!' : 'Bid Accepted!';
+  String get bidRejectedTitle => isArabic ? 'لم يتم قبول المزايدة' : 'Bid Not Accepted';
 }
 
 class _PioneerLocalizationsDelegate extends LocalizationsDelegate<PioneerLocalizations> {
