@@ -8,6 +8,7 @@ import '../../core/theme/pioneer_typography.dart';
 import '../../design_system/components/pioneer_app_header.dart';
 import '../../design_system/components/pioneer_lot_card.dart';
 import '../../design_system/components/pioneer_search_field.dart';
+import '../../core/network/api_repository.dart';
 
 class BrowseLotsScreen extends StatefulWidget {
   final LotCategory? initialCategory;
@@ -22,6 +23,8 @@ class _BrowseLotsScreenState extends State<BrowseLotsScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
   String _sortBy = 'Ending Soon';
+  List<LotItem> _allLots = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -39,14 +42,23 @@ class _BrowseLotsScreenState extends State<BrowseLotsScreen> {
           break;
       }
     }
+    _loadLots();
+  }
+
+  Future<void> _loadLots() async {
+    setState(() => _isLoading = true);
+    final lots = await PioneerRepository.instance.getLots();
+    if (mounted) {
+      setState(() {
+        _allLots = lots;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final allLots = repo.getLots();
-
-    final filteredLots = allLots.where((lot) {
+    final filteredLots = _allLots.where((lot) {
       if (_selectedCategory == 'Vehicles' && lot.category != LotCategory.vehicles) return false;
       if (_selectedCategory == 'Real Estate' && lot.category != LotCategory.realEstate) return false;
       if (_selectedCategory == 'General Materials' && lot.category != LotCategory.generalMaterials) return false;
@@ -63,57 +75,93 @@ class _BrowseLotsScreenState extends State<BrowseLotsScreen> {
         title: 'Browse Lots',
         subtitle: 'Discover great deals across all categories',
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  PioneerSearchField(
-                    hintText: 'Search lots, makes, models, locations...',
-                    onChanged: (val) => setState(() => _searchQuery = val),
+      body: RefreshIndicator(
+        onRefresh: _loadLots,
+        color: PioneerColors.brandPurple,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    PioneerSearchField(
+                      hintText: 'Search lots...',
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                    ),
+                    const SizedBox(height: 14),
+                    // Category Filter Pills
+                    _buildCategoryFilterPills(),
+                    const SizedBox(height: 14),
+                    // Sort & Count Bar
+                    _buildSortBar(filteredLots.length),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
+            if (_isLoading)
+              const SliverFillRemaining(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(PioneerColors.brandPurple),
                   ),
-                  const SizedBox(height: 14),
-                  // Category Filter Pills
-                  _buildCategoryFilterPills(),
-                  const SizedBox(height: 14),
-                  // Sort & Count Bar
-                  _buildSortBar(filteredLots.length),
-                  const SizedBox(height: 12),
-                ],
+                ),
+              )
+            else if (filteredLots.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.inventory_2_outlined, size: 56, color: PioneerColors.textMuted),
+                        const SizedBox(height: 12),
+                        Text('No Lots Found', style: PioneerTypography.sectionTitle),
+                        const SizedBox(height: 6),
+                        Text(
+                          'No lots match your current search or category filter.',
+                          style: PioneerTypography.metadata.copyWith(color: PioneerColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              // 2-Column Grid
+              SliverPadding(
+                padding: const EdgeInsets.only(
+                  left: PioneerSpacing.pageMargin,
+                  right: PioneerSpacing.pageMargin,
+                  bottom: 24,
+                ),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: PioneerSpacing.cardGutterV,
+                    crossAxisSpacing: PioneerSpacing.cardGutterH,
+                    childAspectRatio: 0.65,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final lot = filteredLots[index];
+                      return PioneerLotCard(
+                        lot: lot,
+                        onTap: () => context.push('/lots/${lot.id}'),
+                      );
+                    },
+                    childCount: filteredLots.length,
+                  ),
+                ),
               ),
-            ),
-          ),
-          // 2-Column Grid
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              left: PioneerSpacing.pageMargin,
-              right: PioneerSpacing.pageMargin,
-              bottom: 24,
-            ),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: PioneerSpacing.cardGutterV,
-                crossAxisSpacing: PioneerSpacing.cardGutterH,
-                childAspectRatio: 0.65,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final lot = filteredLots[index];
-                  return PioneerLotCard(
-                    lot: lot,
-                    onTap: () => context.push('/lots/${lot.id}'),
-                  );
-                },
-                childCount: filteredLots.length,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

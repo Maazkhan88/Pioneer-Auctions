@@ -58,6 +58,51 @@ class LotItem {
     this.overviewDescription,
   });
 
+  factory LotItem.fromPublicCard(dynamic card) {
+    // Dynamic to avoid circular dependency if needed, or typed
+    final titleEn = card.titleEn?.toString() ?? '';
+    final titleLower = titleEn.toLowerCase();
+    LotCategory category = LotCategory.vehicles;
+    if (titleLower.contains('villa') ||
+        titleLower.contains('apartment') ||
+        titleLower.contains('land') ||
+        titleLower.contains('building')) {
+      category = LotCategory.realEstate;
+    } else if (titleLower.contains('caterpillar') ||
+        titleLower.contains('generator') ||
+        titleLower.contains('machinery') ||
+        titleLower.contains('crane')) {
+      category = LotCategory.generalMaterials;
+    }
+
+    LotStatus status = LotStatus.upcoming;
+    if (card.lifecycle == 'LIVE') {
+      status = LotStatus.live;
+    } else if (card.lifecycle == 'CLOSED' || card.lifecycle == 'CANCELLED') {
+      status = LotStatus.lost;
+    }
+
+    final currentBidAed = (card.currentBidAed as num?)?.round() ?? 0;
+    final nextBidAed = (card.nextMinimumBidAed as num?)?.round() ?? (currentBidAed + 1000);
+    final closesAt = card.closesAt is DateTime ? card.closesAt as DateTime : DateTime.now().add(const Duration(hours: 2));
+    final diff = closesAt.difference(DateTime.now().toUtc());
+
+    return LotItem(
+      id: card.lotId.toString(),
+      lotNumber: card.lotNumber.toString(),
+      title: titleEn,
+      category: category,
+      status: status,
+      currentBid: currentBidAed,
+      nextBid: nextBidAed,
+      startingBid: currentBidAed,
+      timeRemaining: diff.isNegative ? Duration.zero : diff,
+      location: 'Dubai, UAE',
+      imagePath: 'assets/images/sample_bmw.png',
+      bidCount: 1,
+    );
+  }
+
   LotItem copyWith({
     String? id,
     String? lotNumber,

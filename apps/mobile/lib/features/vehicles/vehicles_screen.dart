@@ -9,6 +9,8 @@ import '../../design_system/components/pioneer_app_header.dart';
 import '../../design_system/components/pioneer_lot_card.dart';
 import '../../design_system/components/pioneer_search_field.dart';
 
+import '../../core/network/api_repository.dart';
+
 class VehiclesScreen extends StatefulWidget {
   const VehiclesScreen({super.key});
 
@@ -20,13 +22,29 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   String _selectedMake = 'All Makes';
   String _searchQuery = '';
   bool _filtersExpanded = false;
+  List<LotItem> _vehicleLots = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLots();
+  }
+
+  Future<void> _loadLots() async {
+    setState(() => _isLoading = true);
+    final lots = await PioneerRepository.instance.getLots(category: LotCategory.vehicles);
+    if (mounted) {
+      setState(() {
+        _vehicleLots = lots;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final vehicleLots = repo.getLots().where((l) => l.category == LotCategory.vehicles).toList();
-
-    final filteredLots = vehicleLots.where((lot) {
+    final filteredLots = _vehicleLots.where((lot) {
       if (_selectedMake != 'All Makes' && !lot.title.toLowerCase().contains(_selectedMake.toLowerCase())) {
         return false;
       }
@@ -38,10 +56,10 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
-      appBar: const PioneerAppHeader(
+      appBar: PioneerAppHeader(
         isRoot: false,
         title: 'Vehicles',
-        subtitle: 'Cars, Trucks, Buses & More • 450 Lots',
+        subtitle: 'Cars, Trucks, Buses & More • ${_vehicleLots.length} Lots',
       ),
       body: CustomScrollView(
         slivers: [

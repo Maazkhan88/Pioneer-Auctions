@@ -10,6 +10,8 @@ import '../../design_system/components/pioneer_app_header.dart';
 import '../../design_system/components/pioneer_lot_card.dart';
 import '../../design_system/components/pioneer_search_field.dart';
 
+import '../../core/network/api_repository.dart';
+
 class MaterialsScreen extends StatefulWidget {
   const MaterialsScreen({super.key});
 
@@ -20,13 +22,29 @@ class MaterialsScreen extends StatefulWidget {
 class _MaterialsScreenState extends State<MaterialsScreen> {
   String _selectedType = 'All Equipment';
   String _searchQuery = '';
+  List<LotItem> _materialsLots = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLots();
+  }
+
+  Future<void> _loadLots() async {
+    setState(() => _isLoading = true);
+    final lots = await PioneerRepository.instance.getLots(category: LotCategory.generalMaterials);
+    if (mounted) {
+      setState(() {
+        _materialsLots = lots;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final materialsLots = repo.getLots().where((l) => l.category == LotCategory.generalMaterials).toList();
-
-    final filteredLots = materialsLots.where((lot) {
+    final filteredLots = _materialsLots.where((lot) {
       if (_selectedType == 'Heavy Machinery' && !lot.title.toLowerCase().contains('excavator') && !lot.title.toLowerCase().contains('forklift')) return false;
       if (_selectedType == 'Generators' && !lot.title.toLowerCase().contains('generator')) return false;
       if (_selectedType == 'Raw Materials' && !lot.title.toLowerCase().contains('steel')) return false;
@@ -39,10 +57,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
-      appBar: const PioneerAppHeader(
+      appBar: PioneerAppHeader(
         isRoot: false,
         title: 'General Materials',
-        subtitle: 'Construction Equipment, Industrial Assets & Surplus',
+        subtitle: 'Construction Equipment, Industrial Assets & Surplus • ${_materialsLots.length} Lots',
       ),
       body: CustomScrollView(
         slivers: [

@@ -14,57 +14,125 @@ import '../../design_system/components/pioneer_lot_card.dart';
 import '../../design_system/components/pioneer_search_field.dart';
 import '../../design_system/components/pioneer_status_chip.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../../core/network/api_repository.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<LotItem> _lots = [];
+  List<AuctionItem> _auctions = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final repo = PioneerRepository.instance;
+    await repo.checkConnectivity();
     final auctions = repo.getAuctions();
-    final liveAuction = auctions.firstWhere((a) => a.status == AuctionStatus.live);
-    final upcomingAuctions = auctions.where((a) => a.status == AuctionStatus.upcoming).toList();
-    final lots = repo.getLots();
-    final featuredLots = lots.take(4).toList();
+    final lots = await repo.getLots();
+
+    if (mounted) {
+      setState(() {
+        _auctions = auctions;
+        _lots = lots;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final liveAuction = _auctions.where((a) => a.status == AuctionStatus.live).firstOrNull ??
+        PioneerMockRepository.instance.getAuctions().first;
+    final upcomingAuctions = _auctions.where((a) => a.status == AuctionStatus.upcoming).toList();
+    final featuredLots = _lots.take(4).toList();
+    final isDemo = PioneerRepository.instance.isDemoMode;
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
       appBar: const PioneerAppHeader(isRoot: true),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            // Search Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
-              child: PioneerSearchField(
-                onTap: () => context.push('/browse'),
-                readOnly: true,
-                onFilterTap: () => context.push('/browse'),
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: PioneerColors.brandPurple,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isDemo)
+                Container(
+                  width: double.infinity,
+                  color: PioneerColors.orangeEndingSoon.withOpacity(0.12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.cloud_off_rounded, size: 16, color: PioneerColors.orangeEndingSoon),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Demo Mode: Offline / Cached Inventory',
+                          style: PioneerTypography.metadata.copyWith(
+                            color: PioneerColors.orangeEndingSoon,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 12),
+              // Search Field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
+                child: PioneerSearchField(
+                  onTap: () => context.push('/browse'),
+                  readOnly: true,
+                  onFilterTap: () => context.push('/browse'),
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-            // 3 Category Discovery Cards (Vehicles, Real Estate, General Materials)
-            _buildCategoryDiscoverySection(context),
-            const SizedBox(height: PioneerSpacing.sectionSpacing),
+              // 3 Category Discovery Cards (Vehicles, Real Estate, General Materials)
+              _buildCategoryDiscoverySection(context),
+              const SizedBox(height: PioneerSpacing.sectionSpacing),
 
-            // Live Now Hero Section
-            _buildLiveNowSection(context, liveAuction),
-            const SizedBox(height: PioneerSpacing.sectionSpacing),
+              // Live Now Hero Section
+              _buildLiveNowSection(context, liveAuction),
+              const SizedBox(height: PioneerSpacing.sectionSpacing),
 
-            // Upcoming Auctions Section
-            _buildUpcomingAuctionsSection(context, upcomingAuctions),
-            const SizedBox(height: PioneerSpacing.sectionSpacing),
+              // Upcoming Auctions Section
+              _buildUpcomingAuctionsSection(context, upcomingAuctions),
+              const SizedBox(height: PioneerSpacing.sectionSpacing),
 
-            // Featured Lots Section
-            _buildFeaturedLotsSection(context, featuredLots),
-            const SizedBox(height: PioneerSpacing.sectionSpacing),
+              // Featured Lots Section
+              _isLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(PioneerColors.brandPurple),
+                        ),
+                      ),
+                    )
+                  : _buildFeaturedLotsSection(context, featuredLots),
+              const SizedBox(height: PioneerSpacing.sectionSpacing),
 
-            // Promotional Skyline Banner
-            _buildPromotionalBanner(context),
-            const SizedBox(height: 30),
-          ],
+              // Promotional Skyline Banner
+              _buildPromotionalBanner(context),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
     );

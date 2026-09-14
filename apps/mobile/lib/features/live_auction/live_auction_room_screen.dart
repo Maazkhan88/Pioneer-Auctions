@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pioneer_contracts/pioneer_contracts.dart';
+import '../../core/bidding/bid_state_machine.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
 import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/models/bid_model.dart';
 import '../../core/models/lot_model.dart';
+import '../../core/network/api_repository.dart';
+import '../../core/network/api_result.dart';
+import '../../core/network/socket_events.dart';
 import '../../core/network/socket_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
+import '../../design_system/components/pioneer_button.dart';
 import '../../design_system/components/pioneer_slide_to_bid.dart';
 import '../../design_system/components/pioneer_status_chip.dart';
 
@@ -21,113 +29,329 @@ class LiveAuctionRoomScreen extends StatefulWidget {
 }
 
 class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
-  late int _currentBid;
-  late int _nextBid;
+  int _currentBid = 86000;
+  int _nextBid = 87000;
   late List<BidItem> _bids;
-  bool _isUserWinning = true;
+  bool _isUserWinning = false;
+  bool _isSubmitting = false;
   final SocketService _socketService = SocketService();
+  final BidStateMachine _bidStateMachine = BidStateMachine();
   bool _isSocketConnected = false;
+  LotItem? _lot;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     final repo = PioneerMockRepository.instance;
-    _currentBid = 86000;
-    _nextBid = 87000;
     _bids = List.from(repo.getLiveBids());
+
+    _loadLot();
 
     // Connect to Socket.IO bidding gateway
     _socketService.addConnectionListener(_onSocketConnectionChanged);
-    _socketService.addBidPlacedListener(_onIncomingBid);
+    _socketService.addSnapshotListener(_onSnapshotReceived);
+    _socketService.addBidAcceptedListener(_onBidAccepted);
+    _socketService.addAuctionExtendedListener(_onAuctionExtended);
+    _socketService.addAuctionStateChangedListener(_onAuctionStateChanged);
+    _socketService.addMyBidStatusChangedListener(_onMyBidStatusChanged);
+    _socketService.addGapDetectedListener(_onGapDetected);
+
     _socketService.connect();
     _socketService.subscribeToLot(widget.lotId);
+  }
+
+  Future<void> _loadLot() async {
+    setState(() => _isLoading = true);
+    final lot = await PioneerRepository.instance.getLotById(widget.lotId);
+    if (mounted) {
+      setState(() {
+        _lot = lot;
+        if (lot != null) {
+          _currentBid = lot.currentBid;
+          _nextBid = lot.nextBid;
+          _isUserWinning = lot.status == LotStatus.winning;
+        }
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _socketService.removeConnectionListener(_onSocketConnectionChanged);
-    _socketService.removeBidPlacedListener(_onIncomingBid);
+    _socketService.removeSnapshotListener(_onSnapshotReceived);
+    _socketService.removeBidAcceptedListener(_onBidAccepted);
+    _socketService.removeAuctionExtendedListener(_onAuctionExtended);
+    _socketService.removeAuctionStateChangedListener(_onAuctionStateChanged);
+    _socketService.removeMyBidStatusChangedListener(_onMyBidStatusChanged);
+    _socketService.removeGapDetectedListener(_onGapDetected);
     _socketService.unsubscribeFromLot(widget.lotId);
     _socketService.disconnect();
     super.dispose();
   }
 
-  void _onSocketConnectionChanged() {
+  void _onSocketConnectionChanged(bool connected) {
     if (mounted) {
       setState(() {
-        _isSocketConnected = _socketService.isConnected;
+        _isSocketConnected = connected;
       });
     }
   }
 
-  void _onIncomingBid(Map<String, dynamic> data) {
-    if (!mounted) return;
-    try {
-      final amountFils = data['amount']?['amountFils'] as int?;
-      final paddle = data['bidderPaddle']?.toString() ?? 'Bidder';
-      final newAmountAed = amountFils != null ? (amountFils / 100).round() : _nextBid;
+  void _onSnapshotReceived(LotSnapshotEvent event) {
+    if (!mounted || event.lotId != widget.lotId) return;
+    setState(() {
+      if (event.state.currentBid != null) {
+        _currentBid = (event.state.currentBid!.amountFils / 100).round();
+      }
+      _nextBid = (event.state.nextMinimumBid.amountFils / 100).round();
+    });
+  }
 
-      setState(() {
-        _currentBid = newAmountAed;
-        _nextBid = newAmountAed + 1000;
-        _isUserWinning = paddle.contains('2456');
-        _bids.insert(
-          0,
-          BidItem(
-            id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
-            bidderNumber: paddle.contains('2456') ? '$paddle (You)' : paddle,
-            isCurrentUser: paddle.contains('2456'),
-            amount: _currentBid,
-            timeAgo: 'Just now',
-            lotId: widget.lotId,
-          ),
-        );
-      });
-    } catch (_) {}
+  void _onBidAccepted(BidAcceptedEvent event) {
+    if (!mounted || event.lotId != widget.lotId) return;
+    final newAmountAed = (event.currentBid.amountFils / 100).round();
+    final nextMinAed = (event.nextMinimumBid.amountFils / 100).round();
+    setState(() {
+      _currentBid = newAmountAed;
+      _nextBid = nextMinAed;
+      _bids.insert(
+        0,
+        BidItem(
+          id: 'bid-${event.sequence}',
+          bidderNumber: 'Bidder',
+          isCurrentUser: false,
+          amount: newAmountAed,
+          timeAgo: 'Just now',
+          lotId: widget.lotId,
+        ),
+      );
+    });
+    _bidStateMachine.handleExternalBidAccepted(event);
+  }
+
+  void _onAuctionExtended(AuctionExtendedEvent event) {
+    if (!mounted || event.lotId != widget.lotId) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Auction extended by 2 minutes (Soft-close)'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onAuctionStateChanged(AuctionStateChangedEvent event) {
+    if (!mounted || event.lotId != widget.lotId) return;
+    _bidStateMachine.handleAuctionStateChanged(event);
+  }
+
+  void _onMyBidStatusChanged(MyBidStatusChangedEvent event) {
+    if (!mounted || event.lotId != widget.lotId) return;
+    setState(() {
+      _isUserWinning = event.status == 'WINNING';
+    });
+    _bidStateMachine.handleMyBidStatusChanged(event);
+  }
+
+  void _onGapDetected(String lotId) {
+    if (!mounted || lotId != widget.lotId) return;
+    _bidStateMachine.handleGapDetected(lotId);
   }
 
   Future<void> _handleBidConfirmed() async {
-    // Attempt real Socket.IO bid command if connected
-    bool success = false;
+    _bidStateMachine.startConfirming(
+      amountFils: _nextBid * 100,
+      expectedSequence: _socketService.getLastAppliedSequence(widget.lotId) ?? 0,
+      termsAccepted: true,
+    );
+    final commandId = _bidStateMachine.startSubmitting();
+    if (commandId == null) return;
+
+    setState(() => _isSubmitting = true);
+
     if (_socketService.isConnected) {
-      success = await _socketService.placeBidViaSocket(
+      final outcome = await _socketService.placeBid(
         lotId: widget.lotId,
-        amountAed: _nextBid,
+        amountFils: _nextBid * 100,
+        commandId: commandId,
+        expectedSequence: _socketService.getLastAppliedSequence(widget.lotId) ?? 0,
       );
-    }
 
-    if (!success) {
-      // Local fallback simulation
-      await Future.delayed(const Duration(milliseconds: 300));
-    }
-
-    if (mounted) {
-      setState(() {
-        _currentBid = _nextBid;
-        _nextBid += 1000;
-        _isUserWinning = true;
-        _bids.insert(
-          0,
-          BidItem(
-            id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
-            bidderNumber: 'Bidder #2456 (You)',
-            isCurrentUser: true,
-            amount: _currentBid,
-            timeAgo: 'Just now',
-            lotId: widget.lotId,
-          ),
+      if (outcome is SocketCommandSuccess<CommandAck>) {
+        _bidStateMachine.handleCommandAck(outcome.data, amountFils: _nextBid * 100);
+        HapticFeedback.heavyImpact();
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+            _isUserWinning = outcome.data.result?.myBidStatus == MyBidStatus.WINNING;
+            _currentBid = _nextBid;
+            _nextBid = _nextBid + 1000;
+            _bids.insert(
+              0,
+              BidItem(
+                id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
+                bidderNumber: 'Bidder #2456 (You)',
+                isCurrentUser: true,
+                amount: _currentBid,
+                timeAgo: 'Just now',
+                lotId: widget.lotId,
+              ),
+            );
+          });
+        }
+      } else if (outcome is SocketCommandFailure<CommandAck>) {
+        _bidStateMachine.handleFailure(
+          amountFils: _nextBid * 100,
+          code: outcome.code,
+          message: outcome.message,
+          retryable: outcome.retryable,
+          latest: outcome.latest,
         );
-      });
+        HapticFeedback.vibrate();
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(outcome.message),
+              backgroundColor: PioneerColors.liveRed,
+            ),
+          );
+        }
+      } else if (outcome is SocketCommandUnknown<CommandAck>) {
+        _bidStateMachine.handleUnknown(
+          amountFils: _nextBid * 100,
+          commandId: outcome.commandId,
+          message: outcome.message,
+        );
+        HapticFeedback.vibrate();
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(outcome.message),
+              backgroundColor: PioneerColors.orangeEndingSoon,
+            ),
+          );
+        }
+      } else {
+        setState(() => _isSubmitting = false);
+      }
+    } else {
+      // Fallback: Use live REST API path
+      final result = await PioneerRepository.instance.placeBid(
+        lotId: widget.lotId,
+        amountFils: _nextBid * 100,
+        commandId: commandId,
+      );
+
+      if (result is ApiSuccess<CommandAck>) {
+        _bidStateMachine.handleCommandAck(result.data, amountFils: _nextBid * 100);
+        HapticFeedback.heavyImpact();
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+            _isUserWinning = result.data.result?.myBidStatus == MyBidStatus.WINNING;
+            _currentBid = _nextBid;
+            _nextBid = _nextBid + 1000;
+            _bids.insert(
+              0,
+              BidItem(
+                id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
+                bidderNumber: 'Bidder #2456 (You)',
+                isCurrentUser: true,
+                amount: _currentBid,
+                timeAgo: 'Just now',
+                lotId: widget.lotId,
+              ),
+            );
+          });
+        }
+      } else if (result is ApiFailure<CommandAck>) {
+        _bidStateMachine.handleFailure(
+          amountFils: _nextBid * 100,
+          code: result.code,
+          message: result.message,
+          retryable: result.retryable,
+          latest: result.latest,
+        );
+        HapticFeedback.vibrate();
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: PioneerColors.liveRed,
+            ),
+          );
+        }
+      } else if (result is ApiUnknown<CommandAck>) {
+        _bidStateMachine.handleUnknown(
+          amountFils: _nextBid * 100,
+          commandId: commandId,
+          message: result.message,
+        );
+        HapticFeedback.vibrate();
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: PioneerColors.orangeEndingSoon,
+            ),
+          );
+        }
+      } else {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final lot = repo.getLots().firstWhere(
-          (l) => l.id == widget.lotId,
-          orElse: () => repo.getLots().first,
-        );
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: PioneerColors.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(PioneerColors.brandPurple),
+          ),
+        ),
+      );
+    }
+
+    final lot = _lot;
+    if (lot == null) {
+      return Scaffold(
+        backgroundColor: PioneerColors.background,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.search_off_rounded, size: 64, color: PioneerColors.textMuted),
+                const SizedBox(height: 16),
+                Text('Lot Not Found', style: PioneerTypography.sectionTitle),
+                const SizedBox(height: 8),
+                Text(
+                  'Lot #${widget.lotId} could not be found or has ended.',
+                  style: PioneerTypography.metadata.copyWith(color: PioneerColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                PioneerButton(
+                  label: 'Back to Browse',
+                  onPressed: () => context.go('/browse'),
+                  isLarge: false,
+                  isFullWidth: false,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
@@ -279,6 +503,7 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
                   // Interactive SLIDE TO BID
                   PioneerSlideToBid(
                     bidAmount: _nextBid,
+                    isSubmitting: _isSubmitting,
                     onConfirmed: _handleBidConfirmed,
                   ),
                   const SizedBox(height: 20),

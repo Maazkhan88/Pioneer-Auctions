@@ -9,6 +9,8 @@ import '../../design_system/components/pioneer_app_header.dart';
 import '../../design_system/components/pioneer_lot_card.dart';
 import '../../design_system/components/pioneer_search_field.dart';
 
+import '../../core/network/api_repository.dart';
+
 class RealEstateScreen extends StatefulWidget {
   const RealEstateScreen({super.key});
 
@@ -19,13 +21,29 @@ class RealEstateScreen extends StatefulWidget {
 class _RealEstateScreenState extends State<RealEstateScreen> {
   String _selectedPropertyType = 'All';
   String _searchQuery = '';
+  List<LotItem> _realEstateLots = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLots();
+  }
+
+  Future<void> _loadLots() async {
+    setState(() => _isLoading = true);
+    final lots = await PioneerRepository.instance.getLots(category: LotCategory.realEstate);
+    if (mounted) {
+      setState(() {
+        _realEstateLots = lots;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final realEstateLots = repo.getLots().where((l) => l.category == LotCategory.realEstate).toList();
-
-    final filteredLots = realEstateLots.where((lot) {
+    final filteredLots = _realEstateLots.where((lot) {
       if (_selectedPropertyType == 'Villas' && !lot.title.toLowerCase().contains('villa')) return false;
       if (_selectedPropertyType == 'Apartments' && !lot.title.toLowerCase().contains('apartment')) return false;
       if (_selectedPropertyType == 'Warehouses' && !lot.title.toLowerCase().contains('warehouse')) return false;
@@ -39,10 +57,10 @@ class _RealEstateScreenState extends State<RealEstateScreen> {
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
-      appBar: const PioneerAppHeader(
+      appBar: PioneerAppHeader(
         isRoot: false,
         title: 'Real Estate',
-        subtitle: 'Residential, Commercial & Land Across UAE',
+        subtitle: 'Residential, Commercial & Land Across UAE • ${_realEstateLots.length} Lots',
       ),
       body: CustomScrollView(
         slivers: [

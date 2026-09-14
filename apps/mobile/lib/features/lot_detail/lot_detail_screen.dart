@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pioneer_contracts/pioneer_contracts.dart';
+import '../../core/bidding/bid_state_machine.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
-import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/models/lot_model.dart';
+import '../../core/network/api_repository.dart';
+import '../../core/network/api_result.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../design_system/components/pioneer_app_header.dart';
 import '../../design_system/components/pioneer_button.dart';
 import '../../design_system/components/pioneer_status_chip.dart';
+import 'components/bid_confirmation_sheet.dart';
 
 class LotDetailScreen extends StatefulWidget {
   final String lotId;
@@ -24,14 +29,77 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
   int _currentImageIndex = 0;
   bool _isWatchlisted = true;
   final Set<String> _expandedSections = {'Overview', 'Auction Information'};
+  LotItem? _lot;
+  bool _isLoading = true;
+  final BidStateMachine _bidStateMachine = BidStateMachine();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLot();
+  }
+
+  Future<void> _loadLot() async {
+    setState(() => _isLoading = true);
+    final lot = await PioneerRepository.instance.getLotById(widget.lotId);
+    if (mounted) {
+      setState(() {
+        _lot = lot;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = PioneerMockRepository.instance;
-    final lot = repo.getLots().firstWhere(
-          (l) => l.id == widget.lotId,
-          orElse: () => repo.getLots().first,
-        );
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: PioneerColors.background,
+        appBar: const PioneerAppHeader(isRoot: false, showLogoInCenter: true),
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(PioneerColors.brandPurple),
+          ),
+        ),
+      );
+    }
+
+    final lot = _lot;
+    if (lot == null) {
+      return Scaffold(
+        backgroundColor: PioneerColors.background,
+        appBar: const PioneerAppHeader(isRoot: false, showLogoInCenter: true),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.search_off_rounded, size: 64, color: PioneerColors.textMuted),
+                const SizedBox(height: 16),
+                Text(
+                  'Lot Not Found',
+                  style: PioneerTypography.sectionTitle,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lot #${widget.lotId} could not be found or has been removed.',
+                  style: PioneerTypography.metadata.copyWith(color: PioneerColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                PioneerButton(
+                  label: 'Browse All Lots',
+                  onPressed: () => context.go('/browse'),
+                  isLarge: false,
+                  isFullWidth: false,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final thumbnails = [
       AssetPaths.bmwX5Hero,
@@ -396,6 +464,7 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
   }
 
   Widget _buildStickyCtaBar(BuildContext context, LotItem lot) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(PioneerSpacing.pageMargin),
       decoration: const BoxDecoration(
@@ -409,15 +478,80 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
           children: [
             Expanded(
               child: PioneerButton(
-                label: 'BID ${PioneerFormatters.currency(lot.nextBid)}',
+                label: l10n.liveAuction,
+                variant: PioneerButtonVariant.outline,
+                isLarge: true,
+                leadingIcon: Icons.videocam_rounded,
+                onPressed: () => context.push('/live-auction/${lot.id}'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: PioneerButton(
+                label: '${l10n.placeBid} \u202A${PioneerFormatters.currency(lot.nextBid)}\u202C',
                 isLarge: true,
                 leadingIcon: Icons.gavel_rounded,
-                onPressed: () => context.push('/live-auction/${lot.id}'),
+                onPressed: () => _openBidConfirmationSheet(lot),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _openBidConfirmationSheet(LotItem lot) {
+    _bidStateMachine.startConfirming(
+      amountFils: lot.nextBid * 100,
+      expectedSequence: 0,
+      termsAccepted: true,
+    );
+
+    BidConfirmationSheet.show(
+      context: context,
+      lotTitle: lot.title,
+      bidAmountFils: lot.nextBid * 100,
+      stateMachine: _bidStateMachine,
+      onSubmit: () async {
+        final commandId = _bidStateMachine.startSubmitting();
+        if (commandId == null) return;
+
+        final result = await PioneerRepository.instance.placeBid(
+          lotId: lot.id,
+          amountFils: lot.nextBid * 100,
+          commandId: commandId,
+        );
+
+        if (result is ApiSuccess<CommandAck>) {
+          _bidStateMachine.handleCommandAck(result.data, amountFils: lot.nextBid * 100);
+          HapticFeedback.heavyImpact();
+          if (mounted) {
+            setState(() {
+              _lot = _lot?.copyWith(
+                currentBid: lot.nextBid,
+                nextBid: lot.nextBid + 1000,
+                status: LotStatus.winning,
+              );
+            });
+          }
+        } else if (result is ApiFailure<CommandAck>) {
+          _bidStateMachine.handleFailure(
+            amountFils: lot.nextBid * 100,
+            code: result.code,
+            message: result.message,
+            retryable: result.retryable,
+            latest: result.latest,
+          );
+          HapticFeedback.vibrate();
+        } else if (result is ApiUnknown<CommandAck>) {
+          _bidStateMachine.handleUnknown(
+            amountFils: lot.nextBid * 100,
+            commandId: commandId,
+            message: result.message,
+          );
+          HapticFeedback.vibrate();
+        }
+      },
     );
   }
 }

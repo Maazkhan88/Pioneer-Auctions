@@ -261,7 +261,7 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
 
           // Action CTA Button
           PioneerButton(
-            text: state is BidSubmitting
+            label: state is BidSubmitting
                 ? l10n.slideSubmitting
                 : state is BidUnknown
                     ? l10n.retryBid
