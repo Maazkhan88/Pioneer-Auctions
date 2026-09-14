@@ -64,29 +64,51 @@ Deliver mobile parity for discovery, lot detail, live bidding, reconnect, and po
 - **Dart Contracts Integration**: Direct local dependency on `packages/contracts/dart` (`pioneer_contracts`). Full support for `PlaceBidCommand`, `LotSnapshot`, `CommandAck`, `Amount` in integer fils (1 AED = 100 fils).
 - **Typed REST Client (`ApiClient`)**:
   - `isHealthy()` health check endpoint.
-  - `fetchLots()` with query and category filters.
-  - `fetchLot()` returning strongly-typed `LotSnapshot`.
-  - `placeBid()` constructing `PlaceBidCommand` with correlation IDs and `X-Contract-Version: 1`.
-  - Fallback: `PioneerRepository` seamlessly transitions between online backend and `PioneerMockRepository`.
+  - `fetchLots()` returning `{ contractVersion: 1, items: PublicLotCard[] }`.
+  - `fetchLot()` returning `PublicLotCard`.
+  - `placeBid()` constructing `PlaceBidCommand` with lowercase headers (`x-pioneer-test-account-id`, `Idempotency-Key`).
+  - Timeout returns `ApiUnknown` retaining the exact `commandId`.
+  - Rejection returns `ApiFailure` with structured server error and latest state.
 - **Realtime Gateway (`SocketService`)**:
   - Connects to Socket.IO namespace `/auctions/v1`.
-  - Room subscriptions (`lot:subscribe`, `lot:unsubscribe`).
-  - Event listeners: `lot:bid-placed`, `lot:going-once`, `bid:status-changed`.
-  - `bid:place` emitWithAck support.
-  - Live indicator in `LiveAuctionRoomScreen` reflecting real socket connection state with graceful local fallback.
-- **Arabic (AR) RTL Localization (`PioneerLocalizations`)**:
-  - App-wide English and Arabic string maps for tabs, chips, actions, and currency (`AED` / `د.إ`).
-  - `PioneerLocaleController` dynamic locale switcher.
-  - Integrated with `AccountDashboardScreen` language toggle tile.
-  - Flutter standard `GlobalMaterialLocalizations`, `GlobalWidgetsLocalizations`, `GlobalCupertinoLocalizations` delegates.
-- **Validation**:
-  - 25/25 automated unit, widget, and contract tests passing (`flutter test`).
-  - 0 issues in `flutter analyze`.
+  - Flat public lot events (`server:hello`, `lot:snapshot`, `bid:accepted`, `auction:extended`, `auction:state-changed`, `reserve:status-changed`, `lot:presence-changed`).
+  - Enveloped personal events (`bid:status-changed`, `proxy-bid:changed`, `eligibility:changed`).
+  - Resilient subscription mapping across reconnects (`lot:subscribe` with `afterSequence`).
+  - Gap detection triggering `lot:sync`.
+  - Foreground resync lifecycle hooks and server-time clock offset synchronization.
+
+### Phase 3: Authoritative Bid State Machine & Controls (Complete)
+- **BidStateMachine**: Sealed state hierarchy (`BidIdle`, `BidConfirming`, `BidSubmitting`, `BidAccepted`, `BidRejected`, `BidUnknown`, `BidOutbid`, `BidGated`, `BidClosed`, `BidResyncing`).
+- **Zero Simulated Bids**: Strictly never fabricates winning or accepted status without authoritative server ack (`CommandAck` or `BidAcceptedEvent`).
+- **Idempotency Command Key**: Generated via RFC 4122 v4 UUID and preserved across retry attempts.
+- **Authoritative Slide-To-Bid**: Slider completion fires `onSubmitRequested` only; haptics fire ONLY on authoritative `ACCEPTED` (`heavyImpact`) or `REJECTED` (`vibrate`). Tap-to-bid accessible alternative.
+- **Fee Breakdown & Terms Gate**: Modal `BidConfirmationSheet` calculating 5% premium (500 AED min) and 5% VAT; terms checkbox requirement with `termsVersionId`.
+
+### Phase 4: Screen Wiring & 404 Handling (Complete)
+- `LotDetailScreen` and `LiveAuctionRoomScreen` wired to `PioneerRepository` and `SocketService`.
+- 404 Lot Not Found screen rendered for nonexistent lot IDs without silent mock substitution.
+- Sticky dual CTA in detail screen ("Live Room" and "Place Bid").
+- Dynamic loading spinners and empty states across browse, vehicles, real estate, and materials screens.
+
+### Phase 5: Android Permission & iOS Platform Scaffolding (Complete)
+- Added `<uses-permission android:name="android.permission.INTERNET"/>` in `apps/mobile/android/app/src/main/AndroidManifest.xml`.
+- Created canonical iOS project scaffolding under `apps/mobile/ios/` (40 files, bundle ID `com.pioneer.pioneerMobile`, `Runner.xcodeproj`, `Info.plist`, `AppDelegate.swift`).
+- Added deep-link aliases (`/lot/:id`, `/payment-return`).
+- Added `kotlin.incremental=false` to `apps/mobile/android/gradle.properties` to fix Windows multi-drive Kotlin cache collisions.
+
+### Phase 6: Arabic BiDi Safety, Dark Theme & Full Tests (Complete)
+- Wrapped currency, numbers, and identifiers with Unicode LTR isolates (`\u202A...\u202C`) to prevent punctuation reversal in Arabic RTL contexts.
+- Added comprehensive dark theme palette tokens and `PioneerTheme.darkTheme`.
+- 50/50 automated tests passing across contracts, REST client, socket events, reconnect recovery, bid state machine, localization, and interactive screens.
+- Android debug APK built natively via AGP (`app-debug.apk`).
+
+## Current Status: In Progress
+- **Why In Progress**: All mobile buyer loop features, contracts, REST, Socket.IO, Android APK build, and 50 automated tests pass on Windows/Android. iOS scaffolding is added, but native iOS execution and UI tests require a macOS environment with Xcode. Per AGENTS.md quality gates, Task 006 remains In Progress until iOS target tests can be executed.
 
 ## Validation Commands
 ```powershell
-$env:PATH = "E:\flutter\bin;$env:PATH"
-$env:TEMP = "E:\temp"; $env:TMP = "E:\temp"
+$env:PATH = "E:\flutter\bin;" + $env:PATH
+$env:TEMP = "E:\temp"; $env:TMP = "E:\temp"; $env:GRADLE_USER_HOME = "E:\.gradle"
 flutter analyze
 flutter test
 flutter build apk --debug

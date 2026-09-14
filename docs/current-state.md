@@ -42,10 +42,10 @@ Phase 0: foundation and contract definition are implemented on draft branches; c
 - Typed Socket.IO client/server maps plus shared valid, invalid, and cross-language golden fixtures.
 - Generated OpenAPI 3.1, JSON Schema, and Quicktype 25.0.0 Dart models with byte-for-byte drift checks in CI.
 - The API serves the generated contract at `GET /api/v1/openapi.json`; API, web, and admin compatibility tests import the same package.
+- Flutter mobile runtime application (`apps/mobile`) with 10 high-fidelity screens, dual-language EN/AR, dark theme, authoritative BidStateMachine, typed REST/Socket.IO adapters, Android debug APK build, and 50 automated tests.
 
 ## What does not exist yet
 
-- No generated Flutter runtime application.
 - No runnable bidding engine.
 - No connected UAE PASS, payment, KYC, push, email, or SMS provider.
 - No production cloud resources.
@@ -61,7 +61,7 @@ Task 007 / admin core is active. Owner: Codex. Branch: `agent/task-007-admin-cor
 | 003 Design system      | Antigravity | `agent/task-003-design-system`     | Complete           | EN/AR web and Flutter primitives & tokens                                                                                                                                                                                                                                    |
 | 004 Bidding engine     | Codex       | `agent/task-004-backend-week1`     | In progress        | Week 1 complete; bidding engine next                                                                                                                                                                                                                                         |
 | 005 Web buyer loop     | Codex       | `agent/task-007-admin-core`        | In progress        | Bid/proxy action state machines (REST+socket), search/filter, calendar, SEO metadata, Arabic `<html>` fix; browser-verified, live-backend verification pending                                                                                                               |
-| 006 Mobile buyer loop  | Unassigned  | —                                  | Blocked by 002–004 | Flutter owner stays consistent                                                                                                                                                                                                                                               |
+| 006 Mobile buyer loop  | Antigravity | `agent/task-006-mobile-buyer-loop` | In progress        | Pixel-accurate Flutter buyer app (10 screens); authoritative BidStateMachine with zero simulated bids; fee sheet & terms gate; Socket.IO v1 reconnection, gap recovery & server time sync; REST client with RFC 4122 v4 idempotency; BiDi safety, dark theme, Android permissions, canonical iOS scaffolding; 50/50 tests passing. In progress pending native iOS runtime validation on macOS/Xcode |
 | 007 Admin core         | Codex       | `agent/task-007-admin-core`        | In progress        | Write actions (final-bid decisions, auction pause/resume/cancel/create/edit, lot create/edit, audit-events read, transactional bulk lot import) fully wired to real endpoints; live monitor, step-up auth, offer/consignment/deposit queues remain unbuilt (see notes below) |
 | 008 Identity/KYC       | Unassigned  | —                                  | Ready after 002    | Provider adapter first                                                                                                                                                                                                                                                       |
 | 009 Deposits/payments  | Unassigned  | —                                  | Ready after 002    | Ledger + webhook safety                                                                                                                                                                                                                                                      |

@@ -195,3 +195,22 @@ Record durable product and architecture decisions here. New entries are append-o
   - Added test coverage in `apps/web/test/lot-socket.spec.ts` for socket reconnect with `afterSequence` catch-up and sequence gap detection triggering `lot:sync` and snapshot application. Added `lot:sync` with `replay` coverage to `apps/api/test/bidding-gateway.spec.ts`.
   - Successfully redeployed all three Cloudflare previews: API preview worker (`8adf2ea1-d058-475f-acba-7cb5a25f207a`), buyer web preview (`8d96c41f-608c-4f70-98bf-8cc59031f8ee`), and admin preview (`bf43f3f9-91c4-4e7a-bd06-b9b890a25a11`).
 - Why: Closes DEC-022's documented drift, brings executable contracts in sync with production behavior, eliminates inefficient full-list refetch on the buyer detail page, and verifies real database and socket resilience under edge cases.
+
+## DEC-023: Authoritative Mobile Bidding State Machine, Idempotency Command Key Preservation, and Multiplatform Scaffolding
+
+- Date: 2026-09-14
+- Status: Accepted
+- Context: Following the review of Task 006 (`350e16f`), 13 blocking findings were identified regarding optimistic bid simulation, slider haptics, Socket.IO contract drift, REST authentication & decoding, missing Android permissions, missing iOS platform scaffolding, and Arabic BiDi formatting.
+- Decision:
+  - **Authoritative Bid State Machine**: Replaced optimistic bid simulations with `BidStateMachine` across 10 discrete lifecycle states (`idle`, `confirming`, `submitting`, `accepted`, `rejected`, `unknown`, `outbid`, `gated`, `closed`, `resyncing`). Zero simulated winning states are permitted.
+  - **Idempotency Command Key Preservation**: Implemented RFC 4122 v4 UUID `commandId` generation with guaranteed preservation across transport timeouts (`ApiUnknown`) and retry attempts, matching backend deduplication invariants.
+  - **Authoritative Controls & Haptics**: Redesigned `PioneerSlideToBid` to act solely as a submission trigger (`onSubmitRequested`), removing optimistic "BID CONFIRMED!" banners. Haptic feedback occurs exclusively upon authoritative server ack (`heavyImpact` for `ACCEPTED`, `vibrate` for `REJECTED`). Added accessible "Tap to Bid" alternative and RTL slider support.
+  - **Fee Breakdown & Terms Gate**: Implemented `BidConfirmationSheet` displaying fee calculations (5% buyer's premium, 500 AED minimum, 5% VAT) and terms-acceptance gate linked to `termsVersionId`.
+  - **Socket.IO Realtime Gateway Alignment**: Configured connection on namespace `/auctions/v1`, flat public events (`server:hello`, `lot:snapshot`, `bid:accepted`, `auction:extended`, `auction:state-changed`, `reserve:status-changed`, `lot:presence-changed`), and enveloped personal events (`bid:status-changed`, `proxy-bid:changed`, `eligibility:changed`). Obsolete events (`lot:bid-placed`, `lot:going-once`) were completely removed.
+  - **Reconnect & Gap Recovery**: Implemented `lot:subscribe` with `afterSequence`, gap detection triggering `lot:sync`, foreground resync lifecycle hooks, and server-time clock offset synchronization.
+  - **REST Authentication & Public Lot Decoding**: Standardized `x-pioneer-test-account-id` in lowercase with valid UUIDs, added `Idempotency-Key` header, environment configuration via `--dart-define`, and verified decoding for `GET /api/v1/lots` (`PublicLotsResponse`) and `GET /api/v1/lots/:lotId` (`PublicLotCard`).
+  - **Platform Scaffolding & Permissions**: Added `<uses-permission android:name="android.permission.INTERNET"/>` in `apps/mobile/android/app/src/main/AndroidManifest.xml`, and scaffolded canonical iOS project structure under `apps/mobile/ios/` (`com.pioneer.pioneerMobile`). Disabled Kotlin incremental compilation in `gradle.properties` (`kotlin.incremental=false`) to eliminate cross-drive Windows file root crashes during AGP builds.
+  - **BiDi Safety & Dark Theme**: Wrapped all monetary amounts, countdowns, and identifiers with Unicode LTR isolates (`\u202A...\u202C`) to prevent numeral reversal in Arabic RTL contexts. Added complete dark theme tokens and `PioneerTheme.darkTheme`.
+  - **Task Lifecycle Status**: Explicitly retained Task 006 status as **In Progress** because native iOS build and UI testing require a macOS/Xcode runner.
+- Why: Guarantees contract parity across Web and Flutter, eliminates risk of phantom bids or double-bidding under network latency, and ensures high resilience under mobile connectivity interruptions.
+
