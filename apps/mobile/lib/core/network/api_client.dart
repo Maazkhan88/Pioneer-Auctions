@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pioneer_contracts/pioneer_contracts.dart';
+import '../models/public_lot_card.dart';
+import '../utils/uuid_service.dart';
 import 'api_config.dart';
+import 'api_result.dart';
 
 class ApiClient {
   final http.Client _httpClient;
@@ -19,94 +23,225 @@ class ApiClient {
             Uri.parse('$baseUrl/api/health'),
             headers: ApiConfig.defaultHeaders(),
           )
-          .timeout(const Duration(milliseconds: 1500));
+          .timeout(const Duration(milliseconds: 2000));
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (_) {
       return false;
     }
   }
 
-  /// Fetches lots list from the backend API.
-  Future<List<Map<String, dynamic>>> fetchLots({String? query, String? category}) async {
+  /// Fetches public lot cards list from GET /api/v1/lots.
+  /// Backend returns `{ contractVersion: 1, items: PublicLotCard[] }`.
+  Future<ApiResult<List<PublicLotCard>>> fetchLots() async {
     try {
-      final queryParams = <String, String>{};
-      if (query != null && query.isNotEmpty) queryParams['q'] = query;
-      if (category != null && category.isNotEmpty) queryParams['category'] = category;
-
-      final uri = Uri.parse('$baseUrl/api/v1/lots').replace(queryParameters: queryParams.isEmpty ? null : queryParams);
+      final uri = Uri.parse('$baseUrl/api/v1/lots');
       final response = await _httpClient
           .get(uri, headers: ApiConfig.defaultHeaders())
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded is List) {
-          return decoded.cast<Map<String, dynamic>>();
-        } else if (decoded is Map && decoded['data'] is List) {
-          return (decoded['data'] as List).cast<Map<String, dynamic>>();
+        final decoded = json.decode(utf8.decode(response.bodyBytes));
+        if (decoded is Map<String, dynamic>) {
+          final contractVersion = decoded['contractVersion'] as int?;
+          if (contractVersion != 1) {
+            return const ApiFailure(
+              code: 'UNSUPPORTED_CONTRACT_VERSION',
+              message: 'Server returned unsupported contract version.',
+            );
+          }
+          final parsed = PublicLotsResponse.fromJson(decoded);
+          return ApiSuccess(parsed.items);
         }
+        return const ApiFailure(
+          code: 'MALFORMED_RESPONSE',
+          message: 'Expected object with items array.',
+        );
       }
-      return [];
-    } catch (_) {
-      return [];
+
+      return _parseErrorResponse(response);
+    } on TimeoutException catch (e) {
+      return ApiUnknown(message: 'Request timed out fetching lots list: $e', cause: e);
+    } catch (e) {
+      return ApiUnknown(message: 'Failed to connect to backend: $e', cause: e);
     }
   }
 
-  /// Fetches single lot snapshot from the backend.
-  Future<LotSnapshot?> fetchLot(String lotId) async {
+  /// Fetches single lot details from GET /api/v1/lots/:lotId.
+  /// Returns a single PublicLotCard (NOT LotSnapshot).
+  Future<ApiResult<PublicLotCard>> fetchLot(String lotId) async {
     try {
       final uri = Uri.parse('$baseUrl/api/v1/lots/$lotId');
       final response = await _httpClient
           .get(uri, headers: ApiConfig.defaultHeaders())
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        return LotSnapshot.fromJson(data);
+        final Map<String, dynamic> decoded = json.decode(utf8.decode(response.bodyBytes));
+        final card = PublicLotCard.fromJson(decoded);
+        return ApiSuccess(card);
       }
-      return null;
-    } catch (_) {
-      return null;
+
+      return _parseErrorResponse(response);
+    } on TimeoutException catch (e) {
+      return ApiUnknown(message: 'Request timed out fetching lot details: $e', cause: e);
+    } catch (e) {
+      return ApiUnknown(message: 'Failed to connect to backend: $e', cause: e);
     }
   }
 
-  /// Places a bid via REST endpoint using PlaceBidCommand.
-  Future<CommandAck?> placeBid({
+  /// Places a manual bid via POST /api/v1/lots/:lotId/bids.
+  /// Preserves [commandId] as Idempotency-Key.
+  Future<ApiResult<CommandAck>> placeBid({
     required String lotId,
-    required int amountAed,
+    required int amountFils,
+    required String commandId,
     int expectedSequence = 0,
+    String? termsVersionId,
     String? testAccountId,
+    String? correlationId,
   }) async {
-    try {
-      final command = PlaceBidCommand(
-        commandId: 'cmd-${DateTime.now().millisecondsSinceEpoch}',
-        contractVersion: ApiConfig.contractVersion,
-        lotId: lotId,
-        amount: Amount(
-          amountFils: amountAed * 100, // 1 AED = 100 fils
-          currency: Currency.AED,
-        ),
-        expectedSequence: expectedSequence,
-        sentAt: DateTime.now().toUtc(),
-        termsVersionId: 'terms-v1',
-      );
+    final corrId = correlationId ?? 'cor-${UuidService.generate().substring(0, 8)}';
+    final payload = {
+      'amount': {
+        'amountFils': amountFils,
+        'currency': 'AED',
+      },
+      'expectedSequence': expectedSequence,
+      'termsVersionId': termsVersionId ?? ApiConfig.termsVersionId,
+    };
 
+    try {
       final uri = Uri.parse('$baseUrl/api/v1/lots/$lotId/bids');
       final response = await _httpClient
           .post(
             uri,
-            headers: ApiConfig.defaultHeaders(testAccountId: testAccountId),
-            body: json.encode(command.toJson()),
+            headers: ApiConfig.defaultHeaders(
+              correlationId: corrId,
+              testAccountId: testAccountId,
+              idempotencyKey: commandId,
+            ),
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        return CommandAck.fromJson(data);
+      final Map<String, dynamic> decoded = json.decode(utf8.decode(response.bodyBytes));
+      final ack = CommandAck.fromJson(decoded);
+
+      if (ack.status == CommandAckStatus.ACCEPTED) {
+        return ApiSuccess(ack, correlationId: corrId);
+      } else {
+        return ApiFailure(
+          code: ack.error?.code.name ?? 'REJECTED',
+          message: ack.error?.message ?? 'Bid was rejected by the server.',
+          retryable: ack.error?.retryable ?? false,
+          retryAfterMs: ack.error?.retryAfterMs,
+          latest: ack.latest?.toJson(),
+          correlationId: corrId,
+        );
       }
-      return null;
-    } catch (_) {
-      return null;
+    } on TimeoutException catch (e) {
+      // Timeout is strictly unknown - never rejected and never accepted!
+      return ApiUnknown(
+        commandId: commandId,
+        message: 'Timeout awaiting bid acknowledgement. Retaining commandId for reconciliation.',
+        cause: e,
+      );
+    } catch (e) {
+      return ApiUnknown(
+        commandId: commandId,
+        message: 'Network error awaiting bid acknowledgement.',
+        cause: e,
+      );
     }
+  }
+
+  /// Creates or raises proxy maximum via PUT /api/v1/lots/:lotId/proxy-bid.
+  Future<ApiResult<Map<String, dynamic>>> setProxyBid({
+    required String lotId,
+    required int maximumFils,
+    required String commandId,
+    int expectedSequence = 0,
+    String? termsVersionId,
+    String? testAccountId,
+    String? correlationId,
+  }) async {
+    final corrId = correlationId ?? 'cor-${UuidService.generate().substring(0, 8)}';
+    final payload = {
+      'maximum': {
+        'amountFils': maximumFils,
+        'currency': 'AED',
+      },
+      'expectedSequence': expectedSequence,
+      'termsVersionId': termsVersionId ?? ApiConfig.termsVersionId,
+    };
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/lots/$lotId/proxy-bid');
+      final response = await _httpClient
+          .put(
+            uri,
+            headers: ApiConfig.defaultHeaders(
+              correlationId: corrId,
+              testAccountId: testAccountId,
+              idempotencyKey: commandId,
+            ),
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 5));
+
+      final Map<String, dynamic> decoded = json.decode(utf8.decode(response.bodyBytes));
+      if (decoded['status'] == 'ACCEPTED') {
+        return ApiSuccess(decoded, correlationId: corrId);
+      } else {
+        final error = decoded['error'] as Map<String, dynamic>?;
+        return ApiFailure(
+          code: error?['code']?.toString() ?? 'PROXY_REJECTED',
+          message: error?['message']?.toString() ?? 'Proxy bid rejected.',
+          retryable: error?['retryable'] as bool? ?? false,
+          latest: decoded['latest'] as Map<String, dynamic>?,
+          correlationId: corrId,
+        );
+      }
+    } on TimeoutException catch (e) {
+      return ApiUnknown(
+        commandId: commandId,
+        message: 'Timeout awaiting proxy bid acknowledgement.',
+        cause: e,
+      );
+    } catch (e) {
+      return ApiUnknown(
+        commandId: commandId,
+        message: 'Network error awaiting proxy bid acknowledgement.',
+        cause: e,
+      );
+    }
+  }
+
+  /// Helper to extract ApiFailure from non-2xx HTTP responses.
+  ApiFailure<T> _parseErrorResponse<T>(http.Response response) {
+    try {
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['error'] is Map<String, dynamic>) {
+          final err = decoded['error'] as Map<String, dynamic>;
+          return ApiFailure(
+            code: err['code']?.toString() ?? 'HTTP_${response.statusCode}',
+            message: err['message']?.toString() ?? 'Server error',
+            retryable: err['retryable'] as bool? ?? false,
+          );
+        }
+        if (decoded['code'] != null) {
+          return ApiFailure(
+            code: decoded['code'].toString(),
+            message: decoded['message']?.toString() ?? 'Error',
+          );
+        }
+      }
+    } catch (_) {}
+
+    return ApiFailure(
+      code: 'HTTP_${response.statusCode}',
+      message: 'Server returned HTTP status ${response.statusCode}',
+    );
   }
 }
