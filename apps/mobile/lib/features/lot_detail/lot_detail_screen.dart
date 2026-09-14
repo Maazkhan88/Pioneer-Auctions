@@ -9,6 +9,7 @@ import '../../core/localization/pioneer_localizations.dart';
 import '../../core/models/lot_model.dart';
 import '../../core/network/api_repository.dart';
 import '../../core/network/api_result.dart';
+import '../../core/session/session_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
@@ -502,11 +503,19 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
   }
 
   void _openBidConfirmationSheet(LotItem lot) {
-    _bidStateMachine.startConfirming(
-      amountFils: lot.nextBid * 100,
-      expectedSequence: 0,
-      termsAccepted: true,
-    );
+    if (!SessionService.instance.isKycVerified) {
+      _bidStateMachine.handleFailure(
+        amountFils: lot.nextBid * 100,
+        code: 'KYC_REQUIRED',
+        message: 'Identity verification required before placing a bid on this lot.',
+      );
+    } else {
+      _bidStateMachine.startConfirming(
+        amountFils: lot.nextBid * 100,
+        expectedSequence: 0,
+        termsAccepted: true,
+      );
+    }
 
     BidConfirmationSheet.show(
       context: context,

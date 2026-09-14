@@ -5,6 +5,7 @@ import '../../core/constants/pioneer_spacing.dart';
 import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/localization/pioneer_localizations.dart';
 import '../../core/models/user_model.dart';
+import '../../core/session/session_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
@@ -20,36 +21,52 @@ class AccountDashboardScreen extends StatelessWidget {
     final user = repo.currentUser;
     final activities = repo.getUserActivities();
 
-    return Scaffold(
-      backgroundColor: PioneerColors.background,
-      appBar: const PioneerAppHeader(isRoot: true),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            // Profile Banner Card
-            _buildProfileCard(user),
-            const SizedBox(height: 16),
+    return ListenableBuilder(
+      listenable: SessionService.instance,
+      builder: (context, _) {
+        final session = SessionService.instance;
+        return Scaffold(
+          backgroundColor: PioneerColors.background,
+          appBar: const PioneerAppHeader(isRoot: true),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                // Profile Banner Card
+                _buildProfileCard(user, session),
+                const SizedBox(height: 16),
 
-            // Horizontal Metrics Strip (5 Cards)
-            _buildMetricsStrip(context, user),
-            const SizedBox(height: 20),
+                // KYC Verification Alert Callout if unverified
+                if (!session.isKycVerified) ...[
+                  _buildKycActionCallout(context),
+                  const SizedBox(height: 16),
+                ],
 
-            // Navigation Menu List
-            _buildNavigationMenu(context),
-            const SizedBox(height: 22),
+                // Horizontal Metrics Strip (5 Cards)
+                _buildMetricsStrip(context, user),
+                const SizedBox(height: 20),
 
-            // Recent Activity Section
-            _buildRecentActivitySection(activities),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
+                // Navigation Menu List
+                _buildNavigationMenu(context, session),
+                const SizedBox(height: 22),
+
+                // Recent Activity Section
+                _buildRecentActivitySection(activities),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileCard(UserModel user) {
+  Widget _buildProfileCard(UserModel user, SessionService session) {
+    final isVerified = session.isKycVerified;
+    final isPending = session.kycStatus == MobileKycStatus.pending;
+    final paddle = session.verifiedIdentity?.bidderPaddleNumber ?? 'Bidder #2456';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
       child: Container(
@@ -114,7 +131,7 @@ class AccountDashboardScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user.fullName,
+                          session.verifiedIdentity?.fullNameEn ?? user.fullName,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 17,
@@ -123,7 +140,7 @@ class AccountDashboardScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          user.memberSince,
+                          isVerified ? '$paddle • ${user.memberSince}' : user.memberSince,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 11.5,
@@ -133,18 +150,42 @@ class AccountDashboardScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: PioneerColors.winningBadgeBg,
+                            color: isVerified
+                                ? PioneerColors.winningBadgeBg
+                                : isPending
+                                    ? PioneerColors.statusPendingBg
+                                    : PioneerColors.statusExpiredBg,
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified_rounded, size: 12, color: PioneerColors.winningBadgeText),
-                              SizedBox(width: 4),
+                              Icon(
+                                isVerified
+                                    ? Icons.verified_rounded
+                                    : isPending
+                                        ? Icons.hourglass_top_rounded
+                                        : Icons.warning_amber_rounded,
+                                size: 12,
+                                color: isVerified
+                                    ? PioneerColors.winningBadgeText
+                                    : isPending
+                                        ? PioneerColors.statusPendingText
+                                        : PioneerColors.statusExpiredText,
+                              ),
+                              const SizedBox(width: 4),
                               Text(
-                                'Verified Account',
+                                isVerified
+                                    ? 'Verified Account'
+                                    : isPending
+                                        ? 'Verification Pending'
+                                        : 'Identity Unverified',
                                 style: TextStyle(
-                                  color: PioneerColors.winningBadgeText,
+                                  color: isVerified
+                                      ? PioneerColors.winningBadgeText
+                                      : isPending
+                                          ? PioneerColors.statusPendingText
+                                          : PioneerColors.statusExpiredText,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -166,6 +207,62 @@ class AccountDashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKycActionCallout(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: PioneerColors.statusPendingBg,
+          borderRadius: PioneerSpacing.borderRadiusCard,
+          border: Border.all(color: PioneerColors.orangeEndingSoon.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: PioneerColors.orangeEndingSoon.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.badge_rounded, color: PioneerColors.orangeEndingSoon, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Emirates ID Verification',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: PioneerColors.brandPurpleDeep),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Verify your Emirates ID to unlock bidding eligibility and paddle registration.',
+                    style: PioneerTypography.metadata.copyWith(fontSize: 11, color: PioneerColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PioneerColors.brandPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                visualDensity: VisualDensity.compact,
+              ),
+              onPressed: () => context.push('/kyc/verify'),
+              child: const Text('Verify', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -234,7 +331,7 @@ class AccountDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavigationMenu(BuildContext context) {
+  Widget _buildNavigationMenu(BuildContext context, SessionService session) {
     final isAr = PioneerLocaleController.instance.isArabic;
     final items = [
       {'icon': Icons.gavel_rounded, 'title': 'My Registered Auctions', 'badge': null, 'route': '/auctions'},
@@ -242,7 +339,12 @@ class AccountDashboardScreen extends StatelessWidget {
       {'icon': Icons.emoji_events_rounded, 'title': 'Won Assets', 'badge': null, 'route': '/my-bids'},
       {'icon': Icons.credit_card_rounded, 'title': 'Payments & Invoices', 'badge': null, 'route': null},
       {'icon': Icons.account_balance_wallet_outlined, 'title': 'Security Deposits', 'badge': null, 'route': null},
-      {'icon': Icons.folder_open_rounded, 'title': 'Documents & Emirates ID', 'badge': null, 'route': null},
+      {
+        'icon': Icons.folder_open_rounded,
+        'title': 'Documents & Emirates ID',
+        'badge': session.isKycVerified ? 'Verified' : 'Action Required',
+        'route': '/kyc/verify',
+      },
       {'icon': Icons.language_rounded, 'title': 'Language / اللغة', 'badge': isAr ? 'العربية' : 'EN', 'action': 'toggle_language'},
       {'icon': Icons.notifications_none_rounded, 'title': 'Notification Center', 'badge': '3', 'route': null},
       {'icon': Icons.lock_outline_rounded, 'title': 'Security & Privacy', 'badge': null, 'route': null},

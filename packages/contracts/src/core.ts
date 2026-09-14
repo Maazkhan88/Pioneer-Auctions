@@ -122,6 +122,30 @@ export type CommandMeta = z.infer<typeof CommandMetaSchema>;
 export type CommandError = z.infer<typeof CommandErrorSchema>;
 export type ApiError = z.infer<typeof ApiErrorSchema>;
 
+export const KycStatusSchema = z.enum([
+  "UNVERIFIED",
+  "PENDING",
+  "VERIFIED",
+  "REJECTED",
+]);
+
+export const EmiratesIdNumberSchema = z
+  .string()
+  .regex(
+    /^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/,
+    "Invalid Emirates ID format (expected 784-YYYY-XXXXXXX-Z)",
+  );
+
+export const KycDocumentTypeSchema = z.enum([
+  "EMIRATES_ID_FRONT",
+  "EMIRATES_ID_BACK",
+  "SELFIE_LIVENESS",
+]);
+
+export type KycStatus = z.infer<typeof KycStatusSchema>;
+export type EmiratesIdNumber = z.infer<typeof EmiratesIdNumberSchema>;
+export type KycDocumentType = z.infer<typeof KycDocumentTypeSchema>;
+
 export type CommandAck<TResult, TLatest = never> =
   | {
       readonly contractVersion: ContractVersion;

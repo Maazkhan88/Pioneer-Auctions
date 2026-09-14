@@ -3,7 +3,9 @@ import { z } from "zod";
 import { MyBidStatusSchema, ReserveStatusSchema } from "./auction.js";
 import {
   CommandMetaSchema,
+  EmiratesIdNumberSchema,
   IsoDateTimeSchema,
+  KycStatusSchema,
   MoneySchema,
   NonNegativeIntegerSchema,
   UuidSchema,
@@ -102,3 +104,29 @@ export type PresenceUpdateCommand = z.infer<typeof PresenceUpdateCommandSchema>;
 export type BidCommandResult = z.infer<typeof BidCommandResultSchema>;
 export type BidLatestState = z.infer<typeof BidLatestStateSchema>;
 export type PlaceBidRestRequest = z.infer<typeof PlaceBidRestRequestSchema>;
+
+export const SubmitKycVerificationCommandSchema = CommandMetaSchema.extend({
+  emiratesIdNumber: EmiratesIdNumberSchema,
+  fullNameEn: z.string().min(3),
+  fullNameAr: z.string().optional(),
+  nationality: z.string().min(2),
+  dateOfBirth: IsoDateTimeSchema,
+  expiryDate: IsoDateTimeSchema,
+  cardFrontRef: z.string().min(1),
+  cardBackRef: z.string().min(1),
+  selfieRef: z.string().optional(),
+});
+
+export const KycSessionResultSchema = z
+  .object({
+    status: KycStatusSchema,
+    bidderNumber: z.string().optional(),
+    verifiedAt: IsoDateTimeSchema.optional(),
+    failureReason: z.string().optional(),
+  })
+  .passthrough();
+
+export type SubmitKycVerificationCommand = z.infer<
+  typeof SubmitKycVerificationCommandSchema
+>;
+export type KycSessionResult = z.infer<typeof KycSessionResultSchema>;

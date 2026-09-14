@@ -95,4 +95,90 @@ class SessionService extends ChangeNotifier {
     }
     return headers;
   }
+
+  // --- Task 008: KYC & Emirates ID Verification State ---
+  MobileKycStatus _kycStatus = MobileKycStatus.verified;
+  MobileKycStatus get kycStatus => _kycStatus;
+
+  VerifiedIdentity? _verifiedIdentity = const VerifiedIdentity(
+    emiratesIdNumber: '784-1988-1234567-1',
+    fullNameEn: 'Ahmed Al Mansoori',
+    fullNameAr: 'أحمد المنصوري',
+    nationality: 'United Arab Emirates',
+    dateOfBirth: '1988-04-12',
+    expiryDate: '2029-04-11',
+    bidderPaddleNumber: 'Paddle #2456',
+  );
+  VerifiedIdentity? get verifiedIdentity => _verifiedIdentity;
+
+  bool get isKycVerified => _kycStatus == MobileKycStatus.verified;
+
+  void setKycStatus(MobileKycStatus status) {
+    _kycStatus = status;
+    notifyListeners();
+  }
+
+  void resetKycForTesting() {
+    _kycStatus = MobileKycStatus.unverified;
+    _verifiedIdentity = null;
+    notifyListeners();
+  }
+
+  Future<void> submitKycVerification({
+    required String emiratesIdNumber,
+    required String fullNameEn,
+    String? fullNameAr,
+    required String nationality,
+    required String dateOfBirth,
+    required String expiryDate,
+  }) async {
+    _kycStatus = MobileKycStatus.pending;
+    notifyListeners();
+
+    // Simulate verification processing delay (or backend verification call)
+    await Future.delayed(const Duration(milliseconds: 1200));
+
+    _verifiedIdentity = VerifiedIdentity(
+      emiratesIdNumber: emiratesIdNumber,
+      fullNameEn: fullNameEn,
+      fullNameAr: fullNameAr,
+      nationality: nationality,
+      dateOfBirth: dateOfBirth,
+      expiryDate: expiryDate,
+      bidderPaddleNumber: 'Paddle #${1000 + (DateTime.now().millisecondsSinceEpoch % 9000)}',
+      verifiedAt: DateTime.now(),
+    );
+    _kycStatus = MobileKycStatus.verified;
+    notifyListeners();
+  }
 }
+
+enum MobileKycStatus {
+  unverified,
+  pending,
+  verified,
+  rejected,
+}
+
+class VerifiedIdentity {
+  final String emiratesIdNumber;
+  final String fullNameEn;
+  final String? fullNameAr;
+  final String nationality;
+  final String dateOfBirth;
+  final String expiryDate;
+  final String bidderPaddleNumber;
+  final DateTime? verifiedAt;
+
+  const VerifiedIdentity({
+    required this.emiratesIdNumber,
+    required this.fullNameEn,
+    this.fullNameAr,
+    required this.nationality,
+    required this.dateOfBirth,
+    required this.expiryDate,
+    required this.bidderPaddleNumber,
+    this.verifiedAt,
+  });
+}
+

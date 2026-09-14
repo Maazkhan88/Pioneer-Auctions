@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/bidding/bid_state_machine.dart';
 import '../../../core/constants/pioneer_spacing.dart';
 import '../../../core/localization/pioneer_localizations.dart';
@@ -244,13 +245,36 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
                 color: PioneerColors.statusPendingBg,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                state.message,
-                style: PioneerTypography.metadata.copyWith(
-                  color: PioneerColors.statusPendingText,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
+              child: Column(
+                children: [
+                  Text(
+                    state.message,
+                    style: PioneerTypography.metadata.copyWith(
+                      color: PioneerColors.statusPendingText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (state.reason == BidGateReason.kycRequired ||
+                      state.reason == BidGateReason.kycPending) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: PioneerColors.brandPurple,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        context.push('/kyc/verify');
+                      },
+                      icon: const Icon(Icons.badge_rounded, size: 16),
+                      label: const Text(
+                        'Verify Emirates ID Now',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -294,19 +318,26 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
           PioneerButton(
             label: state is BidSubmitting
                 ? l10n.slideSubmitting
-                : state is BidUnknown
-                    ? l10n.retryBid
-                    : state is BidAccepted
-                        ? 'Done'
-                        : '${l10n.placeBid} (${PioneerFormatters.currency(breakdown.hammerPriceAed)})',
+                : state is BidGated && (state.reason == BidGateReason.kycRequired || state.reason == BidGateReason.kycPending)
+                    ? 'Verify Emirates ID'
+                    : state is BidUnknown
+                        ? l10n.retryBid
+                        : state is BidAccepted
+                            ? 'Done'
+                            : '${l10n.placeBid} (${PioneerFormatters.currency(breakdown.hammerPriceAed)})',
             isLoading: state is BidSubmitting,
-            onPressed: !_termsAccepted || state is BidSubmitting
-                ? null
-                : state is BidAccepted
-                    ? () => Navigator.of(context).pop()
-                    : () async {
-                        await widget.onSubmit();
-                      },
+            onPressed: state is BidGated && (state.reason == BidGateReason.kycRequired || state.reason == BidGateReason.kycPending)
+                ? () {
+                    Navigator.of(context).pop();
+                    context.push('/kyc/verify');
+                  }
+                : !_termsAccepted || state is BidSubmitting
+                    ? null
+                    : state is BidAccepted
+                        ? () => Navigator.of(context).pop()
+                        : () async {
+                            await widget.onSubmit();
+                          },
           ),
         ],
       ),

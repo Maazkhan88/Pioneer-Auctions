@@ -12,6 +12,7 @@ import '../../core/network/api_repository.dart';
 import '../../core/network/api_result.dart';
 import '../../core/network/socket_events.dart';
 import '../../core/network/socket_service.dart';
+import '../../core/session/session_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
@@ -160,6 +161,27 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
   }
 
   Future<void> _handleBidConfirmed() async {
+    if (!SessionService.instance.isKycVerified) {
+      _bidStateMachine.handleFailure(
+        amountFils: _nextBid * 100,
+        code: 'KYC_REQUIRED',
+        message: 'Identity verification required before placing a bid in live auctions.',
+      );
+      HapticFeedback.vibrate();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Emirates ID verification required to bid.'),
+          backgroundColor: PioneerColors.statusPendingText,
+          action: SnackBarAction(
+            label: 'Verify ID',
+            textColor: Colors.white,
+            onPressed: () => context.push('/kyc/verify'),
+          ),
+        ),
+      );
+      return;
+    }
+
     _bidStateMachine.startConfirming(
       amountFils: _nextBid * 100,
       expectedSequence: _socketService.getLastAppliedSequence(widget.lotId) ?? 0,

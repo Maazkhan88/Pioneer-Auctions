@@ -5,6 +5,7 @@ import '../features/account/account_dashboard_screen.dart';
 import '../features/auctions/auctions_screen.dart';
 import '../features/browse/browse_lots_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/kyc/emirates_id_verification_screen.dart';
 import '../features/live_auction/live_auction_room_screen.dart';
 import '../features/lot_detail/lot_detail_screen.dart';
 import '../features/materials/materials_screen.dart';
@@ -119,6 +120,12 @@ class PioneerRouter {
           final lotId = state.pathParameters['id'] ?? '';
           return LiveAuctionRoomScreen(lotId: lotId);
         },
+      ),
+      // Task 008: Emirates ID document capture & verification
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/kyc/verify',
+        builder: (context, state) => const EmiratesIdVerificationScreen(),
       ),
       // Task 009: Hosted payment return contract stub
       GoRoute(

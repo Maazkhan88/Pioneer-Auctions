@@ -4,10 +4,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   BidCommandAckSchema,
+  EmiratesIdNumberSchema,
   GoldenFixturesSchema,
   IsoDateTimeSchema,
+  KycStatusSchema,
   MoneySchema,
   PlaceBidRestRequestSchema,
+  SubmitKycVerificationCommandSchema,
   UuidSchema,
   clientCommandSchemas,
   formatMoney,
@@ -179,6 +182,56 @@ describe("formatMoney", () => {
     expect(formatMoney(5200000, "ar")).toBe("52,000 د.إ");
     expect(formatMoney(5200050, "en")).toBe("AED 52,000.50");
     expect(formatMoney(5200050, "ar")).toBe("52,000.50 د.إ");
+  });
+});
+
+describe("Emirates ID & KYC Contracts", () => {
+  it("validates standard 15-digit UAE Emirates ID format", () => {
+    expect(
+      EmiratesIdNumberSchema.safeParse("784-1988-1234567-1").success,
+    ).toBe(true);
+    expect(
+      EmiratesIdNumberSchema.safeParse("784-2001-7654321-9").success,
+    ).toBe(true);
+
+    // Invalid formats
+    expect(EmiratesIdNumberSchema.safeParse("784198812345671").success).toBe(
+      false,
+    );
+    expect(EmiratesIdNumberSchema.safeParse("784-198-1234567-1").success).toBe(
+      false,
+    );
+    expect(EmiratesIdNumberSchema.safeParse("999-1988-1234567-1").success).toBe(
+      false,
+    );
+    expect(EmiratesIdNumberSchema.safeParse("invalid").success).toBe(false);
+  });
+
+  it("validates KycStatus lifecycle enum", () => {
+    expect(KycStatusSchema.safeParse("UNVERIFIED").success).toBe(true);
+    expect(KycStatusSchema.safeParse("PENDING").success).toBe(true);
+    expect(KycStatusSchema.safeParse("VERIFIED").success).toBe(true);
+    expect(KycStatusSchema.safeParse("REJECTED").success).toBe(true);
+    expect(KycStatusSchema.safeParse("UNKNOWN").success).toBe(false);
+  });
+
+  it("validates SubmitKycVerificationCommandSchema", () => {
+    const validCommand = {
+      commandId: "11111111-1111-4111-8111-111111111111",
+      contractVersion: 1,
+      sentAt: "2026-07-14T17:00:00.000Z",
+      emiratesIdNumber: "784-1992-1234567-1",
+      fullNameEn: "Ahmed Al Mansoori",
+      nationality: "United Arab Emirates",
+      dateOfBirth: "1992-05-15T00:00:00.000Z",
+      expiryDate: "2028-05-14T00:00:00.000Z",
+      cardFrontRef: "doc-front-uuid-001",
+      cardBackRef: "doc-back-uuid-002",
+    };
+
+    expect(
+      SubmitKycVerificationCommandSchema.safeParse(validCommand).success,
+    ).toBe(true);
   });
 });
 
