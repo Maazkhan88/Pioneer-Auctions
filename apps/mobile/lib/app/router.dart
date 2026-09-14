@@ -102,16 +102,61 @@ class PioneerRouter {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/lots/:id',
         builder: (context, state) {
-          final lotId = state.pathParameters['id'] ?? 'lot-118';
+          final lotId = state.pathParameters['id'] ?? '';
           return LotDetailScreen(lotId: lotId);
         },
+      ),
+      // Task 010: Push notification deep-link alias /lot/:id -> LotDetailScreen
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/lot/:id',
+        redirect: (context, state) => '/lots/${state.pathParameters['id']}',
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/live-auction/:id',
         builder: (context, state) {
-          final lotId = state.pathParameters['id'] ?? 'lot-118';
+          final lotId = state.pathParameters['id'] ?? '';
           return LiveAuctionRoomScreen(lotId: lotId);
+        },
+      ),
+      // Task 009: Hosted payment return contract stub
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/payment-return',
+        builder: (context, state) {
+          final status = state.uri.queryParameters['status'] ?? 'success';
+          final reference = state.uri.queryParameters['reference'] ?? 'REF-PAYMENT';
+          return Scaffold(
+            appBar: AppBar(title: const Text('Payment Return')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      status == 'success' ? Icons.check_circle_rounded : Icons.error_rounded,
+                      color: status == 'success' ? const Color(0xFF139744) : const Color(0xFFEE233E),
+                      size: 64,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      status == 'success' ? 'Payment Successful' : 'Payment Failed',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Reference: $reference', style: const TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.go('/account'),
+                      child: const Text('Go to Account Dashboard'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
         },
       ),
     ],
