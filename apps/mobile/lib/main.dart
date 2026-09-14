@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'app/router.dart';
+import 'core/localization/pioneer_localizations.dart';
 import 'core/theme/pioneer_theme.dart';
 
 void main() {
@@ -25,11 +27,29 @@ class PioneerMobileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Pioneer Auctions',
-      debugShowCheckedModeBanner: false,
-      theme: PioneerTheme.lightTheme,
-      routerConfig: PioneerRouter.router,
+    return ListenableBuilder(
+      listenable: PioneerLocaleController.instance,
+      builder: (context, _) {
+        final locale = PioneerLocaleController.instance.locale;
+        return MaterialApp.router(
+          title: 'Pioneer Auctions',
+          debugShowCheckedModeBanner: false,
+          theme: PioneerTheme.lightTheme,
+          routerConfig: PioneerRouter.router,
+          locale: locale,
+          supportedLocales: const [
+            Locale('en'),
+            Locale('ar'),
+          ],
+          localizationsDelegates: const [
+            PioneerLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+        );
+      },
     );
   }
 }
+

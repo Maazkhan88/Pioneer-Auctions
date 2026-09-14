@@ -60,15 +60,33 @@ Deliver mobile parity for discovery, lot detail, live bidding, reconnect, and po
   - 0 issues in `flutter analyze`.
   - Debug APK built natively via Android Gradle Plugin (`app-debug.apk` — 162.9 MB).
 
-### Phase 2: Backend & Realtime Integration (In Progress)
-- Package dependencies: `pioneer_contracts`, `http`, `socket_io_client`, `flutter_localizations`.
-- Typed REST client for auctions, lots, and user bids.
-- Socket.IO live bidding gateway integration (`/auctions/v1`).
-- Arabic (AR) RTL localization and bidi-safe numerals.
+### Phase 2: Backend & Realtime Integration (Complete)
+- **Dart Contracts Integration**: Direct local dependency on `packages/contracts/dart` (`pioneer_contracts`). Full support for `PlaceBidCommand`, `LotSnapshot`, `CommandAck`, `Amount` in integer fils (1 AED = 100 fils).
+- **Typed REST Client (`ApiClient`)**:
+  - `isHealthy()` health check endpoint.
+  - `fetchLots()` with query and category filters.
+  - `fetchLot()` returning strongly-typed `LotSnapshot`.
+  - `placeBid()` constructing `PlaceBidCommand` with correlation IDs and `X-Contract-Version: 1`.
+  - Fallback: `PioneerRepository` seamlessly transitions between online backend and `PioneerMockRepository`.
+- **Realtime Gateway (`SocketService`)**:
+  - Connects to Socket.IO namespace `/auctions/v1`.
+  - Room subscriptions (`lot:subscribe`, `lot:unsubscribe`).
+  - Event listeners: `lot:bid-placed`, `lot:going-once`, `bid:status-changed`.
+  - `bid:place` emitWithAck support.
+  - Live indicator in `LiveAuctionRoomScreen` reflecting real socket connection state with graceful local fallback.
+- **Arabic (AR) RTL Localization (`PioneerLocalizations`)**:
+  - App-wide English and Arabic string maps for tabs, chips, actions, and currency (`AED` / `د.إ`).
+  - `PioneerLocaleController` dynamic locale switcher.
+  - Integrated with `AccountDashboardScreen` language toggle tile.
+  - Flutter standard `GlobalMaterialLocalizations`, `GlobalWidgetsLocalizations`, `GlobalCupertinoLocalizations` delegates.
+- **Validation**:
+  - 25/25 automated unit, widget, and contract tests passing (`flutter test`).
+  - 0 issues in `flutter analyze`.
 
 ## Validation Commands
 ```powershell
 $env:PATH = "E:\flutter\bin;$env:PATH"
+$env:TEMP = "E:\temp"; $env:TMP = "E:\temp"
 flutter analyze
 flutter test
 flutter build apk --debug

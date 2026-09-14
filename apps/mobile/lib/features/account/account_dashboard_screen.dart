@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
 import '../../core/data/pioneer_mock_repository.dart';
+import '../../core/localization/pioneer_localizations.dart';
 import '../../core/models/user_model.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
@@ -234,6 +235,7 @@ class AccountDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildNavigationMenu(BuildContext context) {
+    final isAr = PioneerLocaleController.instance.isArabic;
     final items = [
       {'icon': Icons.gavel_rounded, 'title': 'My Registered Auctions', 'badge': null, 'route': '/auctions'},
       {'icon': Icons.receipt_long_rounded, 'title': 'My Bids & Orders', 'badge': null, 'route': '/my-bids'},
@@ -241,6 +243,7 @@ class AccountDashboardScreen extends StatelessWidget {
       {'icon': Icons.credit_card_rounded, 'title': 'Payments & Invoices', 'badge': null, 'route': null},
       {'icon': Icons.account_balance_wallet_outlined, 'title': 'Security Deposits', 'badge': null, 'route': null},
       {'icon': Icons.folder_open_rounded, 'title': 'Documents & Emirates ID', 'badge': null, 'route': null},
+      {'icon': Icons.language_rounded, 'title': 'Language / اللغة', 'badge': isAr ? 'العربية' : 'EN', 'action': 'toggle_language'},
       {'icon': Icons.notifications_none_rounded, 'title': 'Notification Center', 'badge': '3', 'route': null},
       {'icon': Icons.lock_outline_rounded, 'title': 'Security & Privacy', 'badge': null, 'route': null},
       {'icon': Icons.headset_mic_outlined, 'title': 'Customer Support', 'badge': null, 'route': null},
@@ -296,9 +299,9 @@ class AccountDashboardScreen extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: const BoxDecoration(
-                        color: PioneerColors.bellBadgeRed,
-                        shape: BoxShape.circle,
+                      decoration: BoxDecoration(
+                        color: item['action'] == 'toggle_language' ? PioneerColors.brandPurple : PioneerColors.bellBadgeRed,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         item['badge'] as String,
@@ -309,7 +312,19 @@ class AccountDashboardScreen extends StatelessWidget {
                 ],
               ),
               onTap: () {
-                if (item['route'] != null) {
+                if (item['action'] == 'toggle_language') {
+                  PioneerLocaleController.instance.toggleLocale();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        PioneerLocaleController.instance.isArabic
+                            ? 'تم التبديل إلى اللغة العربية'
+                            : 'Switched to English',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                } else if (item['route'] != null) {
                   context.push(item['route'] as String);
                 }
               },

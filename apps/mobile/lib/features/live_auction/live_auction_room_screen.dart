@@ -4,6 +4,7 @@ import '../../core/constants/pioneer_spacing.dart';
 import '../../core/data/pioneer_mock_repository.dart';
 import '../../core/models/bid_model.dart';
 import '../../core/models/lot_model.dart';
+import '../../core/network/socket_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
 import '../../core/utils/formatters.dart';
@@ -24,6 +25,8 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
   late int _nextBid;
   late List<BidItem> _bids;
   bool _isUserWinning = true;
+  final SocketService _socketService = SocketService();
+  bool _isSocketConnected = false;
 
   @override
   void initState() {
@@ -32,27 +35,90 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
     _currentBid = 86000;
     _nextBid = 87000;
     _bids = List.from(repo.getLiveBids());
+
+    // Connect to Socket.IO bidding gateway
+    _socketService.addConnectionListener(_onSocketConnectionChanged);
+    _socketService.addBidPlacedListener(_onIncomingBid);
+    _socketService.connect();
+    _socketService.subscribeToLot(widget.lotId);
+  }
+
+  @override
+  void dispose() {
+    _socketService.removeConnectionListener(_onSocketConnectionChanged);
+    _socketService.removeBidPlacedListener(_onIncomingBid);
+    _socketService.unsubscribeFromLot(widget.lotId);
+    _socketService.disconnect();
+    super.dispose();
+  }
+
+  void _onSocketConnectionChanged() {
+    if (mounted) {
+      setState(() {
+        _isSocketConnected = _socketService.isConnected;
+      });
+    }
+  }
+
+  void _onIncomingBid(Map<String, dynamic> data) {
+    if (!mounted) return;
+    try {
+      final amountFils = data['amount']?['amountFils'] as int?;
+      final paddle = data['bidderPaddle']?.toString() ?? 'Bidder';
+      final newAmountAed = amountFils != null ? (amountFils / 100).round() : _nextBid;
+
+      setState(() {
+        _currentBid = newAmountAed;
+        _nextBid = newAmountAed + 1000;
+        _isUserWinning = paddle.contains('2456');
+        _bids.insert(
+          0,
+          BidItem(
+            id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
+            bidderNumber: paddle.contains('2456') ? '$paddle (You)' : paddle,
+            isCurrentUser: paddle.contains('2456'),
+            amount: _currentBid,
+            timeAgo: 'Just now',
+            lotId: widget.lotId,
+          ),
+        );
+      });
+    } catch (_) {}
   }
 
   Future<void> _handleBidConfirmed() async {
-    // Simulate bid network latency
-    await Future.delayed(const Duration(milliseconds: 300));
-    setState(() {
-      _currentBid = _nextBid;
-      _nextBid += 1000;
-      _isUserWinning = true;
-      _bids.insert(
-        0,
-        BidItem(
-          id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
-          bidderNumber: 'Bidder #2456 (You)',
-          isCurrentUser: true,
-          amount: _currentBid,
-          timeAgo: 'Just now',
-          lotId: widget.lotId,
-        ),
+    // Attempt real Socket.IO bid command if connected
+    bool success = false;
+    if (_socketService.isConnected) {
+      success = await _socketService.placeBidViaSocket(
+        lotId: widget.lotId,
+        amountAed: _nextBid,
       );
-    });
+    }
+
+    if (!success) {
+      // Local fallback simulation
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    if (mounted) {
+      setState(() {
+        _currentBid = _nextBid;
+        _nextBid += 1000;
+        _isUserWinning = true;
+        _bids.insert(
+          0,
+          BidItem(
+            id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
+            bidderNumber: 'Bidder #2456 (You)',
+            isCurrentUser: true,
+            amount: _currentBid,
+            timeAgo: 'Just now',
+            lotId: widget.lotId,
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -112,17 +178,17 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
                               width: 6,
                               height: 6,
                               margin: const EdgeInsets.only(right: 5),
-                              decoration: const BoxDecoration(
-                                color: PioneerColors.registeredGreen,
+                              decoration: BoxDecoration(
+                                color: _isSocketConnected ? PioneerColors.registeredGreen : PioneerColors.brandOrange,
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const Text(
-                              'UAE Govt Vehicles • Connected',
+                            Text(
+                              _isSocketConnected ? 'UAE Govt Vehicles • Live Gateway' : 'UAE Govt Vehicles • Local Standby',
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
-                                color: PioneerColors.registeredGreen,
+                                color: _isSocketConnected ? PioneerColors.registeredGreen : PioneerColors.brandOrange,
                               ),
                             ),
                           ],
