@@ -4,16 +4,16 @@ abstract class PioneerFormatters {
   static final NumberFormat _currencyFormat = NumberFormat('#,###', 'en_US');
 
   /// Formats amount into standard Pioneer format: "AED 85,000"
-  /// Includes LTR isolates (\u202A ... \u202C) for BiDi safety in Arabic RTL context.
+  /// Includes LTR isolates (\u2066 ... \u2069) for BiDi safety in Arabic RTL context.
   static String currency(num amount, {String symbol = 'AED', bool isolate = true}) {
     final str = '$symbol ${_currencyFormat.format(amount)}';
-    return isolate ? '\u202A$str\u202C' : str;
+    return isolate ? '\u2066$str\u2069' : str;
   }
 
   /// Formats integer into comma separated: "1,248"
   static String number(num value, {bool isolate = false}) {
     final str = _currencyFormat.format(value);
-    return isolate ? '\u202A$str\u202C' : str;
+    return isolate ? '\u2066$str\u2069' : str;
   }
 
   /// Formats duration into countdown: "2h 14m 32s" or "2h 14m"
@@ -32,12 +32,12 @@ abstract class PioneerFormatters {
     } else {
       str = '${hours}h ${minutes.toString().padLeft(2, '0')}m';
     }
-    return isolate ? '\u202A$str\u202C' : str;
+    return isolate ? '\u2066$str\u2069' : str;
   }
 
   /// Wraps an identifier (VIN, Lot Number, Phone) in an LTR isolate for BiDi safety
   static String identifier(String id) {
-    return '\u202A$id\u202C';
+    return '\u2066$id\u2069';
   }
 
   /// Formats date into "APR 26" or "APR 26, 2026"

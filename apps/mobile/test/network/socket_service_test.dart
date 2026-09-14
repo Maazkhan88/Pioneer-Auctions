@@ -165,7 +165,7 @@ void main() {
       expect(event!.lotId, validLotId);
       expect(event.lotSequence, 6);
       expect(event.status, 'WINNING');
-      expect(event.currentBid.amountFils, 8500000);
+      expect(event.currentBid!.amountFils, 8500000);
     });
 
     test('ProxyBidChangedEvent decodes personal enveloped proxy data', () {
@@ -180,7 +180,7 @@ void main() {
       final event = ProxyBidChangedEvent.fromEnveloped(envelope);
       expect(event, isNotNull);
       expect(event!.lotId, validLotId);
-      expect(event.maximum.amountFils, 9000000);
+      expect(event.maximum!.amountFils, 9000000);
       expect(event.status, 'ACTIVE');
     });
 

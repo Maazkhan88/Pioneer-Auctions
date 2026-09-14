@@ -335,23 +335,37 @@ class ReserveStatusChangedEvent {
   }
 }
 
-/// Emitted when presence changes: 'lot:presence-changed'
+/// Emitted when presence changes: 'lot:presence-changed' (flat lot event with sequence)
 class LotPresenceChangedEvent {
+  final String auctionId;
   final String lotId;
-  final int viewersCount;
+  final int sequence;
+  final int approximateViewerCount;
 
   const LotPresenceChangedEvent({
+    required this.auctionId,
     required this.lotId,
-    required this.viewersCount,
+    required this.sequence,
+    required this.approximateViewerCount,
   });
+
+  /// Backward-compatible alias for approximateViewerCount
+  int get viewersCount => approximateViewerCount;
 
   static LotPresenceChangedEvent? fromJson(dynamic raw) {
     if (raw is! Map<String, dynamic>) return null;
     try {
       final lotId = raw['lotId'] as String?;
-      final viewersCount = raw['viewersCount'] as int? ?? 0;
+      final auctionId = raw['auctionId'] as String? ?? '';
+      final sequence = raw['sequence'] as int? ?? 0;
+      final count = (raw['approximateViewerCount'] ?? raw['viewersCount']) as int? ?? 0;
       if (lotId == null) return null;
-      return LotPresenceChangedEvent(lotId: lotId, viewersCount: viewersCount);
+      return LotPresenceChangedEvent(
+        auctionId: auctionId,
+        lotId: lotId,
+        sequence: sequence,
+        approximateViewerCount: count,
+      );
     } catch (_) {
       return null;
     }
@@ -361,7 +375,7 @@ class LotPresenceChangedEvent {
 /// Personal event: 'bid:status-changed' (enveloped with nested 'data' key)
 class MyBidStatusChangedEvent {
   final String closesAt;
-  final Money currentBid;
+  final Money? currentBid;
   final String lotId;
   final int lotSequence;
   final Money nextMinimumBid;
@@ -369,7 +383,7 @@ class MyBidStatusChangedEvent {
 
   const MyBidStatusChangedEvent({
     required this.closesAt,
-    required this.currentBid,
+    this.currentBid,
     required this.lotId,
     required this.lotSequence,
     required this.nextMinimumBid,
@@ -394,13 +408,18 @@ class MyBidStatusChangedEvent {
       final currentBidRaw = data['currentBid'];
       final nextMinRaw = data['nextMinimumBid'];
 
-      if (currentBidRaw is! Map<String, dynamic> || nextMinRaw is! Map<String, dynamic>) {
+      if (nextMinRaw is! Map<String, dynamic>) {
         return null;
+      }
+
+      Money? currentBid;
+      if (currentBidRaw is Map<String, dynamic>) {
+        currentBid = Money.fromJson(currentBidRaw);
       }
 
       return MyBidStatusChangedEvent(
         closesAt: closesAt,
-        currentBid: Money.fromJson(currentBidRaw),
+        currentBid: currentBid,
         lotId: lotId,
         lotSequence: lotSequence,
         nextMinimumBid: Money.fromJson(nextMinRaw),
@@ -415,14 +434,23 @@ class MyBidStatusChangedEvent {
 /// Personal event: 'proxy-bid:changed' (enveloped)
 class ProxyBidChangedEvent {
   final String lotId;
-  final Money maximum;
-  final String status;
+  final Money? activeProxyMaximum;
+  final Money? currentBid;
+  final int lotSequence;
+  final Money? nextMinimumBid;
+  final String status; // 'ACTIVE', 'EXCEEDED', 'CANCELLED', 'ENDED'
 
   const ProxyBidChangedEvent({
     required this.lotId,
-    required this.maximum,
+    this.activeProxyMaximum,
+    this.currentBid,
+    this.lotSequence = 0,
+    this.nextMinimumBid,
     required this.status,
   });
+
+  /// Backward-compatible alias
+  Money? get maximum => activeProxyMaximum;
 
   static ProxyBidChangedEvent? fromEnveloped(dynamic raw) {
     if (raw is! Map<String, dynamic>) return null;
@@ -432,13 +460,111 @@ class ProxyBidChangedEvent {
     try {
       final lotId = data['lotId'] as String?;
       final status = data['status'] as String? ?? 'ACTIVE';
-      final maxRaw = data['maximum'];
-      if (lotId == null || maxRaw is! Map<String, dynamic>) return null;
+      if (lotId == null) return null;
+
+      final maxRaw = data['activeProxyMaximum'] ?? data['maximum'];
+      Money? activeProxyMaximum;
+      if (maxRaw is Map<String, dynamic>) {
+        activeProxyMaximum = Money.fromJson(maxRaw);
+      }
+
+      final currentBidRaw = data['currentBid'];
+      Money? currentBid;
+      if (currentBidRaw is Map<String, dynamic>) {
+        currentBid = Money.fromJson(currentBidRaw);
+      }
+
+      final nextMinRaw = data['nextMinimumBid'];
+      Money? nextMinimumBid;
+      if (nextMinRaw is Map<String, dynamic>) {
+        nextMinimumBid = Money.fromJson(nextMinRaw);
+      }
+
+      final lotSequence = data['lotSequence'] as int? ?? 0;
 
       return ProxyBidChangedEvent(
         lotId: lotId,
-        maximum: Money.fromJson(maxRaw),
+        activeProxyMaximum: activeProxyMaximum,
+        currentBid: currentBid,
+        lotSequence: lotSequence,
+        nextMinimumBid: nextMinimumBid,
         status: status,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// Bid eligibility status details.
+class BidEligibility {
+  final bool eligible;
+  final List<String> reasonCodes;
+  final Money? eligibleDeposit;
+  final Money? requiredDeposit;
+  final String? termsVersionId;
+
+  const BidEligibility({
+    required this.eligible,
+    this.reasonCodes = const [],
+    this.eligibleDeposit,
+    this.requiredDeposit,
+    this.termsVersionId,
+  });
+
+  factory BidEligibility.fromJson(Map<String, dynamic> json) {
+    final eligible = json['eligible'] as bool? ?? false;
+    final reasonCodes = (json['reasonCodes'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        const [];
+
+    Money? eligibleDeposit;
+    if (json['eligibleDeposit'] is Map<String, dynamic>) {
+      eligibleDeposit = Money.fromJson(json['eligibleDeposit'] as Map<String, dynamic>);
+    }
+
+    Money? requiredDeposit;
+    if (json['requiredDeposit'] is Map<String, dynamic>) {
+      requiredDeposit = Money.fromJson(json['requiredDeposit'] as Map<String, dynamic>);
+    }
+
+    final termsVersionId = json['termsVersionId'] as String?;
+
+    return BidEligibility(
+      eligible: eligible,
+      reasonCodes: reasonCodes,
+      eligibleDeposit: eligibleDeposit,
+      requiredDeposit: requiredDeposit,
+      termsVersionId: termsVersionId,
+    );
+  }
+}
+
+/// Personal event: 'eligibility:changed' (enveloped)
+class EligibilityChangedEvent {
+  final BidEligibility eligibility;
+  final String? lotId;
+
+  const EligibilityChangedEvent({
+    required this.eligibility,
+    this.lotId,
+  });
+
+  static EligibilityChangedEvent? fromEnveloped(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final data = raw['data'];
+    if (data is! Map<String, dynamic>) return null;
+
+    try {
+      final eligRaw = data['eligibility'];
+      if (eligRaw is! Map<String, dynamic>) return null;
+      final eligibility = BidEligibility.fromJson(eligRaw);
+      final lotId = data['lotId'] as String?;
+
+      return EligibilityChangedEvent(
+        eligibility: eligibility,
+        lotId: lotId,
       );
     } catch (_) {
       return null;

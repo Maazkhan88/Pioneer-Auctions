@@ -81,6 +81,11 @@ class SessionService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void revokeTerms(String versionId) {
+    _acceptedTerms.remove(versionId);
+    notifyListeners();
+  }
+
   Map<String, String> get authHeaders {
     final headers = <String, String>{};
     if (_accessToken != null && _accessToken!.isNotEmpty) {

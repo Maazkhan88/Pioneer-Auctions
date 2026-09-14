@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/bidding/bid_state_machine.dart';
 import '../../../core/constants/pioneer_spacing.dart';
 import '../../../core/localization/pioneer_localizations.dart';
+import '../../../core/session/session_service.dart';
 import '../../../core/theme/pioneer_colors.dart';
 import '../../../core/theme/pioneer_typography.dart';
 import '../../../core/utils/formatters.dart';
@@ -12,6 +13,7 @@ import '../../../design_system/components/pioneer_button.dart';
 class BidConfirmationSheet extends StatefulWidget {
   final String lotTitle;
   final int bidAmountFils;
+  final String termsVersionId;
   final BidStateMachine stateMachine;
   final Future<void> Function() onSubmit;
 
@@ -19,6 +21,7 @@ class BidConfirmationSheet extends StatefulWidget {
     super.key,
     required this.lotTitle,
     required this.bidAmountFils,
+    this.termsVersionId = '',
     required this.stateMachine,
     required this.onSubmit,
   });
@@ -27,6 +30,7 @@ class BidConfirmationSheet extends StatefulWidget {
     required BuildContext context,
     required String lotTitle,
     required int bidAmountFils,
+    String termsVersionId = '',
     required BidStateMachine stateMachine,
     required Future<void> Function() onSubmit,
   }) {
@@ -37,6 +41,7 @@ class BidConfirmationSheet extends StatefulWidget {
       builder: (context) => BidConfirmationSheet(
         lotTitle: lotTitle,
         bidAmountFils: bidAmountFils,
+        termsVersionId: termsVersionId,
         stateMachine: stateMachine,
         onSubmit: onSubmit,
       ),
@@ -48,12 +53,32 @@ class BidConfirmationSheet extends StatefulWidget {
 }
 
 class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
-  bool _termsAccepted = true;
+  late bool _termsAccepted;
+
+  String get effectiveTermsVersionId => widget.termsVersionId.isNotEmpty
+      ? widget.termsVersionId
+      : SessionService.instance.termsVersionId;
 
   @override
   void initState() {
     super.initState();
+    _termsAccepted = SessionService.instance.hasAcceptedTerms(effectiveTermsVersionId);
+    widget.stateMachine.setTermsAccepted(_termsAccepted);
     widget.stateMachine.addListener(_onStateChanged);
+  }
+
+  @override
+  void didUpdateWidget(BidConfirmationSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldVersion = oldWidget.termsVersionId.isNotEmpty
+        ? oldWidget.termsVersionId
+        : SessionService.instance.termsVersionId;
+    if (oldVersion != effectiveTermsVersionId) {
+      setState(() {
+        _termsAccepted = SessionService.instance.hasAcceptedTerms(effectiveTermsVersionId);
+        widget.stateMachine.setTermsAccepted(_termsAccepted);
+      });
+    }
   }
 
   @override
@@ -169,8 +194,14 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
             onChanged: state is BidSubmitting
                 ? null
                 : (val) {
+                    final accepted = val ?? false;
                     setState(() {
-                      _termsAccepted = val ?? false;
+                      _termsAccepted = accepted;
+                      if (accepted) {
+                        SessionService.instance.acceptTerms(effectiveTermsVersionId);
+                      } else {
+                        SessionService.instance.revokeTerms(effectiveTermsVersionId);
+                      }
                       widget.stateMachine.setTermsAccepted(_termsAccepted);
                     });
                   },
@@ -267,7 +298,7 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
                     ? l10n.retryBid
                     : state is BidAccepted
                         ? 'Done'
-                        : '${l10n.placeBid} (\u202A${PioneerFormatters.currency(breakdown.hammerPriceAed.round())}\u202C)',
+                        : '${l10n.placeBid} (${PioneerFormatters.currency(breakdown.hammerPriceAed)})',
             isLoading: state is BidSubmitting,
             onPressed: !_termsAccepted || state is BidSubmitting
                 ? null
@@ -284,11 +315,11 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
 
   Widget _buildFeeRow({
     required String label,
-    required double amountAed,
+    required int amountAed,
     required bool isBold,
     Color? valueColor,
   }) {
-    final formatted = '\u202A${PioneerFormatters.currency(amountAed.round())}\u202C';
+    final formatted = PioneerFormatters.currency(amountAed);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

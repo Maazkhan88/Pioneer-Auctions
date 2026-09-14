@@ -19,22 +19,25 @@ void main() {
 
     test('FeeBreakdown calculates 5% premium (min 500 AED) and 5% VAT', () {
       // 85,000 AED = 8,500,000 fils
-      // 5% premium = 4,250 AED = 425,000 fils
-      // 5% VAT on premium = 212.5 AED = 21,250 fils
-      // Total = 89,462.5 AED = 8,946,250 fils
+      // 5% premium = 4,250,000 fils → 425,000 fils (bps math: 8500000*500~/10000 = 425000)
+      // Wait: 8500000 * 500 ~/ 10000 = 4250000000 ~/ 10000 = 425000 fils = 4250 AED
+      // 5% VAT on premium: 425000 * 500 ~/ 10000 = 21250 fils = 212 AED (~/ 100)
+      // Total: 8500000 + 425000 + 21250 = 8946250 fils = 89462 AED (~/ 100)
       final breakdown = FeeBreakdown.calculate(8500000);
-      expect(breakdown.hammerPriceAed, 85000.0);
-      expect(breakdown.buyerPremiumAed, 4250.0);
-      expect(breakdown.vatAed, 212.5);
-      expect(breakdown.totalAed, 89462.5);
+      expect(breakdown.hammerPriceAed, 85000);
+      expect(breakdown.buyerPremiumAed, 4250);
+      expect(breakdown.vatAed, 212); // 21250 fils ~/ 100
+      expect(breakdown.totalAed, 89462); // 8946250 fils ~/ 100
 
       // Low amount testing 500 AED minimum fee
       // 2,000 AED = 200,000 fils
-      // 5% is 100 AED, so minimum 500 AED (50,000 fils) applies
+      // 5% is 10,000 fils (100 AED), so minimum 50,000 fils (500 AED) applies
+      // VAT: 50000 * 500 ~/ 10000 = 2500 fils = 25 AED
+      // Total: 200000 + 50000 + 2500 = 252500 fils = 2525 AED
       final lowBreakdown = FeeBreakdown.calculate(200000);
-      expect(lowBreakdown.buyerPremiumAed, 500.0);
-      expect(lowBreakdown.vatAed, 25.0);
-      expect(lowBreakdown.totalAed, 2525.0);
+      expect(lowBreakdown.buyerPremiumAed, 500);
+      expect(lowBreakdown.vatAed, 25);
+      expect(lowBreakdown.totalAed, 2525);
     });
 
     test('startConfirming without terms gate acceptance transitions to BidGated on submit', () {
@@ -75,10 +78,11 @@ void main() {
       machine.onAuthoritativeSuccess = () => successFired = true;
 
       machine.startConfirming(amountFils: 8500000, expectedSequence: 41, termsAccepted: true);
-      machine.startSubmitting();
+      // Capture the real commandId — ack validation requires it to match
+      final commandId = machine.startSubmitting()!;
 
       final ack = CommandAck(
-        commandId: 'cmd-1',
+        commandId: commandId,
         contractVersion: 1,
         correlationId: 'corr-1',
         serverTime: DateTime.parse('2026-07-14T17:00:00.000Z'),
@@ -167,10 +171,11 @@ void main() {
 
     test('external OUTBID event transitions to BidOutbid', () {
       machine.startConfirming(amountFils: 8500000, expectedSequence: 41, termsAccepted: true);
-      machine.startSubmitting();
+      // Capture the real commandId — ack validation requires it to match
+      final commandId = machine.startSubmitting()!;
 
       final ack = CommandAck(
-        commandId: 'cmd-1',
+        commandId: commandId,
         contractVersion: 1,
         correlationId: 'corr-1',
         serverTime: DateTime.parse('2026-07-14T17:00:00.000Z'),

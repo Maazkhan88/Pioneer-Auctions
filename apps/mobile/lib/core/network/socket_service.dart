@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:pioneer_contracts/pioneer_contracts.dart';
 import 'package:socket_io_client/socket_io_client.dart' as socket_io;
+import '../session/session_service.dart';
 import '../utils/uuid_service.dart';
 import 'api_config.dart';
 import 'socket_events.dart';
@@ -66,6 +67,7 @@ class SocketService with WidgetsBindingObserver {
   final List<void Function(LotPresenceChangedEvent event)> _presenceListeners = [];
   final List<void Function(MyBidStatusChangedEvent event)> _myBidStatusChangedListeners = [];
   final List<void Function(ProxyBidChangedEvent event)> _proxyBidChangedListeners = [];
+  final List<void Function(EligibilityChangedEvent event)> _eligibilityListeners = [];
   final List<void Function(String lotId)> _gapDetectedListeners = [];
 
   SocketService() {
@@ -102,6 +104,9 @@ class SocketService with WidgetsBindingObserver {
   void addProxyBidChangedListener(void Function(ProxyBidChangedEvent) l) => _proxyBidChangedListeners.add(l);
   void removeProxyBidChangedListener(void Function(ProxyBidChangedEvent) l) => _proxyBidChangedListeners.remove(l);
 
+  void addEligibilityListener(void Function(EligibilityChangedEvent) l) => _eligibilityListeners.add(l);
+  void removeEligibilityListener(void Function(EligibilityChangedEvent) l) => _eligibilityListeners.remove(l);
+
   void addGapDetectedListener(void Function(String lotId) l) => _gapDetectedListeners.add(l);
   void removeGapDetectedListener(void Function(String lotId) l) => _gapDetectedListeners.remove(l);
 
@@ -118,17 +123,30 @@ class SocketService with WidgetsBindingObserver {
   /// Connects to the Socket.IO bidding gateway at /auctions/v1.
   void connect({String? testAccountId}) {
     if (_socket != null && _isConnected) return;
-    _testAccountId = testAccountId ?? ApiConfig.defaultTestAccountId;
+    final session = SessionService.instance;
+    _testAccountId = testAccountId ?? session.testAccountId;
 
     try {
       final endpoint = '${ApiConfig.socketUrl}${ApiConfig.socketNamespace}';
+      final authMap = <String, dynamic>{
+        'testAccountId': _testAccountId,
+      };
+      if (session.accessToken != null && session.accessToken!.isNotEmpty) {
+        authMap['accessToken'] = session.accessToken;
+      }
+
+      final extraHeaders = ApiConfig.defaultHeaders(testAccountId: _testAccountId);
+      if (session.accessToken != null && session.accessToken!.isNotEmpty) {
+        extraHeaders['authorization'] = 'Bearer ${session.accessToken}';
+      }
+
       _socket = socket_io.io(
         endpoint,
         socket_io.OptionBuilder()
             .setTransports(['websocket', 'polling'])
             .disableAutoConnect()
-            .setAuth({'testAccountId': _testAccountId})
-            .setExtraHeaders(ApiConfig.defaultHeaders(testAccountId: _testAccountId))
+            .setAuth(authMap)
+            .setExtraHeaders(extraHeaders)
             .build(),
       );
 
@@ -232,9 +250,15 @@ class SocketService with WidgetsBindingObserver {
       _socket?.on('lot:presence-changed', (data) {
         final event = LotPresenceChangedEvent.fromJson(data);
         if (event != null) {
-          for (final l in _presenceListeners) {
-            l(event);
-          }
+          _handleSequencedEvent(
+            lotId: event.lotId,
+            sequence: event.sequence,
+            onApply: () {
+              for (final l in _presenceListeners) {
+                l(event);
+              }
+            },
+          );
         }
       });
 
@@ -252,6 +276,15 @@ class SocketService with WidgetsBindingObserver {
         final event = ProxyBidChangedEvent.fromEnveloped(data);
         if (event != null) {
           for (final l in _proxyBidChangedListeners) {
+            l(event);
+          }
+        }
+      });
+
+      _socket?.on('eligibility:changed', (data) {
+        final event = EligibilityChangedEvent.fromEnveloped(data);
+        if (event != null) {
+          for (final l in _eligibilityListeners) {
             l(event);
           }
         }
@@ -337,20 +370,22 @@ class SocketService with WidgetsBindingObserver {
     });
   }
 
-  /// Emits `lot:sync` for a specific lot.
+  /// Emits `lot:sync` for a specific lot. Requires known `afterSequence`;
+  /// if unknown, emits `lot:subscribe` instead per docs/api-contracts.md §7.
   void syncLot(String lotId) {
     if (_socket == null || !_isConnected) return;
     final lastSeq = _subscribedLots[lotId];
+    if (lastSeq == null) {
+      _sendSubscribe(lotId);
+      return;
+    }
     final payload = <String, dynamic>{
       'commandId': UuidService.generate(),
       'contractVersion': ApiConfig.contractVersion,
       'lotId': lotId,
+      'afterSequence': lastSeq,
       'sentAt': DateTime.now().toUtc().toIso8601String(),
     };
-    if (lastSeq != null) {
-      payload['afterSequence'] = lastSeq;
-    }
-
     _socket?.emitWithAck('lot:sync', payload, ack: (ack) {
       _processSnapshotAck(ack);
     });
