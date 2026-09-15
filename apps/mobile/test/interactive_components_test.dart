@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pioneer_mobile/core/constants/pioneer_spacing.dart';
 import 'package:pioneer_mobile/core/localization/pioneer_localizations.dart';
 import 'package:pioneer_mobile/core/models/lot_model.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_bottom_nav.dart';
@@ -78,6 +79,47 @@ void main() {
     await tester.tap(find.text('My Bids'));
     await tester.pumpAndSettle();
     expect(selectedIndex, 3);
+  });
+
+  testWidgets('PioneerBottomNav renders Material 3 Expressive floating pill with clearance', (WidgetTester tester) async {
+    // Verify spacing constants provide proper floating clearance above the bar
+    expect(PioneerSpacing.floatingNavClearance, greaterThanOrEqualTo(110.0));
+    expect(PioneerSpacing.floatingNavHeight, equals(66.0));
+    expect(PioneerSpacing.radiusFloatingNav, equals(34.0));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: ListView(
+                  children: const [
+                    Text('Content behind nav bar'),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: PioneerBottomNav(
+                  currentIndex: 0,
+                  onTap: (_) {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify floating pill structure: ClipRRect with BackdropFilter and AnimatedContainers
+    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(ClipRRect), findsWidgets);
+    expect(find.byType(AnimatedContainer), findsWidgets);
+    expect(find.text('Content behind nav bar'), findsOneWidget);
   });
 
   testWidgets('PioneerStatusChip renders all status badges', (WidgetTester tester) async {

@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Promotional Skyline Banner
               _buildPromotionalBanner(context),
-              const SizedBox(height: 30),
+              const SizedBox(height: PioneerSpacing.floatingNavClearance),
             ],
           ),
         ),

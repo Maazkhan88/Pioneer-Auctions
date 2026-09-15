@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme/pioneer_colors.dart';
 import '../design_system/components/pioneer_bottom_nav.dart';
 import '../features/account/account_dashboard_screen.dart';
 import '../features/auctions/auctions_screen.dart';
@@ -23,15 +24,28 @@ class PioneerRouter {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return Scaffold(
-            body: navigationShell,
-            bottomNavigationBar: PioneerBottomNav(
-              currentIndex: navigationShell.currentIndex,
-              onTap: (index) {
-                navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
-                );
-              },
+            extendBody: true,
+            backgroundColor: PioneerColors.background,
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: navigationShell,
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: PioneerBottomNav(
+                    currentIndex: navigationShell.currentIndex,
+                    onTap: (index) {
+                      navigationShell.goBranch(
+                        index,
+                        initialLocation: index == navigationShell.currentIndex,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           );
         },

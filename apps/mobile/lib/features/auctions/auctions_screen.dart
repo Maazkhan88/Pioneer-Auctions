@@ -87,7 +87,7 @@ class _AuctionsScreenState extends State<AuctionsScreen> {
               padding: const EdgeInsets.only(
                 left: PioneerSpacing.pageMargin,
                 right: PioneerSpacing.pageMargin,
-                bottom: 24,
+                bottom: PioneerSpacing.floatingNavClearance,
               ),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(

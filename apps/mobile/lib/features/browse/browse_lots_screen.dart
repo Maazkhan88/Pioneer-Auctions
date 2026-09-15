@@ -138,7 +138,7 @@ class _BrowseLotsScreenState extends State<BrowseLotsScreen> {
                 padding: const EdgeInsets.only(
                   left: PioneerSpacing.pageMargin,
                   right: PioneerSpacing.pageMargin,
-                  bottom: 24,
+                  bottom: PioneerSpacing.floatingNavClearance,
                 ),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

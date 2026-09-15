@@ -53,7 +53,7 @@ class AccountDashboardScreen extends StatelessWidget {
 
                 // Recent Activity Section
                 _buildRecentActivitySection(activities),
-                const SizedBox(height: 30),
+                const SizedBox(height: PioneerSpacing.floatingNavClearance),
               ],
             ),
           ),

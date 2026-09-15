@@ -59,4 +59,25 @@ abstract class PioneerSpacing {
       offset: Offset(0, 4),
     ),
   ];
+
+  // M3 Expressive Floating Bottom Nav Bar
+  static const double floatingNavHeight = 66.0;
+  static const double floatingNavClearance = 120.0;
+  static const double floatingNavMarginH = 16.0;
+  static const double floatingNavMarginBottom = 12.0;
+  static const double radiusFloatingNav = 34.0;
+
+  static const List<BoxShadow> floatingNavShadow = [
+    BoxShadow(
+      color: Color(0x1F2B0B57), // ~12% deep brand purple
+      blurRadius: 24.0,
+      offset: Offset(0, 8),
+      spreadRadius: -2.0,
+    ),
+    BoxShadow(
+      color: Color(0x0D000000), // ~5% ambient black
+      blurRadius: 8.0,
+      offset: Offset(0, 2),
+    ),
+  ];
 }
