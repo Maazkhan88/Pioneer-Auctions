@@ -132,7 +132,7 @@ describe("documentation drift", () => {
       (match) => JSON.parse(match[1] ?? "null"),
     );
 
-    expect(examples).toHaveLength(3);
+    expect(examples).toHaveLength(7);
     expect(PlaceBidRestRequestSchema.safeParse(examples[0])).toMatchObject({
       success: true,
     });
@@ -142,6 +142,12 @@ describe("documentation drift", () => {
     expect(BidCommandAckSchema.safeParse(examples[2])).toMatchObject({
       success: true,
     });
+    expect(examples[3].contractVersion).toBe(1);
+    expect(KycStatusSchema.safeParse(examples[3].status).success).toBe(true);
+    expect(examples[4].contractVersion).toBe(1);
+    expect(EmiratesIdNumberSchema.safeParse(examples[5].emiratesIdNumber).success).toBe(true);
+    expect(examples[6].contractVersion).toBe(1);
+    expect(KycStatusSchema.safeParse(examples[6].status).success).toBe(true);
   });
 
   it("keeps the REST inventory aligned with generated OpenAPI inputs", async () => {

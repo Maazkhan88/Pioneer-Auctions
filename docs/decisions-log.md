@@ -225,5 +225,19 @@ Record durable product and architecture decisions here. New entries are append-o
     `((amountFils * bps) + 5000) ~/ 10000`.
     This resolves fractional-fil intermediate calculations deterministically without floating-point drift. (Note: This is an internal platform rounding standard and is not asserted as a UAE statutory rule without legal/accounting confirmation).
   - **Fils-Preserving Currency Formatter**: Implemented `PioneerFormatters.formatFils(int amountFils, {String symbol = 'AED', bool isolate = true})`. When `amountFils % 100 == 0`, displays without decimals (`AED 85,000`). When non-zero fils exist, displays with exactly 2 decimal places (`AED 89,462.50`). Preserves Unicode LTR isolates (`\u2066...\u2069`) for BiDi Arabic context safety.
-  - **Authoritative Terms Gate**: Terms checkbox in `BidConfirmationSheet` defaults to un-checked (`_termsAccepted = false`), requiring explicit user confirmation per bid attempt.
 - Why: Eliminates financial inaccuracies, ensures the buyer is billed and presented with exact fils amounts down to the exact 0.01 AED, avoids floating-point precision hazards, and guarantees legal and accounting precision.
+
+## DEC-026: Authoritative Fail-Closed KYC Lifecycle, Provider Boundary, and Date Formats
+
+- Date: 2026-09-18
+- Status: Accepted
+- Context: In the review of `bba6e1f..01ec557`, KYC was found to fail open on database errors, default mobile state to verified, accept fake bypasses, conflate general account status with KYC status, and use unversioned endpoints.
+- Decision:
+  - **Versioned & Authenticated Route Prefix**: All KYC client routes are mounted strictly under `/api/v1/me/kyc` and require session authentication. Missing, invalid, or unresolvable account context returns 401 Unauthorized.
+  - **Independent Status Separation**: `accounts.kyc_status` (`NOT_STARTED`, `PENDING`, `VERIFIED`, `REJECTED`, `EXPIRED`) is canonical for bidding eligibility and is decoupled from `accounts.status` (`PENDING`, `ACTIVE`, `SUSPENDED`, `LOCKED`). Submissions update `accounts.kyc_status` without altering general account status.
+  - **Fail-Closed Provider Boundary**: Defined `KycProvider` interface (`startSession`, `submit`, `getStatus`). Database or provider outages return 503 `PROVIDER_UNAVAILABLE` with `retryable: true` and never report `VERIFIED`.
+  - **Safe Development Fake Provider**: `DevelopmentFakeKycProvider` is enabled strictly in dev/test via Nest DI token `KYC_PROVIDER`. It throws an explicit fatal exception if initialized when `NODE_ENV === 'production'`.
+  - **Calendar Date-Only Wire Format**: Date of birth and document expiry dates use `IsoDateSchema` (`YYYY-MM-DD`), preventing timestamp/timezone corruption.
+  - **Privacy & Audit Logging**: Sensitive PII (full Emirates ID numbers, full names, biometric images, document references) is redacted from application logs and security audit records.
+  - **Online vs Live-Hall Boundary**: Pioneer timed online auctions and live-hall auctions have separate lifecycles. Timed soft-close bidding extensions (2-minute window) apply to online timed auctions only and are not conflated with live auctioneer calls.
+- Why: Ensures regulatory compliance, prevents fraudulent bidding bypasses, protects buyer privacy, and guarantees system resilience under network and provider downtime.

@@ -295,6 +295,76 @@ Rejected bid commands return a semantic result rather than using transport failu
 
 Authentication/authorization and malformed payloads still use appropriate HTTP 4xx responses.
 
+## 5b. Authenticated KYC REST endpoints
+
+Base path: `/api/v1/me/kyc`
+
+All KYC endpoints require authentication (`x-pioneer-test-account-id` header or Bearer session token). Missing, invalid, or unresolvable account context returns 401 Unauthorized. Database or provider outages fail closed, returning 503 `PROVIDER_UNAVAILABLE` with `retryable: true`, and never report `VERIFIED`.
+
+### `GET /api/v1/me/kyc`
+
+Returns the authenticated account's current KYC status.
+
+Response (`200 OK`):
+
+```json
+{
+  "contractVersion": 1,
+  "status": "UNVERIFIED",
+  "bidderNumber": "Paddle #192f"
+}
+```
+
+- Status enum: `UNVERIFIED` | `PENDING` | `VERIFIED` | `REJECTED`.
+- `bidderNumber` is present only when status is `VERIFIED`.
+
+### `POST /api/v1/me/kyc/sessions`
+
+Initializes a provider KYC session for the authenticated account.
+
+Response (`201 Created`):
+
+```json
+{
+  "contractVersion": 1,
+  "sessionId": "session-12345",
+  "status": "PENDING"
+}
+```
+
+### `POST /api/v1/me/kyc/submit`
+
+Submits Emirates ID verification details and document references. All date fields strictly use ISO-8601 calendar date strings (`YYYY-MM-DD`).
+
+Request (`POST /api/v1/me/kyc/submit`):
+
+```json
+{
+  "emiratesIdNumber": "784-1992-1234567-1",
+  "fullNameEn": "Ahmed Al Mansoori",
+  "dateOfBirth": "1992-05-15",
+  "expiryDate": "2028-05-14",
+  "nationality": "United Arab Emirates",
+  "cardFrontRef": "doc-front-001",
+  "cardBackRef": "doc-back-002"
+}
+```
+
+Response (`200 OK`):
+
+```json
+{
+  "contractVersion": 1,
+  "status": "PENDING"
+}
+```
+
+Validation rules:
+- `emiratesIdNumber`: strictly formatted as `784-YYYY-XXXXXXX-Z`.
+- `dateOfBirth`: must be an ISO calendar date (`YYYY-MM-DD`) in the past.
+- `expiryDate`: must be an ISO calendar date (`YYYY-MM-DD`) in the future.
+- `cardFrontRef`, `cardBackRef`: uploaded document object references.
+
 ## 6. Socket.IO connection and rooms
 
 Namespace: `/auctions/v1`

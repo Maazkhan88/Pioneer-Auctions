@@ -103,7 +103,35 @@ Deliver mobile parity for discovery, lot detail, live bidding, reconnect, and po
 - Android debug APK built natively via AGP (`app-debug.apk`).
 
 ## Current Status: In Progress
-- **Why In Progress**: All mobile buyer loop features, contracts, REST, Socket.IO, Android APK build, and 50 automated tests pass on Windows/Android. iOS scaffolding is added, but native iOS execution and UI tests require a macOS environment with Xcode. Per AGENTS.md quality gates, Task 006 remains In Progress until iOS target tests can be executed.
+- **Why In Progress**: All mobile buyer loop features, authoritative bid state machine, pure integer fils arithmetic, Material 3 floating navigation with accessibility/localization, and 68 automated Flutter tests pass on Windows/Android. Android debug APK builds cleanly. Native iOS runtime validation and UI tests require a macOS environment with Xcode. In accordance with AGENTS.md quality gates, Task 006 remains explicitly In Progress until verified on a macOS/Xcode runner.
+
+### Remediation Completed — 2026-09-18 (docs/antigravity-task-006-008-remediation-prompt.md)
+
+1. **Simulated Bidding Completely Removed (Blocker C)**:
+   - Deleted demo mode simulated bid acceptance fallback in `PioneerRepository.placeBid()`.
+   - Transport timeouts remain strictly `ApiUnknown` with identical `commandId` and payload. Offline mode returns safe unavailable status without fabricating bids.
+2. **Authoritative Screen Rendering (Blocker D)**:
+   - Removed optimistic mutations (`+1000` increments, local status flips, fabricated bid history rows) from `LotDetailScreen` and `LiveAuctionRoomScreen`.
+   - Screens render authoritative server fields (`result.currentBid.amountFils`, `result.nextMinimumBid.amountFils`, `result.sequence`, `result.myBidStatus`, `result.closesAt`, `result.extended`).
+   - Screen-level haptics removed; state machine triggers authoritative success (`heavyImpact`) or failure (`vibrate`) haptics.
+3. **Hardened Correlation and Event Ordering (Blocker E)**:
+   - `handleCommandAck` requires an active pending command, validates `ack.commandId == activeCommand.commandId`, `ack.result.lotId == activeCommand.lotId`, and `ack.result.sequence >= lastAppliedSequence`.
+   - Deduplication uses an independent `_completedCommandIds` set so duplicate acks remain ignored across all lifecycle states.
+   - Late acks cannot overwrite newer personal `OUTBID`, `CLOSED`, `GATED`, or `RESYNCING` states.
+   - Public `bid:accepted` events update public price and sequence only; personal winning/outbid status is driven strictly by personal `bid:status-changed` events.
+4. **Fils Preservation & Round-Half-Up Financials (Blocker G / DEC-025)**:
+   - Pure integer fils arithmetic throughout (`((amountFils * bps) + 5000) ~/ 10000`). Truncating `~/ 100` AED getters deleted.
+   - `PioneerFormatters.formatFils` displays exact fils when non-zero (`AED 89,462.50`) and whole AED when zero (`AED 85,000`), with LTR BiDi isolation.
+   - `BidConfirmationSheet` fee breakdown preserves exact fils.
+5. **Authoritative Terms Gate (Blocker F)**:
+   - Terms checkbox in `BidConfirmationSheet` defaults to un-checked (`_termsAccepted = false`), requiring explicit user confirmation per bid.
+6. **M3 Floating Navigation Localized & Accessible (Blocker J)**:
+   - All 5 tab labels localized via `PioneerLocalizations` in EN and AR; tab 3 labeled "Browse".
+   - Explicit `Semantics` on tabs (button, selected state, localized label).
+   - Reduced motion supported via `MediaQuery.maybeDisableAnimationsOf`.
+   - Minimum 48x48 logical pixel touch targets maintained.
+   - Large text scaling (up to 2.0x) verified overflow-free with `Flexible` and `FittedBox`.
+7. **iOS Camera Permissions**: Added `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` to `apps/mobile/ios/Runner/Info.plist`.
 
 ## Validation Commands
 ```powershell

@@ -1,6 +1,6 @@
 # Current state
 
-Last updated: 2026-09-09
+Last updated: 2026-09-18
 
 Repository: `https://github.com/Maazkhan88/Pioneer-Auctions` (`main`)
 
@@ -204,9 +204,24 @@ Outstanding from the original list: outbid/rejected/closed bid states beyond wha
 
 ## Next action
 
-With realtime contract drift resolved, `GET /api/v1/lots/:lotId` implemented, DEC-019 Turbopack bundling diagnosed and resolved with precompiled `dist/` exports, and soft-close/gap-resync verified against real database and socket flows: (1) complete the remaining Task 007 admin slices (step-up auth for high-risk actions, live monitor, and review queues), and (2) prepare Identity/KYC provider adapter foundations (Task 008).
+With the 9-commit remediation pass on `agent/task-006-mobile-buyer-loop` complete (resolving all Blockers A through J, removing all simulated bids, establishing fail-closed server KYC, preserving fils, and localizing/accessible M3 navigation):
+1. **Task 006 (Mobile)**: Remains **In Progress** pending macOS/Xcode runner execution for native iOS target builds and UI tests.
+2. **Task 008 (Identity & KYC)**: Remains **In Progress** pending commercial KYC provider contract finalization (Onfido/Jumio), live UAE PASS staging integration, webhook processing, and counsel-approved data retention policy.
+3. Proceed with Task 007 remaining admin slices (step-up auth for high-risk actions, live monitor, review queues).
 
 ## Last validation
+
+- On 2026-09-18, executed the full 9-commit remediation pass on `agent/task-006-mobile-buyer-loop` (`docs/antigravity-task-006-008-remediation-prompt.md`):
+  - **Commit 1 (`ade5ff9`)**: Made KYC authenticated and fail-closed under `/api/v1/me/kyc` with `SessionService`, `accounts.kyc_status` decoupling, `KycProvider` boundary, and production-safe `DevelopmentFakeKycProvider`.
+  - **Commit 2 (`72162ba`)**: Added `IsoDateSchema` (`YYYY-MM-DD`), typed Zod REST schemas, and regenerated Dart contracts, OpenAPI spec, and golden fixtures without drift.
+  - **Commit 3 (`41de131`)**: Mobile KYC switched to unverified default, masked Emirates ID (`784-****-*******-1`), real camera capture only for selfies (gallery liveness disabled), temporary file cleanup, and authoritative `PENDING` modal. Added iOS camera/photo usage descriptions in `Info.plist`.
+  - **Commit 4 (`2b09a31`)**: Completely deleted simulated bid acceptance from repository and optimistic mutations (`+1000`, fake bidder rows, local status flips) from detail and live auction screens. State machine callbacks control authoritative haptics.
+  - **Commit 5 (`133a616`)**: Hardened command correlation (`ack.commandId`, `lotId`, sequence monotonicity), independent `_completedCommandIds` deduplication, and separated public price updates from personal winning/outbid status events.
+  - **Commit 6 (`405dec1`)**: Pure integer fils arithmetic with integer round-half-up (`((amountFils * bps) + 5000) ~/ 10000`) and deleted truncated AED getters (DEC-025). `PioneerFormatters.formatFils` displays exact fils with BiDi isolation. Terms checkbox defaults to unchecked.
+  - **Commit 7 (`cc7d746`)**: Localized all 5 bottom nav tabs via `PioneerLocalizations`, labeled tab 3 "Browse", added `Semantics`, reduced-motion support, and scale-safe layout.
+  - **Commit 8 (`8815742`)**: Added comprehensive tests covering KYC route prefix, provider failure fail-closed, sensitive data log redaction, bidding outbid races, fee rounding boundaries, formatFils BiDi isolation, and bottom nav accessibility/semantics.
+  - **Commit 9**: Synchronized documentation across `api-contracts.md`, `decisions-log.md` (DEC-025, DEC-026), `current-state.md`, `006-mobile-buyer-loop.md`, and `008-identity-and-kyc.md`.
+  - Quality gates: `pnpm --filter @pioneer/contracts test` and `check:generated` passed (12/12), `pnpm --filter @pioneer/api test` passed (18 files / 103 tests), `flutter analyze` passed (0 issues), and `flutter test` passed (68/68 tests).
 
 - On 2026-09-09, aligned personal realtime event contract and proved DEC-019 production runtime imports:
   - Added generated UUID `eventId` server-side to `bid:status-changed` outbox payloads in `BiddingService.writePersonalBidStatusOutbox` (`apps/api/src/bidding/bidding.service.ts`).
