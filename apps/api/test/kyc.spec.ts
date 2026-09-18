@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { DevelopmentFakeKycProvider } from "../src/identity/development-fake-kyc.provider.js";
 import { IdentityService } from "../src/identity/identity.service.js";
@@ -262,6 +262,98 @@ describe("Task 008 — Authenticated, Fail-Closed Identity & KYC Backend", () =>
       );
     } finally {
       process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  it("mounts under /api/v1/me/kyc route prefix", () => {
+    const path = Reflect.getMetadata("path", KycController);
+    expect(path).toBe("/api/v1/me/kyc");
+  });
+
+  it("handles provider failure fail-closed with retryable PROVIDER_UNAVAILABLE", async () => {
+    const failingProvider = {
+      getStatus: async () => {
+        throw new Error("Provider network down");
+      },
+      startSession: async () => {
+        throw new Error("Provider network down");
+      },
+      submit: async () => {
+        throw new Error("Provider network down");
+      },
+    };
+    const { sessionService } = createTestStack();
+    const kycService = new KycService(
+      {
+        query: async () => ({ rowCount: 1, rows: [{ kyc_status: "NOT_STARTED", status: "ACTIVE" }] }),
+      } as never,
+      failingProvider,
+    );
+    const controller = new KycController(kycService, sessionService);
+    const req = createRequest(mockAccount.id);
+
+    await expect(controller.startSession(req)).rejects.toMatchObject({
+      response: {
+        code: "PROVIDER_UNAVAILABLE",
+        retryable: true,
+      },
+      status: 503,
+    });
+
+    await expect(
+      controller.submit(
+        {
+          cardBackRef: "doc-back-002",
+          cardFrontRef: "doc-front-001",
+          dateOfBirth: "1992-05-15",
+          emiratesIdNumber: "784-1992-1234567-1",
+          expiryDate: "2028-05-14",
+          fullNameEn: "Ahmed Al Mansoori",
+          nationality: "United Arab Emirates",
+        },
+        req,
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: "PROVIDER_UNAVAILABLE",
+        retryable: true,
+      },
+      status: 503,
+    });
+  });
+
+  it("redacts sensitive data from logger output", async () => {
+    const { controller, kycService } = createTestStack({ kycStatus: "NOT_STARTED" });
+    const req = createRequest(mockAccount.id);
+
+    const loggedMessages: string[] = [];
+    const logSpy = vi
+      .spyOn((kycService as unknown as { logger: { log: (msg: string) => void } }).logger, "log")
+      .mockImplementation((msg: string) => {
+        loggedMessages.push(msg);
+      });
+
+    await controller.submit(
+      {
+        cardBackRef: "doc-back-secret-002",
+        cardFrontRef: "doc-front-secret-001",
+        dateOfBirth: "1992-05-15",
+        emiratesIdNumber: "784-1992-1234567-1",
+        expiryDate: "2028-05-14",
+        fullNameEn: "Ahmed Al Mansoori",
+        nationality: "United Arab Emirates",
+      },
+      req,
+    );
+
+    logSpy.mockRestore();
+
+    expect(loggedMessages.length).toBeGreaterThan(0);
+    for (const msg of loggedMessages) {
+      expect(msg).not.toContain("784-1992-1234567-1");
+      expect(msg).not.toContain("Ahmed Al Mansoori");
+      expect(msg).not.toContain("doc-front-secret-001");
+      expect(msg).not.toContain("doc-back-secret-002");
     }
   });
 });

@@ -406,6 +406,12 @@ class BidStateMachine extends ChangeNotifier {
       return;
     }
 
+    // A late acknowledgement must not overwrite a newer personal OUTBID, closed, gated, or resynced state
+    if (_state is BidOutbid || _state is BidClosed || _state is BidGated || _state is BidResyncing) {
+      _completedCommandIds.add(ack.commandId);
+      return;
+    }
+
     if (ack.status == CommandAckStatus.ACCEPTED) {
       final res = ack.result;
       if (res == null) {

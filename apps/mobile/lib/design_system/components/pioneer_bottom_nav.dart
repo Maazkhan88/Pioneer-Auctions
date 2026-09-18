@@ -146,37 +146,39 @@ class PioneerBottomNav extends StatelessWidget {
                     duration: animDuration,
                     curve: Curves.easeOutCubic,
                     width: isSelected ? 50 : 36,
-                    height: 30,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? PioneerColors.brandPurple.withValues(alpha: 0.14)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
                       child: Icon(
                         isSelected ? activeIcon : icon,
-                        size: 22,
+                        size: 20,
                         color: isSelected ? activeColor : inactiveColor,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  AnimatedDefaultTextStyle(
-                    duration: textDuration,
-                    curve: Curves.easeOutCubic,
-                    style: PioneerTypography.navLabel.copyWith(
-                      color: isSelected ? activeColor : inactiveColor,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 10.5,
-                      letterSpacing: isSelected ? -0.1 : 0.0,
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 1),
+                  Flexible(
+                    child: AnimatedDefaultTextStyle(
+                      duration: textDuration,
+                      curve: Curves.easeOutCubic,
+                      style: PioneerTypography.navLabel.copyWith(
+                        color: isSelected ? activeColor : inactiveColor,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                        fontSize: 10.5,
+                        letterSpacing: isSelected ? -0.1 : 0.0,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ),
