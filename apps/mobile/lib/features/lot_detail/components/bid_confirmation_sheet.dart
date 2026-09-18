@@ -63,7 +63,7 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
   @override
   void initState() {
     super.initState();
-    _termsAccepted = SessionService.instance.hasAcceptedTerms(effectiveTermsVersionId);
+    _termsAccepted = false;
     widget.stateMachine.setTermsAccepted(_termsAccepted);
     widget.stateMachine.addListener(_onStateChanged);
   }
@@ -76,7 +76,7 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
         : SessionService.instance.termsVersionId;
     if (oldVersion != effectiveTermsVersionId) {
       setState(() {
-        _termsAccepted = SessionService.instance.hasAcceptedTerms(effectiveTermsVersionId);
+        _termsAccepted = false;
         widget.stateMachine.setTermsAccepted(_termsAccepted);
       });
     }
@@ -162,25 +162,25 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
               children: [
                 _buildFeeRow(
                   label: l10n.currentBid,
-                  amountAed: breakdown.hammerPriceAed,
+                  amountFils: breakdown.hammerPriceFils,
                   isBold: false,
                 ),
                 const SizedBox(height: 8),
                 _buildFeeRow(
                   label: l10n.buyersPremium,
-                  amountAed: breakdown.buyerPremiumAed,
+                  amountFils: breakdown.buyerPremiumFils,
                   isBold: false,
                 ),
                 const SizedBox(height: 8),
                 _buildFeeRow(
                   label: l10n.vat,
-                  amountAed: breakdown.vatAed,
+                  amountFils: breakdown.vatFils,
                   isBold: false,
                 ),
                 const Divider(height: 20, color: PioneerColors.borderCard),
                 _buildFeeRow(
                   label: l10n.totalAmount,
-                  amountAed: breakdown.totalAed,
+                  amountFils: breakdown.totalFils,
                   isBold: true,
                   valueColor: PioneerColors.brandPurpleDeep,
                 ),
@@ -324,7 +324,7 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
                         ? l10n.retryBid
                         : state is BidAccepted
                             ? 'Done'
-                            : '${l10n.placeBid} (${PioneerFormatters.currency(breakdown.hammerPriceAed)})',
+                            : '${l10n.placeBid} (${PioneerFormatters.formatFils(breakdown.hammerPriceFils)})',
             isLoading: state is BidSubmitting,
             onPressed: state is BidGated && (state.reason == BidGateReason.kycRequired || state.reason == BidGateReason.kycPending)
                 ? () {
@@ -346,11 +346,11 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
 
   Widget _buildFeeRow({
     required String label,
-    required int amountAed,
+    required int amountFils,
     required bool isBold,
     Color? valueColor,
   }) {
-    final formatted = PioneerFormatters.currency(amountAed);
+    final formatted = PioneerFormatters.formatFils(amountFils);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

@@ -71,10 +71,10 @@ class FeeBreakdown {
     int hammerPriceFils, [
     FeeSchedule schedule = FeeSchedule.standard,
   ]) {
-    // Integer basis points: (fils * bps) ~/ 10000
-    final calculatedPremium = (hammerPriceFils * schedule.buyerPremiumBps) ~/ 10000;
-    final buyerPremiumFils = max(calculatedPremium, schedule.minimumPremiumFils);
-    final vatFils = (buyerPremiumFils * schedule.vatBps) ~/ 10000;
+    // Integer basis points with round-half-up: ((fils * bps) + 5000) ~/ 10000
+    final calculatedPremium = ((hammerPriceFils * schedule.buyerPremiumBps) + 5000) ~/ 10000;
+    final buyerPremiumFils = max(schedule.minimumPremiumFils, calculatedPremium);
+    final vatFils = ((buyerPremiumFils * schedule.vatBps) + 5000) ~/ 10000;
     final totalFils = hammerPriceFils + buyerPremiumFils + vatFils;
 
     return FeeBreakdown(
@@ -85,12 +85,6 @@ class FeeBreakdown {
       schedule: schedule,
     );
   }
-
-  // Integer AED getters using integer division
-  int get hammerPriceAed => hammerPriceFils ~/ 100;
-  int get buyerPremiumAed => buyerPremiumFils ~/ 100;
-  int get vatAed => vatFils ~/ 100;
-  int get totalAed => totalFils ~/ 100;
 }
 
 /// Immutable snapshot of a bid command in-flight or pending retry.

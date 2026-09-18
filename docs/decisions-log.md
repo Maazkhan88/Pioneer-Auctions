@@ -211,6 +211,19 @@ Record durable product and architecture decisions here. New entries are append-o
   - **REST Authentication & Public Lot Decoding**: Standardized `x-pioneer-test-account-id` in lowercase with valid UUIDs, added `Idempotency-Key` header, environment configuration via `--dart-define`, and verified decoding for `GET /api/v1/lots` (`PublicLotsResponse`) and `GET /api/v1/lots/:lotId` (`PublicLotCard`).
   - **Platform Scaffolding & Permissions**: Added `<uses-permission android:name="android.permission.INTERNET"/>` in `apps/mobile/android/app/src/main/AndroidManifest.xml`, and scaffolded canonical iOS project structure under `apps/mobile/ios/` (`com.pioneer.pioneerMobile`). Disabled Kotlin incremental compilation in `gradle.properties` (`kotlin.incremental=false`) to eliminate cross-drive Windows file root crashes during AGP builds.
   - **BiDi Safety & Dark Theme**: Wrapped all monetary amounts, countdowns, and identifiers with Unicode LTR isolates (`\u202A...\u202C`) to prevent numeral reversal in Arabic RTL contexts. Added complete dark theme tokens and `PioneerTheme.darkTheme`.
-  - **Task Lifecycle Status**: Explicitly retained Task 006 status as **In Progress** because native iOS build and UI testing require a macOS/Xcode runner.
+  - Task Lifecycle Status: Explicitly retained Task 006 status as **In Progress** because native iOS build and UI testing require a macOS/Xcode runner.
 - Why: Guarantees contract parity across Web and Flutter, eliminates risk of phantom bids or double-bidding under network latency, and ensures high resilience under mobile connectivity interruptions.
 
+## DEC-025: Integer Fils Preservation and Round-Half-Up UAE Auction Fee Arithmetic (Remediation DEC-020)
+
+- Date: 2026-09-18
+- Status: Accepted
+- Context: In the review of `bba6e1f..01ec557`, financial calculations in mobile bidding UI were found to use integer floor division (`~/ 100`) to convert intermediate fils to AED, discarding fractional AED (fils). For example, a hammer price of AED 85,000 (8,500,000 fils) with 5% buyer's premium (425,000 fils) and 5% VAT (21,250 fils) resulted in displaying AED 212 VAT and AED 89,462 total instead of the exact AED 212.50 VAT and AED 89,462.50 total.
+- Decision:
+  - **Exact Fils Representation**: All monetary values throughout mobile state, calculations, contracts, and displays remain in pure integer fils (1 AED = 100 fils). Integer-truncating AED getters (`hammerPriceAed`, `buyerPremiumAed`, `vatAed`, `totalAed`) using `~/ 100` are deleted.
+  - **Round-Half-Up Basis Point Arithmetic**: Intermediate fee calculations involving basis points (`bps`) use integer round-half-up:
+    `((amountFils * bps) + 5000) ~/ 10000`.
+    This resolves fractional-fil intermediate calculations deterministically without floating-point drift. (Note: This is an internal platform rounding standard and is not asserted as a UAE statutory rule without legal/accounting confirmation).
+  - **Fils-Preserving Currency Formatter**: Implemented `PioneerFormatters.formatFils(int amountFils, {String symbol = 'AED', bool isolate = true})`. When `amountFils % 100 == 0`, displays without decimals (`AED 85,000`). When non-zero fils exist, displays with exactly 2 decimal places (`AED 89,462.50`). Preserves Unicode LTR isolates (`\u2066...\u2069`) for BiDi Arabic context safety.
+  - **Authoritative Terms Gate**: Terms checkbox in `BidConfirmationSheet` defaults to un-checked (`_termsAccepted = false`), requiring explicit user confirmation per bid attempt.
+- Why: Eliminates financial inaccuracies, ensures the buyer is billed and presented with exact fils amounts down to the exact 0.01 AED, avoids floating-point precision hazards, and guarantees legal and accounting precision.

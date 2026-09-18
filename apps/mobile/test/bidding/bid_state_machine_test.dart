@@ -18,27 +18,27 @@ void main() {
       expect(machine.state, isA<BidIdle>());
     });
 
-    test('FeeBreakdown calculates 5% premium (min 500 AED) and 5% VAT', () {
+    test('FeeBreakdown calculates 5% premium (min 500 AED) and 5% VAT preserving exact fils', () {
       // 85,000 AED = 8,500,000 fils
-      // 5% premium = 4,250,000 fils → 425,000 fils (bps math: 8500000*500~/10000 = 425000)
-      // Wait: 8500000 * 500 ~/ 10000 = 4250000000 ~/ 10000 = 425000 fils = 4250 AED
-      // 5% VAT on premium: 425000 * 500 ~/ 10000 = 21250 fils = 212 AED (~/ 100)
-      // Total: 8500000 + 425000 + 21250 = 8946250 fils = 89462 AED (~/ 100)
+      // 5% premium = 425,000 fils = 4,250.00 AED
+      // 5% VAT on premium: ((425000 * 500) + 5000) ~/ 10000 = 21,250 fils = 212.50 AED
+      // Total: 8500000 + 425000 + 21250 = 8,946,250 fils = 89,462.50 AED
       final breakdown = FeeBreakdown.calculate(8500000);
-      expect(breakdown.hammerPriceAed, 85000);
-      expect(breakdown.buyerPremiumAed, 4250);
-      expect(breakdown.vatAed, 212); // 21250 fils ~/ 100
-      expect(breakdown.totalAed, 89462); // 8946250 fils ~/ 100
+      expect(breakdown.hammerPriceFils, 8500000);
+      expect(breakdown.buyerPremiumFils, 425000);
+      expect(breakdown.vatFils, 21250); // Exact 212.50 AED
+      expect(breakdown.totalFils, 8946250); // Exact 89,462.50 AED
 
-      // Low amount testing 500 AED minimum fee
+      // Low amount testing 500 AED (50,000 fils) minimum fee
       // 2,000 AED = 200,000 fils
       // 5% is 10,000 fils (100 AED), so minimum 50,000 fils (500 AED) applies
-      // VAT: 50000 * 500 ~/ 10000 = 2500 fils = 25 AED
-      // Total: 200000 + 50000 + 2500 = 252500 fils = 2525 AED
+      // VAT: ((50000 * 500) + 5000) ~/ 10000 = 2500 fils = 25.00 AED
+      // Total: 200000 + 50000 + 2500 = 252500 fils = 2525.00 AED
       final lowBreakdown = FeeBreakdown.calculate(200000);
-      expect(lowBreakdown.buyerPremiumAed, 500);
-      expect(lowBreakdown.vatAed, 25);
-      expect(lowBreakdown.totalAed, 2525);
+      expect(lowBreakdown.hammerPriceFils, 200000);
+      expect(lowBreakdown.buyerPremiumFils, 50000);
+      expect(lowBreakdown.vatFils, 2500);
+      expect(lowBreakdown.totalFils, 252500);
     });
 
     test('startConfirming without terms gate acceptance transitions to BidGated on submit', () {
