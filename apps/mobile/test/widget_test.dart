@@ -15,9 +15,9 @@ void main() {
     // Verify 5 bottom navigation tabs exist
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Auctions'), findsWidgets);
-    expect(find.text('Watchlist'), findsWidgets);
+    expect(find.text('Browse'), findsWidgets);
     expect(find.text('My Bids'), findsWidgets);
-    expect(find.text('Profile'), findsWidgets);
+    expect(find.text('Account'), findsWidgets);
 
     // Verify Home Screen Content
     expect(find.text('Live Now'), findsOneWidget);
