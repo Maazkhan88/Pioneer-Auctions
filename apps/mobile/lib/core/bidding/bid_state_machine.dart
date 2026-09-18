@@ -305,6 +305,18 @@ class BidStateMachine extends ChangeNotifier {
   PendingBidCommand? _activeCommand;
   PendingBidCommand? get activeCommand => _activeCommand;
 
+  final Set<String> _completedCommandIds = {};
+  Set<String> get completedCommandIds => Set.unmodifiable(_completedCommandIds);
+
+  int _lastAppliedSequence = 0;
+  int get lastAppliedSequence => _lastAppliedSequence;
+
+  int _publicCurrentBidFils = 0;
+  int get publicCurrentBidFils => _publicCurrentBidFils;
+
+  int _publicNextMinimumBidFils = 0;
+  int get publicNextMinimumBidFils => _publicNextMinimumBidFils;
+
   VoidCallback? onAuthoritativeSuccess;
   VoidCallback? onAuthoritativeFailure;
 
@@ -322,6 +334,7 @@ class BidStateMachine extends ChangeNotifier {
     String termsVersionId = '',
     bool termsAccepted = false,
   }) {
+    _lastAppliedSequence = max(_lastAppliedSequence, expectedSequence);
     final command = PendingBidCommand(
       commandId: UuidService.generate(),
       lotId: lotId,
@@ -383,27 +396,19 @@ class BidStateMachine extends ChangeNotifier {
     PendingBidCommand? command,
     int? amountFils,
   }) {
-    final cmd = command ??
-        _activeCommand ??
-        PendingBidCommand(
-          commandId: ack.commandId,
-          lotId: ack.result?.lotId ?? '',
-          amountFils: amountFils ?? ack.result?.currentBid.amountFils ?? 0,
-          expectedSequence: 0,
-          termsVersionId: '',
-          sentAt: ack.serverTime,
-        );
+    // Deduplicate: If already processed for this commandId, ignore duplicate
+    if (_completedCommandIds.contains(ack.commandId)) {
+      return;
+    }
+
+    final cmd = command ?? _activeCommand;
+    // Reject or ignore acknowledgements without an active pending command
+    if (cmd == null) {
+      return;
+    }
 
     // Validate commandId matches active command; ignore stale or mismatched acks
     if (ack.commandId != cmd.commandId) {
-      return;
-    }
-
-    // Deduplicate: If already accepted or rejected for this commandId, ignore
-    if (_state is BidAccepted && (_state as BidAccepted).commandId == ack.commandId) {
-      return;
-    }
-    if (_state is BidRejected && (_state as BidRejected).commandId == ack.commandId) {
       return;
     }
 
@@ -415,9 +420,25 @@ class BidStateMachine extends ChangeNotifier {
           command: cmd,
           message: 'Server accepted bid but omitted authoritative result details.',
         );
+        _triggerHaptic(HapticFeedback.vibrate);
         notifyListeners();
         return;
       }
+
+      // Validate that ack.result.lotId == activeCommand.lotId (when specified)
+      if (cmd.lotId.isNotEmpty && res.lotId.isNotEmpty && res.lotId != cmd.lotId) {
+        return;
+      }
+
+      // Validate sequence ordering is respected (ack.result.sequence >= lastAppliedSequence)
+      if (res.sequence < _lastAppliedSequence) {
+        return;
+      }
+
+      _completedCommandIds.add(ack.commandId);
+      _lastAppliedSequence = max(_lastAppliedSequence, res.sequence);
+      _publicCurrentBidFils = res.currentBid.amountFils;
+      _publicNextMinimumBidFils = res.nextMinimumBid.amountFils;
 
       _state = BidAccepted(
         commandId: ack.commandId,
@@ -433,6 +454,7 @@ class BidStateMachine extends ChangeNotifier {
       notifyListeners();
       onAuthoritativeSuccess?.call();
     } else {
+      _completedCommandIds.add(ack.commandId);
       final code = ack.error?.code.name ?? 'REJECTED';
       final message = ack.error?.message ?? 'Bid was rejected by server.';
       final retryable = ack.error?.retryable ?? false;
@@ -546,25 +568,20 @@ class BidStateMachine extends ChangeNotifier {
   }
 
   /// External event: incoming bid:accepted from another participant.
+  /// Updates public price only. Never assumes the local user is winning or outbid.
   void handleExternalBidAccepted(BidAcceptedEvent event) {
-    if (_state is BidAccepted) {
-      final accepted = _state as BidAccepted;
-      if (event.amount.amountFils > accepted.amountFils) {
-        _state = BidOutbid(
-          currentBidFils: event.currentBid.amountFils,
-          nextMinimumBidFils: event.nextMinimumBid.amountFils,
-          message: 'You have been outbid.',
-        );
-        notifyListeners();
-      }
-    }
+    _lastAppliedSequence = max(_lastAppliedSequence, event.sequence);
+    _publicCurrentBidFils = event.currentBid.amountFils;
+    _publicNextMinimumBidFils = event.nextMinimumBid.amountFils;
+    notifyListeners();
   }
 
   /// External event: personal bid:status-changed.
   void handleMyBidStatusChanged(MyBidStatusChangedEvent event) {
+    _lastAppliedSequence = max(_lastAppliedSequence, event.lotSequence);
     if (event.status == 'OUTBID') {
       _state = BidOutbid(
-        currentBidFils: event.currentBid?.amountFils ?? 0,
+        currentBidFils: event.currentBid?.amountFils ?? _publicCurrentBidFils,
         nextMinimumBidFils: event.nextMinimumBid.amountFils,
         message: 'You have been outbid.',
       );

@@ -208,5 +208,174 @@ void main() {
       machine.handleMyBidStatusChanged(outbidEvent);
       expect(machine.state, isA<BidOutbid>());
     });
+
+    test('ignores CommandAck without active command or with mismatched commandId', () {
+      final ack = CommandAck(
+        commandId: 'random-command-id',
+        contractVersion: 1,
+        correlationId: 'corr-1',
+        serverTime: DateTime.now().toUtc(),
+        status: CommandAckStatus.ACCEPTED,
+        result: Result(
+          closesAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+          currentBid: ResultCurrentBid(amountFils: 8500000, currency: Currency.AED),
+          extended: false,
+          lotId: validLotId,
+          myBidStatus: MyBidStatus.WINNING,
+          nextMinimumBid: ResultNextMinimumBid(amountFils: 8700000, currency: Currency.AED),
+          reserveStatus: ReserveStatus.MET,
+          sequence: 42,
+        ),
+      );
+
+      // Without active command: ignored
+      machine.handleCommandAck(ack);
+      expect(machine.state, isA<BidIdle>());
+
+      // With mismatched commandId: ignored
+      machine.startConfirming(lotId: validLotId, amountFils: 8500000, expectedSequence: 41, termsAccepted: true);
+      machine.startSubmitting();
+      machine.handleCommandAck(ack);
+      expect(machine.state, isA<BidSubmitting>());
+    });
+
+    test('ignores CommandAck with mismatched lotId or stale sequence', () {
+      machine.startConfirming(lotId: validLotId, amountFils: 8500000, expectedSequence: 50, termsAccepted: true);
+      final commandId = machine.startSubmitting()!;
+
+      // Stale sequence (40 < 50): ignored
+      final staleAck = CommandAck(
+        commandId: commandId,
+        contractVersion: 1,
+        correlationId: 'corr-stale',
+        serverTime: DateTime.now().toUtc(),
+        status: CommandAckStatus.ACCEPTED,
+        result: Result(
+          closesAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+          currentBid: ResultCurrentBid(amountFils: 8500000, currency: Currency.AED),
+          extended: false,
+          lotId: validLotId,
+          myBidStatus: MyBidStatus.WINNING,
+          nextMinimumBid: ResultNextMinimumBid(amountFils: 8700000, currency: Currency.AED),
+          reserveStatus: ReserveStatus.MET,
+          sequence: 40,
+        ),
+      );
+      machine.handleCommandAck(staleAck);
+      expect(machine.state, isA<BidSubmitting>());
+
+      // Mismatched lotId: ignored
+      final wrongLotAck = CommandAck(
+        commandId: commandId,
+        contractVersion: 1,
+        correlationId: 'corr-wrong-lot',
+        serverTime: DateTime.now().toUtc(),
+        status: CommandAckStatus.ACCEPTED,
+        result: Result(
+          closesAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+          currentBid: ResultCurrentBid(amountFils: 8500000, currency: Currency.AED),
+          extended: false,
+          lotId: 'different-lot-id',
+          myBidStatus: MyBidStatus.WINNING,
+          nextMinimumBid: ResultNextMinimumBid(amountFils: 8700000, currency: Currency.AED),
+          reserveStatus: ReserveStatus.MET,
+          sequence: 51,
+        ),
+      );
+      machine.handleCommandAck(wrongLotAck);
+      expect(machine.state, isA<BidSubmitting>());
+    });
+
+    test('deduplicates completedCommandIds independently of current state', () {
+      machine.startConfirming(lotId: validLotId, amountFils: 8500000, expectedSequence: 41, termsAccepted: true);
+      final commandId = machine.startSubmitting()!;
+
+      final ack = CommandAck(
+        commandId: commandId,
+        contractVersion: 1,
+        correlationId: 'corr-dedup',
+        serverTime: DateTime.now().toUtc(),
+        status: CommandAckStatus.ACCEPTED,
+        result: Result(
+          closesAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+          currentBid: ResultCurrentBid(amountFils: 8500000, currency: Currency.AED),
+          extended: false,
+          lotId: validLotId,
+          myBidStatus: MyBidStatus.WINNING,
+          nextMinimumBid: ResultNextMinimumBid(amountFils: 8700000, currency: Currency.AED),
+          reserveStatus: ReserveStatus.MET,
+          sequence: 42,
+        ),
+      );
+
+      machine.handleCommandAck(ack);
+      expect(machine.state, isA<BidAccepted>());
+      expect(machine.completedCommandIds.contains(commandId), isTrue);
+
+      // Transition away from BidAccepted (e.g. personal outbid event)
+      final outbidEvent = MyBidStatusChangedEvent(
+        closesAt: '2026-07-14T17:05:00.000Z',
+        currentBid: Money(amountFils: 8700000, currency: Currency.AED),
+        lotId: validLotId,
+        lotSequence: 43,
+        nextMinimumBid: Money(amountFils: 8900000, currency: Currency.AED),
+        status: 'OUTBID',
+      );
+      machine.handleMyBidStatusChanged(outbidEvent);
+      expect(machine.state, isA<BidOutbid>());
+
+      // Duplicate ack arrives: MUST be ignored because commandId is in completedCommandIds!
+      machine.handleCommandAck(ack);
+      expect(machine.state, isA<BidOutbid>());
+    });
+
+    test('handleExternalBidAccepted updates public price only and does NOT transition to BidOutbid', () {
+      machine.startConfirming(lotId: validLotId, amountFils: 8500000, expectedSequence: 41, termsAccepted: true);
+      final commandId = machine.startSubmitting()!;
+
+      final ack = CommandAck(
+        commandId: commandId,
+        contractVersion: 1,
+        correlationId: 'corr-public',
+        serverTime: DateTime.now().toUtc(),
+        status: CommandAckStatus.ACCEPTED,
+        result: Result(
+          closesAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+          currentBid: ResultCurrentBid(amountFils: 8500000, currency: Currency.AED),
+          extended: false,
+          lotId: validLotId,
+          myBidStatus: MyBidStatus.WINNING,
+          nextMinimumBid: ResultNextMinimumBid(amountFils: 8700000, currency: Currency.AED),
+          reserveStatus: ReserveStatus.MET,
+          sequence: 42,
+        ),
+      );
+      machine.handleCommandAck(ack);
+      expect(machine.state, isA<BidAccepted>());
+
+      // Incoming public bid:accepted event with higher amount from broadcast
+      final publicEvent = BidAcceptedEvent(
+        amount: Money(amountFils: 8700000, currency: Currency.AED),
+        auctionId: 'auction-1',
+        bidKind: 'MANUAL',
+        currentBid: Money(amountFils: 8700000, currency: Currency.AED),
+        extended: false,
+        lotId: validLotId,
+        nextMinimumBid: Money(amountFils: 8900000, currency: Currency.AED),
+        reserveStatus: 'MET',
+        sequence: 43,
+      );
+
+      machine.handleExternalBidAccepted(publicEvent);
+
+      // Public prices are updated
+      expect(machine.publicCurrentBidFils, 8700000);
+      expect(machine.publicNextMinimumBidFils, 8900000);
+      expect(machine.lastAppliedSequence, 43);
+
+      // Local state is NOT outbid because public events do not determine personal status!
+      expect(machine.state, isA<BidAccepted>());
+      expect(machine.state, isNot(isA<BidOutbid>()));
+    });
   });
 }
