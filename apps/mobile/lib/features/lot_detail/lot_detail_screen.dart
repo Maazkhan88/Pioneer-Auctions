@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pioneer_contracts/pioneer_contracts.dart' hide State;
 import '../../core/bidding/bid_state_machine.dart';
@@ -534,13 +533,17 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
 
         if (result is ApiSuccess<CommandAck>) {
           _bidStateMachine.handleCommandAck(result.data, amountFils: lot.nextBid * 100);
-          HapticFeedback.heavyImpact();
-          if (mounted) {
+          final ackResult = result.data.result;
+          if (mounted && ackResult != null) {
             setState(() {
               _lot = _lot?.copyWith(
-                currentBid: lot.nextBid,
-                nextBid: lot.nextBid + 1000,
-                status: LotStatus.winning,
+                currentBid: ackResult.currentBid.amountFils ~/ 100,
+                nextBid: ackResult.nextMinimumBid.amountFils ~/ 100,
+                status: ackResult.myBidStatus == MyBidStatus.WINNING
+                    ? LotStatus.winning
+                    : (ackResult.myBidStatus == MyBidStatus.OUTBID
+                        ? LotStatus.outbid
+                        : _lot?.status),
               );
             });
           }
@@ -552,14 +555,12 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
             retryable: result.retryable,
             latest: result.latest,
           );
-          HapticFeedback.vibrate();
         } else if (result is ApiUnknown<CommandAck>) {
           _bidStateMachine.handleUnknown(
             amountFils: lot.nextBid * 100,
             commandId: commandId,
             message: result.message,
           );
-          HapticFeedback.vibrate();
         }
       },
     );

@@ -97,8 +97,9 @@ class PioneerRepository {
     }
   }
 
-  /// Places a bid via live REST API, with fallback simulation in Demo/Offline mode.
+  /// Places a bid via live REST API.
   /// Returns typed `ApiResult<CommandAck>`, preserving `commandId` idempotency.
+  /// Network failures or timeouts remain ApiUnknown and are never synthesized.
   Future<ApiResult<CommandAck>> placeBid({
     required String lotId,
     required int amountFils,
@@ -106,39 +107,12 @@ class PioneerRepository {
     int expectedSequence = 0,
     String? termsVersionId,
   }) async {
-    if (_isOnline) {
-      final result = await _apiClient.placeBid(
-        lotId: lotId,
-        amountFils: amountFils,
-        commandId: commandId,
-        expectedSequence: expectedSequence,
-        termsVersionId: termsVersionId,
-      );
-      if (result is! ApiUnknown) {
-        return result;
-      }
-      // If backend unreachable on real device, fall through to Demo Mode fallback
-    }
-
-    // Demo Mode simulation fallback
-    await Future.delayed(const Duration(milliseconds: 600));
-    final ack = CommandAck(
+    return _apiClient.placeBid(
+      lotId: lotId,
+      amountFils: amountFils,
       commandId: commandId,
-      contractVersion: 1,
-      correlationId: 'cor-demo-${DateTime.now().millisecondsSinceEpoch}',
-      serverTime: DateTime.now().toUtc(),
-      status: CommandAckStatus.ACCEPTED,
-      result: Result(
-        closesAt: DateTime.now().toUtc().add(const Duration(hours: 2)),
-        currentBid: ResultCurrentBid(amountFils: amountFils, currency: Currency.AED),
-        extended: false,
-        lotId: lotId,
-        myBidStatus: MyBidStatus.WINNING,
-        nextMinimumBid: ResultNextMinimumBid(amountFils: amountFils + 100000, currency: Currency.AED),
-        reserveStatus: ReserveStatus.MET,
-        sequence: (expectedSequence > 0 ? expectedSequence : 1) + 1,
-      ),
+      expectedSequence: expectedSequence,
+      termsVersionId: termsVersionId,
     );
-    return ApiSuccess(ack);
   }
 }

@@ -202,24 +202,15 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
 
       if (outcome is SocketCommandSuccess<CommandAck>) {
         _bidStateMachine.handleCommandAck(outcome.data, amountFils: _nextBid * 100);
-        HapticFeedback.heavyImpact();
         if (mounted) {
+          final ackResult = outcome.data.result;
           setState(() {
             _isSubmitting = false;
-            _isUserWinning = outcome.data.result?.myBidStatus == MyBidStatus.WINNING;
-            _currentBid = _nextBid;
-            _nextBid = _nextBid + 1000;
-            _bids.insert(
-              0,
-              BidItem(
-                id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
-                bidderNumber: 'Bidder #2456 (You)',
-                isCurrentUser: true,
-                amount: _currentBid,
-                timeAgo: 'Just now',
-                lotId: widget.lotId,
-              ),
-            );
+            if (ackResult != null) {
+              _isUserWinning = ackResult.myBidStatus == MyBidStatus.WINNING;
+              _currentBid = ackResult.currentBid.amountFils ~/ 100;
+              _nextBid = ackResult.nextMinimumBid.amountFils ~/ 100;
+            }
           });
         }
       } else if (outcome is SocketCommandFailure<CommandAck>) {
@@ -230,7 +221,6 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
           retryable: outcome.retryable,
           latest: outcome.latest,
         );
-        HapticFeedback.vibrate();
         if (mounted) {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -246,7 +236,6 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
           commandId: outcome.commandId,
           message: outcome.message,
         );
-        HapticFeedback.vibrate();
         if (mounted) {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -269,24 +258,15 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
 
       if (result is ApiSuccess<CommandAck>) {
         _bidStateMachine.handleCommandAck(result.data, amountFils: _nextBid * 100);
-        HapticFeedback.heavyImpact();
         if (mounted) {
+          final ackResult = result.data.result;
           setState(() {
             _isSubmitting = false;
-            _isUserWinning = result.data.result?.myBidStatus == MyBidStatus.WINNING;
-            _currentBid = _nextBid;
-            _nextBid = _nextBid + 1000;
-            _bids.insert(
-              0,
-              BidItem(
-                id: 'bid-${DateTime.now().millisecondsSinceEpoch}',
-                bidderNumber: 'Bidder #2456 (You)',
-                isCurrentUser: true,
-                amount: _currentBid,
-                timeAgo: 'Just now',
-                lotId: widget.lotId,
-              ),
-            );
+            if (ackResult != null) {
+              _isUserWinning = ackResult.myBidStatus == MyBidStatus.WINNING;
+              _currentBid = ackResult.currentBid.amountFils ~/ 100;
+              _nextBid = ackResult.nextMinimumBid.amountFils ~/ 100;
+            }
           });
         }
       } else if (result is ApiFailure<CommandAck>) {
@@ -297,7 +277,6 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
           retryable: result.retryable,
           latest: result.latest,
         );
-        HapticFeedback.vibrate();
         if (mounted) {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -313,7 +292,6 @@ class _LiveAuctionRoomScreenState extends State<LiveAuctionRoomScreen> {
           commandId: commandId,
           message: result.message,
         );
-        HapticFeedback.vibrate();
         if (mounted) {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(

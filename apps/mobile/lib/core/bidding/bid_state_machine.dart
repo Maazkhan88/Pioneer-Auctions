@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:pioneer_contracts/pioneer_contracts.dart';
 import '../network/socket_events.dart';
 import '../utils/uuid_service.dart';
@@ -428,6 +429,7 @@ class BidStateMachine extends ChangeNotifier {
         myBidStatus: myBidStatusValues.reverse[res.myBidStatus] ?? 'WINNING',
         nextMinimumBidFils: res.nextMinimumBid.amountFils,
       );
+      _triggerHaptic(HapticFeedback.heavyImpact);
       notifyListeners();
       onAuthoritativeSuccess?.call();
     } else {
@@ -505,6 +507,7 @@ class BidStateMachine extends ChangeNotifier {
         );
       }
     }
+    _triggerHaptic(HapticFeedback.vibrate);
     notifyListeners();
     onAuthoritativeFailure?.call();
   }
@@ -532,7 +535,14 @@ class BidStateMachine extends ChangeNotifier {
       command: cmd,
       message: message,
     );
+    _triggerHaptic(HapticFeedback.vibrate);
     notifyListeners();
+  }
+
+  static void _triggerHaptic(Future<void> Function() fn) {
+    try {
+      fn().catchError((_) {});
+    } catch (_) {}
   }
 
   /// External event: incoming bid:accepted from another participant.

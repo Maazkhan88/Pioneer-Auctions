@@ -4,6 +4,7 @@ import 'package:pioneer_mobile/core/bidding/bid_state_machine.dart';
 import 'package:pioneer_mobile/core/network/socket_events.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const validLotId = '11111111-1111-4111-8111-111111111111';
 
   group('BidStateMachine', () {

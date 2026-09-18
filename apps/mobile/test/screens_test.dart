@@ -120,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Ahmed Al Mansoori'), findsOneWidget);
-    expect(find.text('Verified Account'), findsOneWidget);
+    expect(find.text('Identity Unverified'), findsOneWidget);
     expect(find.text('Active Bids'), findsOneWidget);
     expect(find.text('Recent Activity'), findsOneWidget);
   });
