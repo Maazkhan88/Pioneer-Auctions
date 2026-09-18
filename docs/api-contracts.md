@@ -140,6 +140,7 @@ This is the MVP surface. Additive response fields are allowed within v1; removal
 | PATCH  | `/me/preferences`         | Locale, timezone, theme, numeral and notifications preferences |
 | GET    | `/me/kyc`                 | KYC state and next permitted action                            |
 | POST   | `/me/kyc/sessions`        | Start fallback KYC provider session                            |
+| POST   | `/me/kyc/submit`          | Submit Emirates ID KYC verification                           |
 
 ### Catalog and auctions
 

@@ -48,5 +48,21 @@
       "closesAt": "2026-07-15T08:04:00.000Z",
       "extended": true
     }
+  },
+  "kycStatusResponse": {
+    "status": "UNVERIFIED"
+  },
+  "submitKycRequest": {
+    "emiratesIdNumber": "784-1992-1234567-1",
+    "fullNameEn": "Ahmed Al Mansoori",
+    "fullNameAr": "أحمد المنصوري",
+    "nationality": "United Arab Emirates",
+    "dateOfBirth": "1992-05-15",
+    "expiryDate": "2028-05-14",
+    "cardFrontRef": "doc-front-001",
+    "cardBackRef": "doc-back-002"
+  },
+  "submitKycResponse": {
+    "status": "PENDING"
   }
 }

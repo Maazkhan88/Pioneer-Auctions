@@ -21,6 +21,21 @@ void main() {
     CommandAckStatus.ACCEPTED,
     'CommandAck.status',
   );
+  expectEqual(
+    contracts.submitKycResponse.status,
+    KycStatusResponseStatus.PENDING,
+    'SubmitKycResponse.status',
+  );
+  expectEqual(
+    contracts.kycStatusResponse.status,
+    KycStatusResponseStatus.UNVERIFIED,
+    'KycStatusResponse.status',
+  );
+  expectEqual(
+    contracts.submitKycRequest.emiratesIdNumber,
+    '784-1992-1234567-1',
+    'SubmitKycRequest.emiratesIdNumber',
+  );
 
   final roundTrip = PioneerContracts.fromRawJson(contracts.toRawJson());
   expectEqual(roundTrip.money.amountFils, 5200000, 'round-trip amountFils');

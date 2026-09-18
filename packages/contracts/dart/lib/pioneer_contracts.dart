@@ -2,15 +2,21 @@ import 'dart:convert';
 
 class PioneerContracts {
     CommandAck commandAck;
+    KycStatusResponse kycStatusResponse;
     LotSnapshot lotSnapshot;
     Money money;
     PlaceBidCommand placeBidCommand;
+    SubmitKycRequest submitKycRequest;
+    SubmitKycResponse submitKycResponse;
 
     PioneerContracts({
         required this.commandAck,
+        required this.kycStatusResponse,
         required this.lotSnapshot,
         required this.money,
         required this.placeBidCommand,
+        required this.submitKycRequest,
+        required this.submitKycResponse,
     });
 
     factory PioneerContracts.fromRawJson(String str) => PioneerContracts.fromJson(json.decode(str));
@@ -19,16 +25,22 @@ class PioneerContracts {
 
     factory PioneerContracts.fromJson(Map<String, dynamic> json) => PioneerContracts(
         commandAck: CommandAck.fromJson(json["commandAck"]),
+        kycStatusResponse: KycStatusResponse.fromJson(json["kycStatusResponse"]),
         lotSnapshot: LotSnapshot.fromJson(json["lotSnapshot"]),
         money: Money.fromJson(json["money"]),
         placeBidCommand: PlaceBidCommand.fromJson(json["placeBidCommand"]),
+        submitKycRequest: SubmitKycRequest.fromJson(json["submitKycRequest"]),
+        submitKycResponse: SubmitKycResponse.fromJson(json["submitKycResponse"]),
     );
 
     Map<String, dynamic> toJson() => {
         "commandAck": commandAck.toJson(),
+        "kycStatusResponse": kycStatusResponse.toJson(),
         "lotSnapshot": lotSnapshot.toJson(),
         "money": money.toJson(),
         "placeBidCommand": placeBidCommand.toJson(),
+        "submitKycRequest": submitKycRequest.toJson(),
+        "submitKycResponse": submitKycResponse.toJson(),
     };
 }
 
@@ -380,6 +392,44 @@ enum CommandAckStatus {
 final commandAckStatusValues = EnumValues({
     "ACCEPTED": CommandAckStatus.ACCEPTED,
     "REJECTED": CommandAckStatus.REJECTED
+});
+
+class KycStatusResponse {
+    String? bidderNumber;
+    KycStatusResponseStatus status;
+
+    KycStatusResponse({
+        this.bidderNumber,
+        required this.status,
+    });
+
+    factory KycStatusResponse.fromRawJson(String str) => KycStatusResponse.fromJson(json.decode(str));
+
+    String toRawJson() => json.encode(toJson());
+
+    factory KycStatusResponse.fromJson(Map<String, dynamic> json) => KycStatusResponse(
+        bidderNumber: json["bidderNumber"],
+        status: kycStatusResponseStatusValues.map[json["status"]]!,
+    );
+
+    Map<String, dynamic> toJson() => {
+        "bidderNumber": bidderNumber,
+        "status": kycStatusResponseStatusValues.reverse[status],
+    };
+}
+
+enum KycStatusResponseStatus {
+    PENDING,
+    REJECTED,
+    UNVERIFIED,
+    VERIFIED
+}
+
+final kycStatusResponseStatusValues = EnumValues({
+    "PENDING": KycStatusResponseStatus.PENDING,
+    "REJECTED": KycStatusResponseStatus.REJECTED,
+    "UNVERIFIED": KycStatusResponseStatus.UNVERIFIED,
+    "VERIFIED": KycStatusResponseStatus.VERIFIED
 });
 
 class LotSnapshot {
@@ -881,6 +931,86 @@ class Amount {
     Map<String, dynamic> toJson() => {
         "amountFils": amountFils,
         "currency": currencyValues.reverse[currency],
+    };
+}
+
+class SubmitKycRequest {
+    String cardBackRef;
+    String cardFrontRef;
+    String dateOfBirth;
+    String emiratesIdNumber;
+    String expiryDate;
+    String? fullNameAr;
+    String fullNameEn;
+    String nationality;
+    String? selfieRef;
+
+    SubmitKycRequest({
+        required this.cardBackRef,
+        required this.cardFrontRef,
+        required this.dateOfBirth,
+        required this.emiratesIdNumber,
+        required this.expiryDate,
+        this.fullNameAr,
+        required this.fullNameEn,
+        required this.nationality,
+        this.selfieRef,
+    });
+
+    factory SubmitKycRequest.fromRawJson(String str) => SubmitKycRequest.fromJson(json.decode(str));
+
+    String toRawJson() => json.encode(toJson());
+
+    factory SubmitKycRequest.fromJson(Map<String, dynamic> json) => SubmitKycRequest(
+        cardBackRef: json["cardBackRef"],
+        cardFrontRef: json["cardFrontRef"],
+        dateOfBirth: json["dateOfBirth"],
+        emiratesIdNumber: json["emiratesIdNumber"],
+        expiryDate: json["expiryDate"],
+        fullNameAr: json["fullNameAr"],
+        fullNameEn: json["fullNameEn"],
+        nationality: json["nationality"],
+        selfieRef: json["selfieRef"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "cardBackRef": cardBackRef,
+        "cardFrontRef": cardFrontRef,
+        "dateOfBirth": dateOfBirth,
+        "emiratesIdNumber": emiratesIdNumber,
+        "expiryDate": expiryDate,
+        "fullNameAr": fullNameAr,
+        "fullNameEn": fullNameEn,
+        "nationality": nationality,
+        "selfieRef": selfieRef,
+    };
+}
+
+class SubmitKycResponse {
+    String? bidderNumber;
+    KycStatusResponseStatus status;
+    DateTime? verifiedAt;
+
+    SubmitKycResponse({
+        this.bidderNumber,
+        required this.status,
+        this.verifiedAt,
+    });
+
+    factory SubmitKycResponse.fromRawJson(String str) => SubmitKycResponse.fromJson(json.decode(str));
+
+    String toRawJson() => json.encode(toJson());
+
+    factory SubmitKycResponse.fromJson(Map<String, dynamic> json) => SubmitKycResponse(
+        bidderNumber: json["bidderNumber"],
+        status: kycStatusResponseStatusValues.map[json["status"]]!,
+        verifiedAt: json["verifiedAt"] == null ? null : DateTime.parse(json["verifiedAt"]),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "bidderNumber": bidderNumber,
+        "status": kycStatusResponseStatusValues.reverse[status],
+        "verifiedAt": verifiedAt?.toIso8601String(),
     };
 }
 

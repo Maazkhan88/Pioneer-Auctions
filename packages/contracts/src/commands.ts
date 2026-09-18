@@ -4,6 +4,7 @@ import { MyBidStatusSchema, ReserveStatusSchema } from "./auction.js";
 import {
   CommandMetaSchema,
   EmiratesIdNumberSchema,
+  IsoDateSchema,
   IsoDateTimeSchema,
   KycStatusSchema,
   MoneySchema,
@@ -130,3 +131,37 @@ export type SubmitKycVerificationCommand = z.infer<
   typeof SubmitKycVerificationCommandSchema
 >;
 export type KycSessionResult = z.infer<typeof KycSessionResultSchema>;
+
+export const SubmitKycRestRequestSchema = z.strictObject({
+  cardBackRef: z.string().trim().min(1).max(256),
+  cardFrontRef: z.string().trim().min(1).max(256),
+  dateOfBirth: IsoDateSchema,
+  emiratesIdNumber: EmiratesIdNumberSchema,
+  expiryDate: IsoDateSchema,
+  fullNameAr: z.string().trim().max(128).optional(),
+  fullNameEn: z.string().trim().min(2).max(128),
+  nationality: z.string().trim().min(2).max(64),
+  selfieRef: z.string().trim().max(256).optional(),
+});
+
+export const KycStatusResponseSchema = z.strictObject({
+  bidderNumber: z.string().optional(),
+  status: KycStatusSchema,
+});
+
+export const KycSessionResponseSchema = z.strictObject({
+  accountId: UuidSchema,
+  sessionId: z.string().min(1),
+  status: z.string().min(1),
+});
+
+export const SubmitKycResponseSchema = z.strictObject({
+  bidderNumber: z.string().optional(),
+  status: KycStatusSchema,
+  verifiedAt: IsoDateTimeSchema.optional(),
+});
+
+export type SubmitKycRestRequest = z.infer<typeof SubmitKycRestRequestSchema>;
+export type KycStatusResponse = z.infer<typeof KycStatusResponseSchema>;
+export type KycSessionResponse = z.infer<typeof KycSessionResponseSchema>;
+export type SubmitKycResponse = z.infer<typeof SubmitKycResponseSchema>;

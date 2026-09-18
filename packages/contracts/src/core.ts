@@ -10,6 +10,12 @@ export const ContractVersionSchema = z
 export const CurrencySchema = z.literal("AED");
 export const UuidSchema = z.uuid();
 export const IsoDateTimeSchema = z.iso.datetime({ precision: 3 });
+export const IsoDateSchema = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    "Invalid ISO calendar date format (expected YYYY-MM-DD)",
+  );
 export const NonNegativeIntegerSchema = z.int().nonnegative();
 export const PositiveIntegerSchema = z.int().positive();
 export const CorrelationIdSchema = z.string().trim().min(1).max(128);
@@ -115,6 +121,7 @@ export function createCommandAckSchema<
 
 export type Currency = z.infer<typeof CurrencySchema>;
 export type IsoDateTime = z.infer<typeof IsoDateTimeSchema>;
+export type IsoDate = z.infer<typeof IsoDateSchema>;
 export type Uuid = z.infer<typeof UuidSchema>;
 export type Money = z.infer<typeof MoneySchema>;
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;

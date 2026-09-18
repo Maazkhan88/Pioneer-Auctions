@@ -4,8 +4,12 @@ import { LotPublicStateSchema } from "./auction.js";
 import {
   BidCommandAckSchema,
   BidLatestStateSchema,
+  KycSessionResponseSchema,
+  KycStatusResponseSchema,
   PlaceBidRestRequestSchema,
   SetProxyBidRestRequestSchema,
+  SubmitKycResponseSchema,
+  SubmitKycRestRequestSchema,
 } from "./commands.js";
 import { ApiErrorSchema, MoneySchema, UuidSchema } from "./core.js";
 import { LotSnapshotSchema } from "./events.js";
@@ -17,11 +21,15 @@ const componentSchemas = {
   ApiError: ApiErrorSchema,
   BidCommandAck: BidCommandAckSchema,
   BidLatestState: BidLatestStateSchema,
+  KycSessionResponse: KycSessionResponseSchema,
+  KycStatusResponse: KycStatusResponseSchema,
   LotPublicState: LotPublicStateSchema,
   LotSnapshot: LotSnapshotSchema,
   Money: MoneySchema,
   PlaceBidRestRequest: PlaceBidRestRequestSchema,
   SetProxyBidRestRequest: SetProxyBidRestRequestSchema,
+  SubmitKycResponse: SubmitKycResponseSchema,
+  SubmitKycRestRequest: SubmitKycRestRequestSchema,
   Uuid: UuidSchema,
 } as const;
 
@@ -100,6 +108,40 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
       responses: {
         "200": jsonResponse("Authoritative snapshot", "LotSnapshot"),
         "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/me/kyc") {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Current KYC verification status",
+          "KycStatusResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "post" && operation.path === "/me/kyc/sessions") {
+    return {
+      ...base,
+      responses: {
+        "201": jsonResponse("KYC session initiated", "KycSessionResponse"),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "post" && operation.path === "/me/kyc/submit") {
+    return {
+      ...base,
+      requestBody: jsonBody("SubmitKycRestRequest"),
+      responses: {
+        "200": jsonResponse("KYC submission result", "SubmitKycResponse"),
+        "4XX": jsonResponse("Validation or client error", "ApiError"),
       },
     };
   }

@@ -450,6 +450,53 @@
         ],
         "additionalProperties": {}
       },
+      "KycSessionResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sessionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "accountId",
+          "sessionId",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "KycStatusResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bidderNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
       "LotPublicState": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1007,6 +1054,89 @@
         ],
         "additionalProperties": false
       },
+      "SubmitKycResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bidderNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ]
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "SubmitKycRestRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "cardBackRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "cardFrontRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "emiratesIdNumber": {
+            "type": "string",
+            "pattern": "^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$"
+          },
+          "expiryDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "fullNameAr": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "fullNameEn": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 128
+          },
+          "nationality": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 64
+          },
+          "selfieRef": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "cardBackRef",
+          "cardFrontRef",
+          "dateOfBirth",
+          "emiratesIdNumber",
+          "expiryDate",
+          "fullNameEn",
+          "nationality"
+        ],
+        "additionalProperties": false
+      },
       "Uuid": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "string",
@@ -1158,10 +1288,27 @@
         "tags": [
           "me"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
-          "501": {
-            "description": "Contract inventory entry; implementation is planned"
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycStatusResponse"
+                }
+              }
+            },
+            "description": "Current KYC verification status"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
           }
         }
       }
@@ -1174,10 +1321,70 @@
         "tags": [
           "me"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
-          "501": {
-            "description": "Contract inventory entry; implementation is planned"
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycSessionResponse"
+                }
+              }
+            },
+            "description": "KYC session initiated"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/me/kyc/submit": {
+      "post": {
+        "operationId": "post_meKycSubmit",
+        "parameters": [],
+        "summary": "Submit Emirates ID KYC verification",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitKycRestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitKycResponse"
+                }
+              }
+            },
+            "description": "KYC submission result"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Validation or client error"
           }
         }
       }
