@@ -244,4 +244,74 @@ class ApiClient {
       message: 'Server returned HTTP status ${response.statusCode}',
     );
   }
+
+  /// Fetches current KYC status from GET /api/v1/me/kyc.
+  Future<ApiResult<KycStatusResponse>> fetchKycStatus({
+    String? testAccountId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/me/kyc');
+      final response = await _httpClient
+          .get(
+            uri,
+            headers: ApiConfig.defaultHeaders(testAccountId: testAccountId),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decoded =
+            json.decode(utf8.decode(response.bodyBytes));
+        final kycStatus = KycStatusResponse.fromJson(decoded);
+        return ApiSuccess(kycStatus);
+      }
+
+      return _parseErrorResponse(response);
+    } on TimeoutException catch (e) {
+      return ApiUnknown(
+        message: 'Request timed out fetching KYC status: $e',
+        cause: e,
+      );
+    } catch (e) {
+      return ApiUnknown(
+        message: 'Failed to connect to backend for KYC status: $e',
+        cause: e,
+      );
+    }
+  }
+
+  /// Submits Emirates ID KYC verification to POST /api/v1/me/kyc/submit.
+  Future<ApiResult<SubmitKycResponse>> submitKycVerification({
+    required SubmitKycRequest request,
+    String? testAccountId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/me/kyc/submit');
+      final response = await _httpClient
+          .post(
+            uri,
+            headers: ApiConfig.defaultHeaders(testAccountId: testAccountId),
+            body: json.encode(request.toJson()),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decoded =
+            json.decode(utf8.decode(response.bodyBytes));
+        final submitResponse = SubmitKycResponse.fromJson(decoded);
+        return ApiSuccess(submitResponse);
+      }
+
+      return _parseErrorResponse(response);
+    } on TimeoutException catch (e) {
+      return ApiUnknown(
+        message: 'Request timed out submitting KYC verification: $e',
+        cause: e,
+      );
+    } catch (e) {
+      return ApiUnknown(
+        message: 'Failed to connect to backend for KYC submission: $e',
+        cause: e,
+      );
+    }
+  }
 }

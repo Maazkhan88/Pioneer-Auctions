@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:pioneer_contracts/pioneer_contracts.dart';
+import '../network/api_client.dart';
 import '../network/api_config.dart';
+import '../network/api_result.dart';
 
 /// Secure session storage interface. Task 008 can wire platform Keychain/Keystore.
 abstract class SecureSessionStorage {
@@ -32,6 +35,12 @@ class SessionService extends ChangeNotifier {
   SecureSessionStorage get storage => _storage;
   void configureStorage(SecureSessionStorage storage) {
     _storage = storage;
+  }
+
+  ApiClient? _apiClient;
+  ApiClient get apiClient => _apiClient ?? ApiClient();
+  void configureApiClient(ApiClient client) {
+    _apiClient = client;
   }
 
   String _testAccountId = ApiConfig.testAccountId;
@@ -97,18 +106,10 @@ class SessionService extends ChangeNotifier {
   }
 
   // --- Task 008: KYC & Emirates ID Verification State ---
-  MobileKycStatus _kycStatus = MobileKycStatus.verified;
+  MobileKycStatus _kycStatus = MobileKycStatus.unverified;
   MobileKycStatus get kycStatus => _kycStatus;
 
-  VerifiedIdentity? _verifiedIdentity = const VerifiedIdentity(
-    emiratesIdNumber: '784-1988-1234567-1',
-    fullNameEn: 'Ahmed Al Mansoori',
-    fullNameAr: 'أحمد المنصوري',
-    nationality: 'United Arab Emirates',
-    dateOfBirth: '1988-04-12',
-    expiryDate: '2029-04-11',
-    bidderPaddleNumber: 'Paddle #2456',
-  );
+  VerifiedIdentity? _verifiedIdentity;
   VerifiedIdentity? get verifiedIdentity => _verifiedIdentity;
 
   bool get isKycVerified => _kycStatus == MobileKycStatus.verified;
@@ -124,32 +125,96 @@ class SessionService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> submitKycVerification({
+  Future<MobileKycStatus> loadKycStatus({ApiClient? client}) async {
+    final resolvedClient = client ?? _apiClient ?? ApiClient();
+    final result = await resolvedClient.fetchKycStatus(testAccountId: _testAccountId);
+    if (result is ApiSuccess<KycStatusResponse>) {
+      _kycStatus = _mapContractKycStatus(result.data.status);
+      if (_kycStatus == MobileKycStatus.verified && result.data.bidderNumber != null) {
+        _verifiedIdentity = VerifiedIdentity(
+          maskedId: '784-****-*******-1',
+          fullNameEn: 'Verified User',
+          nationality: 'United Arab Emirates',
+          bidderPaddleNumber: result.data.bidderNumber!,
+          verifiedAt: DateTime.now(),
+        );
+      }
+      notifyListeners();
+    }
+    return _kycStatus;
+  }
+
+  Future<ApiResult<SubmitKycResponse>> submitKycVerification({
     required String emiratesIdNumber,
     required String fullNameEn,
     String? fullNameAr,
     required String nationality,
     required String dateOfBirth,
     required String expiryDate,
+    required String cardFrontRef,
+    required String cardBackRef,
+    String? selfieRef,
+    ApiClient? client,
   }) async {
     _kycStatus = MobileKycStatus.pending;
     notifyListeners();
 
-    // Simulate verification processing delay (or backend verification call)
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    _verifiedIdentity = VerifiedIdentity(
-      emiratesIdNumber: emiratesIdNumber,
-      fullNameEn: fullNameEn,
-      fullNameAr: fullNameAr,
-      nationality: nationality,
+    final resolvedClient = client ?? _apiClient ?? ApiClient();
+    final request = SubmitKycRequest(
+      cardBackRef: cardBackRef,
+      cardFrontRef: cardFrontRef,
       dateOfBirth: dateOfBirth,
+      emiratesIdNumber: emiratesIdNumber,
       expiryDate: expiryDate,
-      bidderPaddleNumber: 'Paddle #${1000 + (DateTime.now().millisecondsSinceEpoch % 9000)}',
-      verifiedAt: DateTime.now(),
+      fullNameAr: fullNameAr,
+      fullNameEn: fullNameEn,
+      nationality: nationality,
+      selfieRef: selfieRef,
     );
-    _kycStatus = MobileKycStatus.verified;
+
+    final result = await resolvedClient.submitKycVerification(
+      request: request,
+      testAccountId: _testAccountId,
+    );
+
+    if (result is ApiSuccess<SubmitKycResponse>) {
+      _kycStatus = _mapContractKycStatus(result.data.status);
+      if (_kycStatus == MobileKycStatus.verified) {
+        _verifiedIdentity = VerifiedIdentity(
+          maskedId: _maskEmiratesId(emiratesIdNumber),
+          fullNameEn: fullNameEn,
+          fullNameAr: fullNameAr,
+          nationality: nationality,
+          bidderPaddleNumber: result.data.bidderNumber ??
+              'Paddle #${_testAccountId.length >= 4 ? _testAccountId.substring(_testAccountId.length - 4) : "2456"}',
+          verifiedAt: result.data.verifiedAt ?? DateTime.now(),
+        );
+      }
+    } else {
+      _kycStatus = MobileKycStatus.unverified;
+    }
     notifyListeners();
+    return result;
+  }
+
+  static String _maskEmiratesId(String id) {
+    if (id.length >= 18) {
+      return '${id.substring(0, 4)}****-*******-${id.substring(id.length - 1)}';
+    }
+    return '784-****-*******-1';
+  }
+
+  static MobileKycStatus _mapContractKycStatus(KycStatusResponseStatus status) {
+    switch (status) {
+      case KycStatusResponseStatus.VERIFIED:
+        return MobileKycStatus.verified;
+      case KycStatusResponseStatus.PENDING:
+        return MobileKycStatus.pending;
+      case KycStatusResponseStatus.REJECTED:
+        return MobileKycStatus.rejected;
+      case KycStatusResponseStatus.UNVERIFIED:
+        return MobileKycStatus.unverified;
+    }
   }
 }
 
@@ -161,24 +226,23 @@ enum MobileKycStatus {
 }
 
 class VerifiedIdentity {
-  final String emiratesIdNumber;
+  final String maskedId;
   final String fullNameEn;
   final String? fullNameAr;
   final String nationality;
-  final String dateOfBirth;
-  final String expiryDate;
   final String bidderPaddleNumber;
   final DateTime? verifiedAt;
 
   const VerifiedIdentity({
-    required this.emiratesIdNumber,
+    required this.maskedId,
     required this.fullNameEn,
     this.fullNameAr,
     required this.nationality,
-    required this.dateOfBirth,
-    required this.expiryDate,
     required this.bidderPaddleNumber,
     this.verifiedAt,
   });
+
+  /// Masked Emirates ID for display purposes
+  String get emiratesIdNumber => maskedId;
 }
 

@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pioneer_contracts/pioneer_contracts.dart' hide State;
 import '../../core/constants/pioneer_spacing.dart';
 import '../../core/localization/pioneer_localizations.dart';
+import '../../core/network/api_client.dart';
+import '../../core/network/api_result.dart';
 import '../../core/session/session_service.dart';
 import '../../core/theme/pioneer_colors.dart';
 import '../../core/theme/pioneer_typography.dart';
@@ -20,14 +23,21 @@ enum KycStep {
 /// Guided multi-step Emirates ID document scanner & liveness verification screen
 /// with real device camera and gallery capture support.
 class EmiratesIdVerificationScreen extends StatefulWidget {
-  const EmiratesIdVerificationScreen({super.key});
+  final ImagePicker? imagePicker;
+  final ApiClient? apiClient;
+
+  const EmiratesIdVerificationScreen({
+    super.key,
+    this.imagePicker,
+    this.apiClient,
+  });
 
   @override
   State<EmiratesIdVerificationScreen> createState() => _EmiratesIdVerificationScreenState();
 }
 
 class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScreen> {
-  final ImagePicker _picker = ImagePicker();
+  late final ImagePicker _picker = widget.imagePicker ?? ImagePicker();
 
   KycStep _currentStep = KycStep.front;
 
@@ -37,17 +47,17 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
   XFile? _selfieImage;
 
   // Extracted OCR fields
-  final TextEditingController _nameEnController = TextEditingController(text: 'Ahmed Al Mansoori');
-  final TextEditingController _nameArController = TextEditingController(text: 'أحمد المنصوري');
-  final TextEditingController _idNumberController = TextEditingController(text: '784-1992-1234567-1');
-  final TextEditingController _nationalityController = TextEditingController(text: 'United Arab Emirates');
-  final TextEditingController _dobController = TextEditingController(text: '1992-05-15');
-  final TextEditingController _expiryController = TextEditingController(text: '2028-05-14');
+  final TextEditingController _nameEnController = TextEditingController();
+  final TextEditingController _nameArController = TextEditingController();
+  final TextEditingController _idNumberController = TextEditingController();
+  final TextEditingController _nationalityController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _expiryController = TextEditingController();
 
   bool _frontCaptured = false;
   bool _backCaptured = false;
   bool _livenessVerified = false;
-  bool _declarationAccepted = true;
+  bool _declarationAccepted = false;
   bool _isSubmitting = false;
 
   @override
@@ -117,10 +127,10 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
     }
   }
 
-  Future<void> _captureSelfieImage(ImageSource source) async {
+  Future<void> _captureSelfieImage() async {
     try {
       final photo = await _picker.pickImage(
-        source: source,
+        source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.front,
         imageQuality: 90,
       );
@@ -144,31 +154,6 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
     }
   }
 
-  // Demo fallback methods for test automation
-  void _onFrontCaptured() {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _frontCaptured = true;
-      _currentStep = KycStep.back;
-    });
-  }
-
-  void _onBackCaptured() {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _backCaptured = true;
-      _currentStep = KycStep.liveness;
-    });
-  }
-
-  void _onLivenessCompleted() {
-    HapticFeedback.heavyImpact();
-    setState(() {
-      _livenessVerified = true;
-      _currentStep = KycStep.review;
-    });
-  }
-
   Future<void> _submitVerification() async {
     if (!_declarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,21 +165,63 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
       return;
     }
 
+    if (_idNumberController.text.trim().isEmpty ||
+        _nameEnController.text.trim().isEmpty ||
+        _dobController.text.trim().isEmpty ||
+        _expiryController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete all required identity fields.'),
+          backgroundColor: PioneerColors.statusExpiredText,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
-    await SessionService.instance.submitKycVerification(
+    final frontRef = 'doc-front-${DateTime.now().millisecondsSinceEpoch}';
+    final backRef = 'doc-back-${DateTime.now().millisecondsSinceEpoch}';
+    final selfieRef = _selfieImage != null
+        ? 'doc-selfie-${DateTime.now().millisecondsSinceEpoch}'
+        : null;
+
+    final result = await SessionService.instance.submitKycVerification(
       emiratesIdNumber: _idNumberController.text.trim(),
       fullNameEn: _nameEnController.text.trim(),
-      fullNameAr: _nameArController.text.trim(),
+      fullNameAr: _nameArController.text.trim().isNotEmpty
+          ? _nameArController.text.trim()
+          : null,
       nationality: _nationalityController.text.trim(),
       dateOfBirth: _dobController.text.trim(),
       expiryDate: _expiryController.text.trim(),
+      cardFrontRef: frontRef,
+      cardBackRef: backRef,
+      selfieRef: selfieRef,
+      client: widget.apiClient,
     );
 
-    HapticFeedback.heavyImpact();
+    _cleanupTempFiles();
+
+    HapticFeedback.mediumImpact();
     if (!mounted) return;
 
     setState(() => _isSubmitting = false);
+
+    if (result is! ApiSuccess<SubmitKycResponse>) {
+      final message = switch (result) {
+        ApiFailure(:final message) => message,
+        ApiUnknown(:final message) => message,
+        _ => 'Submission error',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Verification submission failed: $message'),
+          backgroundColor: PioneerColors.statusExpiredText,
+        ),
+      );
+      return;
+    }
 
     showDialog(
       context: context,
@@ -209,18 +236,18 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
               width: 64,
               height: 64,
               decoration: const BoxDecoration(
-                color: PioneerColors.winningBadgeBg,
+                color: PioneerColors.brandPurpleLight,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.verified_user_rounded,
+                Icons.hourglass_top_rounded,
                 size: 36,
-                color: PioneerColors.winningBadgeText,
+                color: PioneerColors.brandPurple,
               ),
             ),
             const SizedBox(height: 18),
             const Text(
-              'Identity Verified!',
+              'Verification Pending',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -229,7 +256,7 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
             ),
             const SizedBox(height: 8),
             Text(
-              'Your Emirates ID has been verified. You have been assigned ${SessionService.instance.verifiedIdentity?.bidderPaddleNumber ?? "Bidder #2456"}. You are now eligible to place bids in all live auctions.',
+              'Your Emirates ID documents and selfie have been submitted securely for review. Verification is typically completed within 1 business day. Bidding will be enabled once verified.',
               style: PioneerTypography.metadata.copyWith(
                 fontSize: 13,
                 color: PioneerColors.textSecondary,
@@ -240,10 +267,10 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
             SizedBox(
               width: double.infinity,
               child: PioneerButton(
-                label: 'Start Bidding',
+                label: 'Return to Account',
                 onPressed: () {
                   Navigator.of(ctx).pop();
-                  context.go('/browse');
+                  context.go('/account');
                 },
               ),
             ),
@@ -251,6 +278,23 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
         ),
       ),
     );
+  }
+
+  void _cleanupTempFiles() {
+    try {
+      if (_frontImage != null) {
+        final f = File(_frontImage!.path);
+        if (f.existsSync()) f.deleteSync();
+      }
+      if (_backImage != null) {
+        final f = File(_backImage!.path);
+        if (f.existsSync()) f.deleteSync();
+      }
+      if (_selfieImage != null) {
+        final f = File(_selfieImage!.path);
+        if (f.existsSync()) f.deleteSync();
+      }
+    } catch (_) {}
   }
 
   @override
@@ -436,16 +480,6 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
           ),
           onPressed: () => _captureFrontImage(ImageSource.gallery),
         ),
-        const SizedBox(height: 8),
-
-        // Fast path for test/demo
-        TextButton(
-          onPressed: _onFrontCaptured,
-          child: Text(
-            'Capture Front & Continue',
-            style: PioneerTypography.metadata.copyWith(color: PioneerColors.textMuted, fontSize: 12),
-          ),
-        ),
         const SizedBox(height: 16),
 
         // OCR Preview Fields
@@ -503,7 +537,7 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
           imageFile: _backImage,
           isFront: false,
           title: 'MACHINE READABLE ZONE',
-          subtitle: 'I<ARE784199212345671<<<<<<<<<<<<<<<\n9205150M2805142ARE<<<<<<<<<<<8\nAL<MANSOORI<<AHMED<<<<<<<<<<<<<<',
+          subtitle: 'I<ARE784000000000000<<<<<<<<<<<<<<<\n0000000M0000000ARE<<<<<<<<<<<0\nUNITED<ARAB<EMIRATES<<<<<<<<<<<<',
         ),
         const SizedBox(height: 20),
 
@@ -526,15 +560,6 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
             style: TextStyle(color: PioneerColors.brandPurple, fontWeight: FontWeight.w700, fontSize: 13.5),
           ),
           onPressed: () => _captureBackImage(ImageSource.gallery),
-        ),
-        const SizedBox(height: 8),
-
-        TextButton(
-          onPressed: _onBackCaptured,
-          child: Text(
-            'Capture Back & Continue',
-            style: PioneerTypography.metadata.copyWith(color: PioneerColors.textMuted, fontSize: 12),
-          ),
         ),
         const SizedBox(height: 16),
 
@@ -574,13 +599,13 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Face Liveness Check',
+          'Take a Selfie for Verification',
           style: PioneerTypography.sectionTitle,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 6),
         Text(
-          'Center your face in the frame. Ensure good lighting and look directly at the front camera.',
+          'Center your face in the frame and take a clear selfie photo for identity verification.',
           style: PioneerTypography.metadata.copyWith(color: PioneerColors.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -638,33 +663,9 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
         const SizedBox(height: 24),
 
         PioneerButton(
-          label: 'Open Front Camera for Selfie',
+          label: 'Take Selfie with Front Camera',
           leadingIcon: Icons.camera_front_rounded,
-          onPressed: () => _captureSelfieImage(ImageSource.camera),
-        ),
-        const SizedBox(height: 10),
-
-        OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            side: const BorderSide(color: PioneerColors.brandPurple, width: 1.5),
-          ),
-          icon: const Icon(Icons.photo_library_rounded, color: PioneerColors.brandPurple, size: 20),
-          label: const Text(
-            'Upload Selfie from Photos',
-            style: TextStyle(color: PioneerColors.brandPurple, fontWeight: FontWeight.w700, fontSize: 13.5),
-          ),
-          onPressed: () => _captureSelfieImage(ImageSource.gallery),
-        ),
-        const SizedBox(height: 8),
-
-        TextButton(
-          onPressed: _onLivenessCompleted,
-          child: Text(
-            'Confirm Face Liveness',
-            style: PioneerTypography.metadata.copyWith(color: PioneerColors.textMuted, fontSize: 12),
-          ),
+          onPressed: _captureSelfieImage,
         ),
       ],
     );
@@ -742,9 +743,19 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _selfieImage != null
-                        ? Image.file(File(_selfieImage!.path), fit: BoxFit.cover)
+                        ? Image.file(
+                            File(_selfieImage!.path),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) =>
+                                const Icon(Icons.person_rounded, size: 36, color: Colors.white),
+                          )
                         : _frontImage != null
-                            ? Image.file(File(_frontImage!.path), fit: BoxFit.cover)
+                            ? Image.file(
+                                File(_frontImage!.path),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const Icon(Icons.person_rounded, size: 36, color: Colors.white),
+                              )
                             : const Icon(Icons.person_rounded, size: 36, color: Colors.white),
                   ),
                   const SizedBox(width: 14),
@@ -844,21 +855,21 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
                 icon: Icons.check_circle_rounded,
                 text: _frontImage != null
                     ? 'Card Front Photo Captured (${_frontImage!.name})'
-                    : 'Card Front & Security Hologram Verified',
+                    : 'Card Front Photo Attached',
               ),
               const SizedBox(height: 8),
               _ChecklistRow(
                 icon: Icons.check_circle_rounded,
                 text: _backImage != null
                     ? 'Card Back Photo Captured (${_backImage!.name})'
-                    : 'Card Back & MRZ Checksum Validated',
+                    : 'Card Back Photo Attached',
               ),
               const SizedBox(height: 8),
               _ChecklistRow(
                 icon: Icons.check_circle_rounded,
                 text: _selfieImage != null
-                    ? 'Live Selfie Verified (${_selfieImage!.name})'
-                    : 'Facial Biometric Match Confirmed (98.4%)',
+                    ? 'Verification Selfie Captured (${_selfieImage!.name})'
+                    : 'Selfie Photo Attached',
               ),
             ],
           ),
@@ -880,7 +891,7 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
         const SizedBox(height: 20),
 
         PioneerButton(
-          label: 'Submit & Get Bidder Paddle',
+          label: 'Submit Verification',
           isLoading: _isSubmitting,
           onPressed: _isSubmitting ? null : _submitVerification,
         ),
@@ -910,6 +921,7 @@ class _EmiratesIdVerificationScreenState extends State<EmiratesIdVerificationScr
                   Image.file(
                     File(imageFile.path),
                     fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
                   Positioned(
                     top: 10,

@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Pioneer Auctions requires camera access to capture your Emirates ID and selfie for identity verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pioneer Auctions requires access to your photo library to select identity documents for verification.</string>
 </dict>
 </plist>
