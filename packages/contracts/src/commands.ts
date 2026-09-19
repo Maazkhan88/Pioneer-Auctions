@@ -300,3 +300,117 @@ export const AdminRejectRefundRequestSchema = z.strictObject({
 export type AdminRejectRefundRequest = z.infer<
   typeof AdminRejectRefundRequestSchema
 >;
+
+export const NotificationTypeSchema = z.enum([
+  "BID_CONFIRMED",
+  "OUTBID",
+  "PROXY_EXCEEDED",
+  "ENDING_SOON",
+  "AUCTION_EXTENDED",
+  "WINNER_PENDING_APPROVAL",
+  "BID_APPROVED",
+  "BID_REJECTED",
+  "DEPOSIT_CREDITED",
+  "REFUND_PROCESSED",
+  "REFUND_REJECTED",
+]);
+export type NotificationType = z.infer<typeof NotificationTypeSchema>;
+
+export const NotificationItemSchema = z.strictObject({
+  bodyAr: z.string().min(1),
+  bodyEn: z.string().min(1),
+  createdAt: IsoDateTimeSchema,
+  deepLink: z.string().nullable().optional(),
+  id: UuidSchema,
+  isRead: z.boolean(),
+  readAt: IsoDateTimeSchema.nullable().optional(),
+  titleAr: z.string().min(1),
+  titleEn: z.string().min(1),
+  type: NotificationTypeSchema,
+});
+export type NotificationItem = z.infer<typeof NotificationItemSchema>;
+
+export const NotificationListResponseSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  items: z.array(NotificationItemSchema),
+  unreadCount: NonNegativeIntegerSchema,
+});
+export type NotificationListResponse = z.infer<
+  typeof NotificationListResponseSchema
+>;
+
+export const MarkNotificationReadResponseSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  isRead: z.boolean(),
+  notificationId: UuidSchema,
+  readAt: IsoDateTimeSchema,
+});
+export type MarkNotificationReadResponse = z.infer<
+  typeof MarkNotificationReadResponseSchema
+>;
+
+export const MarkAllNotificationsReadResponseSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  markedCount: NonNegativeIntegerSchema,
+});
+export type MarkAllNotificationsReadResponse = z.infer<
+  typeof MarkAllNotificationsReadResponseSchema
+>;
+
+export const UserNotificationPreferencesSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  emailEnabled: z.boolean(),
+  notifyDeposits: z.boolean(),
+  notifyEndingSoon: z.boolean(),
+  notifyMarketing: z.boolean(),
+  notifyOutbid: z.boolean(),
+  pushEnabled: z.boolean(),
+  quietHoursEnabled: z.boolean(),
+  quietHoursEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  quietHoursStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  smsEnabled: z.boolean(),
+});
+export type UserNotificationPreferences = z.infer<
+  typeof UserNotificationPreferencesSchema
+>;
+
+export const UpdateNotificationPreferencesRequestSchema = z.strictObject({
+  emailEnabled: z.boolean().optional(),
+  notifyDeposits: z.boolean().optional(),
+  notifyEndingSoon: z.boolean().optional(),
+  notifyMarketing: z.boolean().optional(),
+  notifyOutbid: z.boolean().optional(),
+  pushEnabled: z.boolean().optional(),
+  quietHoursEnabled: z.boolean().optional(),
+  quietHoursEnd: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional(),
+  quietHoursStart: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional(),
+  smsEnabled: z.boolean().optional(),
+});
+export type UpdateNotificationPreferencesRequest = z.infer<
+  typeof UpdateNotificationPreferencesRequestSchema
+>;
+
+export const DevicePlatformSchema = z.enum(["ANDROID", "IOS", "WEB"]);
+export type DevicePlatform = z.infer<typeof DevicePlatformSchema>;
+
+export const RegisterDeviceTokenRequestSchema = z.strictObject({
+  platform: DevicePlatformSchema,
+  token: z.string().trim().min(1).max(512),
+});
+export type RegisterDeviceTokenRequest = z.infer<
+  typeof RegisterDeviceTokenRequestSchema
+>;
+
+export const RegisterDeviceTokenResponseSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  registered: z.boolean(),
+});
+export type RegisterDeviceTokenResponse = z.infer<
+  typeof RegisterDeviceTokenResponseSchema
+>;

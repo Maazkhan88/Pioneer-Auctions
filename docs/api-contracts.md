@@ -128,19 +128,22 @@ This is the MVP surface. Additive response fields are allowed within v1; removal
 
 ### Identity and profile
 
-| Method | Path                      | Purpose                                                        |
-| ------ | ------------------------- | -------------------------------------------------------------- |
-| POST   | `/auth/uae-pass/start`    | Create authorization request with PKCE/state                   |
-| GET    | `/auth/uae-pass/callback` | Provider callback; establishes client redirect result          |
-| POST   | `/auth/otp/request`       | Request fallback phone/email OTP                               |
-| POST   | `/auth/otp/verify`        | Verify OTP and issue session                                   |
-| POST   | `/auth/refresh`           | Rotate refresh session                                         |
-| POST   | `/auth/logout`            | Revoke current refresh session                                 |
-| GET    | `/me`                     | Profile, locale, KYC, bidding eligibility summary              |
-| PATCH  | `/me/preferences`         | Locale, timezone, theme, numeral and notifications preferences |
-| GET    | `/me/kyc`                 | KYC state and next permitted action                            |
-| POST   | `/me/kyc/sessions`        | Start fallback KYC provider session                            |
-| POST   | `/me/kyc/submit`          | Submit Emirates ID KYC verification                            |
+| Method | Path                       | Purpose                                                        |
+| ------ | -------------------------- | -------------------------------------------------------------- |
+| POST   | `/auth/uae-pass/start`     | Create authorization request with PKCE/state                   |
+| GET    | `/auth/uae-pass/callback`  | Provider callback; establishes client redirect result          |
+| POST   | `/auth/otp/request`        | Request fallback phone/email OTP                               |
+| POST   | `/auth/otp/verify`         | Verify OTP and issue session                                   |
+| POST   | `/auth/refresh`            | Rotate refresh session                                         |
+| POST   | `/auth/logout`             | Revoke current refresh session                                 |
+| GET    | `/me`                      | Profile, locale, KYC, bidding eligibility summary              |
+| GET    | `/me/preferences`          | Get profile preferences                                        |
+| PATCH  | `/me/preferences`          | Locale, timezone, theme, numeral and notifications preferences |
+| POST   | `/me/device-tokens`        | Register device push token                                     |
+| DELETE | `/me/device-tokens/:token` | Unregister device push token                                   |
+| GET    | `/me/kyc`                  | KYC state and next permitted action                            |
+| POST   | `/me/kyc/sessions`         | Start fallback KYC provider session                            |
+| POST   | `/me/kyc/submit`           | Submit Emirates ID KYC verification                            |
 
 ### Catalog and auctions
 
@@ -178,17 +181,19 @@ Provider webhooks live under authenticated provider-specific paths and are not c
 
 Socket commands are preferred while connected. Equivalent REST commands support accessibility, recovery, and clients without a healthy socket.
 
-| Method | Path                        | Purpose                                      |
-| ------ | --------------------------- | -------------------------------------------- |
-| POST   | `/lots/:lotId/bids`         | Place manual/custom bid                      |
-| PUT    | `/lots/:lotId/proxy-bid`    | Create/raise proxy maximum                   |
-| GET    | `/lots/:lotId/my-proxy-bid` | Private active proxy status/max              |
-| DELETE | `/lots/:lotId/proxy-bid`    | MVP endpoint exists and rejects cancellation |
-| POST   | `/lots/:lotId/offers`       | Submit an eligible make-an-offer             |
-| GET    | `/me/bids`                  | Active/won/lost activity                     |
-| GET    | `/me/offers`                | Pending/accepted/rejected offers             |
-| GET    | `/me/watchlist`             | Watched lots                                 |
-| GET    | `/me/notifications`         | In-app notification feed                     |
+| Method | Path                         | Purpose                                      |
+| ------ | ---------------------------- | -------------------------------------------- |
+| POST   | `/lots/:lotId/bids`          | Place manual/custom bid                      |
+| PUT    | `/lots/:lotId/proxy-bid`     | Create/raise proxy maximum                   |
+| GET    | `/lots/:lotId/my-proxy-bid`  | Private active proxy status/max              |
+| DELETE | `/lots/:lotId/proxy-bid`     | MVP endpoint exists and rejects cancellation |
+| POST   | `/lots/:lotId/offers`        | Submit an eligible make-an-offer             |
+| GET    | `/me/bids`                   | Active/won/lost activity                     |
+| GET    | `/me/offers`                 | Pending/accepted/rejected offers             |
+| GET    | `/me/watchlist`              | Watched lots                                 |
+| GET    | `/me/notifications`          | In-app notification feed                     |
+| POST   | `/me/notifications/:id/read` | Mark notification read                       |
+| POST   | `/me/notifications/read-all` | Mark all notifications read                  |
 
 ### Seller MVP/v1 boundary
 
@@ -468,6 +473,86 @@ Response (`201 Created`):
     "requestedAt": "2026-07-14T17:00:00.000Z",
     "status": "REQUESTED"
   }
+}
+```
+
+## 5d. Transactional notifications and preferences REST endpoints
+
+Base paths:
+
+- `/api/v1/me/notifications`
+- `/api/v1/me/preferences`
+- `/api/v1/me/device-tokens`
+
+All notification and preference endpoints require authenticated account context (`x-pioneer-test-account-id` header or Bearer session token).
+
+### `GET /api/v1/me/notifications`
+
+Returns the authenticated user's in-app notification feed with bilingual titles, localized bodies, deep links, read status, and unread count.
+
+Response (`200 OK`):
+
+```json
+{
+  "contractVersion": 1,
+  "items": [
+    {
+      "bodyAr": "قام مزايد آخر بتقديم عرض أعلى على اللوت #101.",
+      "bodyEn": "Another bidder placed a higher bid on Lot #101.",
+      "createdAt": "2026-07-14T17:00:00.000Z",
+      "deepLink": "/lot/11111111-1111-4111-8111-111111111111",
+      "id": "44444444-4444-4444-8444-444444444444",
+      "isRead": false,
+      "titleAr": "تمت المزايدة عليك!",
+      "titleEn": "You've been outbid!",
+      "type": "OUTBID"
+    }
+  ],
+  "unreadCount": 1
+}
+```
+
+### `GET /api/v1/me/preferences`
+
+Returns the authenticated user's channel toggles, notification category preferences, and quiet hours configuration.
+
+Response (`200 OK`):
+
+```json
+{
+  "contractVersion": 1,
+  "emailEnabled": true,
+  "notifyDeposits": true,
+  "notifyEndingSoon": true,
+  "notifyMarketing": false,
+  "notifyOutbid": true,
+  "pushEnabled": true,
+  "quietHoursEnabled": true,
+  "quietHoursEnd": "07:00",
+  "quietHoursStart": "22:00",
+  "smsEnabled": false
+}
+```
+
+### `POST /api/v1/me/device-tokens`
+
+Registers a push notification device token (FCM for Android, APNs for iOS, or Web Push).
+
+Request (`POST /api/v1/me/device-tokens`):
+
+```json
+{
+  "platform": "ANDROID",
+  "token": "fcm-registration-token-sample-value"
+}
+```
+
+Response (`201 Created`):
+
+```json
+{
+  "contractVersion": 1,
+  "registered": true
 }
 ```
 

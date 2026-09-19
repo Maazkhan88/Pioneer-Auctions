@@ -13,9 +13,13 @@ import {
   IsoDateTimeSchema,
   KycStatusSchema,
   MoneySchema,
+  NotificationListResponseSchema,
   PaymentIntentResponseSchema,
   PlaceBidRestRequestSchema,
+  RegisterDeviceTokenRequestSchema,
+  RegisterDeviceTokenResponseSchema,
   SubmitKycVerificationCommandSchema,
+  UserNotificationPreferencesSchema,
   UuidSchema,
   clientCommandSchemas,
   formatMoney,
@@ -137,7 +141,7 @@ describe("documentation drift", () => {
       (match) => JSON.parse(match[1] ?? "null"),
     );
 
-    expect(examples).toHaveLength(12);
+    expect(examples).toHaveLength(16);
     expect(PlaceBidRestRequestSchema.safeParse(examples[0])).toMatchObject({
       success: true,
     });
@@ -172,6 +176,26 @@ describe("documentation drift", () => {
       success: true,
     });
     expect(DepositRefundResponseSchema.safeParse(examples[11])).toMatchObject({
+      success: true,
+    });
+    expect(
+      NotificationListResponseSchema.safeParse(examples[12]),
+    ).toMatchObject({
+      success: true,
+    });
+    expect(
+      UserNotificationPreferencesSchema.safeParse(examples[13]),
+    ).toMatchObject({
+      success: true,
+    });
+    expect(
+      RegisterDeviceTokenRequestSchema.safeParse(examples[14]),
+    ).toMatchObject({
+      success: true,
+    });
+    expect(
+      RegisterDeviceTokenResponseSchema.safeParse(examples[15]),
+    ).toMatchObject({
       success: true,
     });
   });

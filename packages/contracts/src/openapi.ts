@@ -13,11 +13,18 @@ import {
   GetDepositsResponseSchema,
   KycSessionResponseSchema,
   KycStatusResponseSchema,
+  MarkAllNotificationsReadResponseSchema,
+  MarkNotificationReadResponseSchema,
+  NotificationListResponseSchema,
   PaymentIntentResponseSchema,
   PlaceBidRestRequestSchema,
+  RegisterDeviceTokenRequestSchema,
+  RegisterDeviceTokenResponseSchema,
   SetProxyBidRestRequestSchema,
   SubmitKycResponseSchema,
   SubmitKycRestRequestSchema,
+  UpdateNotificationPreferencesRequestSchema,
+  UserNotificationPreferencesSchema,
 } from "./commands.js";
 import { ApiErrorSchema, MoneySchema, UuidSchema } from "./core.js";
 import { LotSnapshotSchema } from "./events.js";
@@ -40,12 +47,20 @@ const componentSchemas = {
   KycStatusResponse: KycStatusResponseSchema,
   LotPublicState: LotPublicStateSchema,
   LotSnapshot: LotSnapshotSchema,
+  MarkAllNotificationsReadResponse: MarkAllNotificationsReadResponseSchema,
+  MarkNotificationReadResponse: MarkNotificationReadResponseSchema,
   Money: MoneySchema,
+  NotificationListResponse: NotificationListResponseSchema,
   PaymentIntentResponse: PaymentIntentResponseSchema,
   PlaceBidRestRequest: PlaceBidRestRequestSchema,
+  RegisterDeviceTokenRequest: RegisterDeviceTokenRequestSchema,
+  RegisterDeviceTokenResponse: RegisterDeviceTokenResponseSchema,
   SetProxyBidRestRequest: SetProxyBidRestRequestSchema,
   SubmitKycResponse: SubmitKycResponseSchema,
   SubmitKycRestRequest: SubmitKycRestRequestSchema,
+  UpdateNotificationPreferencesRequest:
+    UpdateNotificationPreferencesRequestSchema,
+  UserNotificationPreferences: UserNotificationPreferencesSchema,
   Uuid: UuidSchema,
 } as const;
 
@@ -183,10 +198,7 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
       ...base,
       requestBody: jsonBody("CreateDepositPaymentIntentRequest"),
       responses: {
-        "201": jsonResponse(
-          "Payment intent created",
-          "PaymentIntentResponse",
-        ),
+        "201": jsonResponse("Payment intent created", "PaymentIntentResponse"),
         "4XX": jsonResponse("Client error", "ApiError"),
       },
     };
@@ -199,10 +211,7 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
     return {
       ...base,
       responses: {
-        "200": jsonResponse(
-          "Payment intent status",
-          "PaymentIntentResponse",
-        ),
+        "200": jsonResponse("Payment intent status", "PaymentIntentResponse"),
         "4XX": jsonResponse("Client error", "ApiError"),
       },
     };
@@ -225,7 +234,10 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
     };
   }
 
-  if (operation.method === "get" && operation.path === "/admin/deposit-actions") {
+  if (
+    operation.method === "get" &&
+    operation.path === "/admin/deposit-actions"
+  ) {
     return {
       ...base,
       responses: {
@@ -246,9 +258,108 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
       ...base,
       requestBody: jsonBody("AdminApproveRefundRequest"),
       responses: {
+        "200": jsonResponse("Deposit action applied", "DepositRefundResponse"),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/me/preferences") {
+    return {
+      ...base,
+      responses: {
         "200": jsonResponse(
-          "Deposit action applied",
-          "DepositRefundResponse",
+          "User notification and profile preferences",
+          "UserNotificationPreferences",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "patch" && operation.path === "/me/preferences") {
+    return {
+      ...base,
+      requestBody: jsonBody("UpdateNotificationPreferencesRequest"),
+      responses: {
+        "200": jsonResponse(
+          "Updated user preferences",
+          "UserNotificationPreferences",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/me/notifications") {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "List of user notifications",
+          "NotificationListResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "post" &&
+    operation.path === "/me/notifications/{id}/read"
+  ) {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Notification marked read",
+          "MarkNotificationReadResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "post" &&
+    operation.path === "/me/notifications/read-all"
+  ) {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "All notifications marked read",
+          "MarkAllNotificationsReadResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "post" && operation.path === "/me/device-tokens") {
+    return {
+      ...base,
+      requestBody: jsonBody("RegisterDeviceTokenRequest"),
+      responses: {
+        "201": jsonResponse(
+          "Device token registered",
+          "RegisterDeviceTokenResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "delete" &&
+    operation.path === "/me/device-tokens/{token}"
+  ) {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Device token unregistered",
+          "RegisterDeviceTokenResponse",
         ),
         "4XX": jsonResponse("Client error", "ApiError"),
       },

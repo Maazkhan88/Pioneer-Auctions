@@ -15,7 +15,25 @@ export const restOperations = [
   operation("post", "/auth/refresh", "Rotate refresh session"),
   operation("post", "/auth/logout", "Revoke current refresh session"),
   operation("get", "/me", "Get current profile"),
-  operation("patch", "/me/preferences", "Update profile preferences"),
+  operation("get", "/me/preferences", "Get profile preferences", "contracted"),
+  operation(
+    "patch",
+    "/me/preferences",
+    "Update profile preferences",
+    "contracted",
+  ),
+  operation(
+    "post",
+    "/me/device-tokens",
+    "Register device push token",
+    "contracted",
+  ),
+  operation(
+    "delete",
+    "/me/device-tokens/{token}",
+    "Unregister device push token",
+    "contracted",
+  ),
   operation("get", "/me/kyc", "Get KYC status", "contracted"),
   operation(
     "post",
@@ -95,7 +113,19 @@ export const restOperations = [
   operation("get", "/me/bids", "List bidding activity"),
   operation("get", "/me/offers", "List offers"),
   operation("get", "/me/watchlist", "List watched lots"),
-  operation("get", "/me/notifications", "List notifications"),
+  operation("get", "/me/notifications", "List notifications", "contracted"),
+  operation(
+    "post",
+    "/me/notifications/{id}/read",
+    "Mark notification read",
+    "contracted",
+  ),
+  operation(
+    "post",
+    "/me/notifications/read-all",
+    "Mark all notifications read",
+    "contracted",
+  ),
   operation("post", "/seller/listings", "Create seller listing draft"),
   operation("patch", "/seller/listings/{id}", "Update seller listing draft"),
   operation(

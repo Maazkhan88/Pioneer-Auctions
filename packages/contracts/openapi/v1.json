@@ -1520,6 +1520,58 @@
         ],
         "additionalProperties": {}
       },
+      "MarkAllNotificationsReadResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "markedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "contractVersion",
+          "markedCount"
+        ],
+        "additionalProperties": false
+      },
+      "MarkNotificationReadResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "notificationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        },
+        "required": [
+          "contractVersion",
+          "isRead",
+          "notificationId",
+          "readAt"
+        ],
+        "additionalProperties": false
+      },
       "Money": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1537,6 +1589,114 @@
         "required": [
           "amountFils",
           "currency"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationListResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bodyAr": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bodyEn": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                },
+                "deepLink": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "isRead": {
+                  "type": "boolean"
+                },
+                "readAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "titleAr": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "titleEn": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "BID_CONFIRMED",
+                    "OUTBID",
+                    "PROXY_EXCEEDED",
+                    "ENDING_SOON",
+                    "AUCTION_EXTENDED",
+                    "WINNER_PENDING_APPROVAL",
+                    "BID_APPROVED",
+                    "BID_REJECTED",
+                    "DEPOSIT_CREDITED",
+                    "REFUND_PROCESSED",
+                    "REFUND_REJECTED"
+                  ]
+                }
+              },
+              "required": [
+                "bodyAr",
+                "bodyEn",
+                "createdAt",
+                "id",
+                "isRead",
+                "titleAr",
+                "titleEn",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "contractVersion",
+          "items",
+          "unreadCount"
         ],
         "additionalProperties": false
       },
@@ -1639,6 +1799,49 @@
           "amount",
           "expectedSequence",
           "termsVersionId"
+        ],
+        "additionalProperties": false
+      },
+      "RegisterDeviceTokenRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ANDROID",
+              "IOS",
+              "WEB"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "platform",
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "RegisterDeviceTokenResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "registered": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "contractVersion",
+          "registered"
         ],
         "additionalProperties": false
       },
@@ -1763,6 +1966,102 @@
           "expiryDate",
           "fullNameEn",
           "nationality"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateNotificationPreferencesRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "emailEnabled": {
+            "type": "boolean"
+          },
+          "notifyDeposits": {
+            "type": "boolean"
+          },
+          "notifyEndingSoon": {
+            "type": "boolean"
+          },
+          "notifyMarketing": {
+            "type": "boolean"
+          },
+          "notifyOutbid": {
+            "type": "boolean"
+          },
+          "pushEnabled": {
+            "type": "boolean"
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietHoursEnd": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "quietHoursStart": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "smsEnabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserNotificationPreferences": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          },
+          "notifyDeposits": {
+            "type": "boolean"
+          },
+          "notifyEndingSoon": {
+            "type": "boolean"
+          },
+          "notifyMarketing": {
+            "type": "boolean"
+          },
+          "notifyOutbid": {
+            "type": "boolean"
+          },
+          "pushEnabled": {
+            "type": "boolean"
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietHoursEnd": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "quietHoursStart": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "smsEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "contractVersion",
+          "emailEnabled",
+          "notifyDeposits",
+          "notifyEndingSoon",
+          "notifyMarketing",
+          "notifyOutbid",
+          "pushEnabled",
+          "quietHoursEnabled",
+          "quietHoursEnd",
+          "quietHoursStart",
+          "smsEnabled"
         ],
         "additionalProperties": false
       },
@@ -1894,6 +2193,37 @@
       }
     },
     "/me/preferences": {
+      "get": {
+        "operationId": "get_mePreferences",
+        "parameters": [],
+        "summary": "Get profile preferences",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserNotificationPreferences"
+                }
+              }
+            },
+            "description": "User notification and profile preferences"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      },
       "patch": {
         "operationId": "patch_mePreferences",
         "parameters": [],
@@ -1901,10 +2231,122 @@
         "tags": [
           "me"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "501": {
-            "description": "Contract inventory entry; implementation is planned"
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserNotificationPreferences"
+                }
+              }
+            },
+            "description": "Updated user preferences"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/me/device-tokens": {
+      "post": {
+        "operationId": "post_meDevice_tokens",
+        "parameters": [],
+        "summary": "Register device push token",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterDeviceTokenResponse"
+                }
+              }
+            },
+            "description": "Device token registered"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/me/device-tokens/{token}": {
+      "delete": {
+        "operationId": "delete_meDevice_tokensToken",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Unregister device push token",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterDeviceTokenResponse"
+                }
+              }
+            },
+            "description": "Device token unregistered"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
           }
         }
       }
@@ -2741,10 +3183,102 @@
         "tags": [
           "me"
         ],
-        "x-implementation-status": "planned",
+        "x-implementation-status": "contracted",
         "responses": {
-          "501": {
-            "description": "Contract inventory entry; implementation is planned"
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            },
+            "description": "List of user notifications"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/me/notifications/{id}/read": {
+      "post": {
+        "operationId": "post_meNotificationsIdRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "summary": "Mark notification read",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationReadResponse"
+                }
+              }
+            },
+            "description": "Notification marked read"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
+          }
+        }
+      }
+    },
+    "/me/notifications/read-all": {
+      "post": {
+        "operationId": "post_meNotificationsRead_all",
+        "parameters": [],
+        "summary": "Mark all notifications read",
+        "tags": [
+          "me"
+        ],
+        "x-implementation-status": "contracted",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllNotificationsReadResponse"
+                }
+              }
+            },
+            "description": "All notifications marked read"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client error"
           }
         }
       }
