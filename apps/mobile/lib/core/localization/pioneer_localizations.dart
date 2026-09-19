@@ -149,6 +149,42 @@ class PioneerLocalizations {
   String get depositNow => isArabic ? 'إيداع الآن' : 'Deposit Now';
   String get proceedToPayment => isArabic ? 'المتابعة إلى بوابة الدفع' : 'Proceed to Payment';
   String get depositSuccessful => isArabic ? 'تم تأكيد إيداع التأمين بنجاح' : 'Deposit successfully cleared';
+
+  // Notifications & Preferences (Task 010)
+  String get notificationPreferences => isArabic ? 'تفضيلات الإشعارات' : 'Notification Preferences';
+  String get markAllAsRead => isArabic ? 'تحديد الكل كمقروء' : 'Mark all as read';
+  String get allNotifications => isArabic ? 'الكل' : 'All';
+  String get bidsFilter => isArabic ? 'المزايدات' : 'Bids';
+  String get depositsFilter => isArabic ? 'التأمين' : 'Deposits';
+  String get remindersFilter => isArabic ? 'التنبيهات' : 'Reminders';
+  String get today => isArabic ? 'اليوم' : 'Today';
+  String get yesterday => isArabic ? 'أمس' : 'Yesterday';
+  String get earlier => isArabic ? 'سابقاً' : 'Earlier';
+  String get noNotifications => isArabic ? 'لا توجد إشعارات بعد' : 'No notifications yet';
+  String get noNotificationsSubtitle => isArabic
+      ? 'سنخبرك عند وجود تحديثات على مزايداتك وتأمينك.'
+      : "We'll notify you when there are updates to your bids and deposits.";
+  String get deliveryChannels => isArabic ? 'قنوات الإرسال' : 'Delivery Channels';
+  String get pushNotifications => isArabic ? 'إشعارات الهاتف' : 'Push Notifications';
+  String get emailNotifications => isArabic ? 'البريد الإلكتروني' : 'Email Notifications';
+  String get smsNotifications => isArabic ? 'الرسائل النصية' : 'SMS Notifications';
+  String get alertCategories => isArabic ? 'أنواع التنبيهات' : 'Alert Categories';
+  String get notifyOutbidTitle => isArabic ? 'تنبيه تجاوز المزايدة' : 'Outbid Alerts';
+  String get notifyOutbidSubtitle => isArabic ? 'تنبيه فوري عندما يتجاوز أحدهم مزايدتك' : 'Immediate alert when someone outbids you';
+  String get notifyEndingSoonTitle => isArabic ? 'تنبيهات قرب انتهاء المزاد' : 'Ending Soon Milestones';
+  String get notifyEndingSoonSubtitle => isArabic ? 'تنبيهات عند 24 ساعة، 1 ساعة، 30 دقيقة و 5 دقائق' : 'Reminders at 24h, 1h, 30m, and 5m';
+  String get notifyDepositsTitle => isArabic ? 'عمليات التأمين والاسترداد' : 'Deposits & Refunds';
+  String get notifyDepositsSubtitle => isArabic ? 'تأكيدات إيداع مبالغ التأمين واستردادها' : 'Confirmations for deposit credits and refunds';
+  String get notifyMarketingTitle => isArabic ? 'العروض والإعلانات' : 'Marketing & Announcements';
+  String get notifyMarketingSubtitle => isArabic ? 'أخبار المزادات القادمة والفرص الحصرية' : 'Upcoming auctions and exclusive catalogs';
+  String get quietHours => isArabic ? 'ساعات الهدوء' : 'Quiet Hours';
+  String get quietHoursSubtitle => isArabic ? 'كتم الإشعارات غير العاجلة أثناء الليل' : 'Mute non-critical alerts during the night';
+  String get quietHoursStart => isArabic ? 'وقت البدء' : 'Start Time';
+  String get quietHoursEnd => isArabic ? 'وقت الانتهاء' : 'End Time';
+  String get quietHoursBypassNotice => isArabic
+      ? 'تنبيه: التنبيهات الحساسة للوقت (مثل تجاوز المزايدة وتمديد المزاد) ستصلك فوراً حتى خلال ساعات الهدوء.'
+      : 'Note: Time-critical bidding alerts (such as outbid and auction extensions) will always bypass quiet hours.';
+  String get preferencesSaved => isArabic ? 'تم حفظ التفضيلات بنجاح' : 'Preferences saved successfully';
 }
 
 class _PioneerLocalizationsDelegate extends LocalizationsDelegate<PioneerLocalizations> {

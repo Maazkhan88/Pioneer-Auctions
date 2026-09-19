@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
 import '../../core/theme/pioneer_colors.dart';
@@ -130,47 +131,51 @@ class PioneerAppHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildNotificationBell(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: PioneerColors.surfaceSubtle,
-            shape: BoxShape.circle,
-            border: Border.all(color: PioneerColors.borderLight, width: 1.0),
-          ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            size: 20,
-            color: PioneerColors.textPrimary,
-          ),
-        ),
-        Positioned(
-          top: -2,
-          right: -2,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: PioneerColors.bellBadgeRed,
+    return GestureDetector(
+      key: const ValueKey('header_notification_bell'),
+      onTap: () => context.push('/notifications'),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: PioneerColors.surfaceSubtle,
               shape: BoxShape.circle,
+              border: Border.all(color: PioneerColors.borderLight, width: 1.0),
             ),
-            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-            child: const Center(
-              child: Text(
-                '3',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  height: 1.0,
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              size: 20,
+              color: PioneerColors.textPrimary,
+            ),
+          ),
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: PioneerColors.bellBadgeRed,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: const Center(
+                child: Text(
+                  '3',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    height: 1.0,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

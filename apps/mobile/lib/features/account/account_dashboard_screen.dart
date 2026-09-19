@@ -346,7 +346,8 @@ class AccountDashboardScreen extends StatelessWidget {
         'route': '/kyc/verify',
       },
       {'icon': Icons.language_rounded, 'title': 'Language / اللغة', 'badge': isAr ? 'العربية' : 'EN', 'action': 'toggle_language'},
-      {'icon': Icons.notifications_none_rounded, 'title': 'Notification Center', 'badge': '3', 'route': null},
+      {'icon': Icons.notifications_none_rounded, 'title': 'Notification Center', 'badge': '3', 'route': '/notifications'},
+      {'icon': Icons.tune_rounded, 'title': 'Notification Preferences', 'badge': null, 'route': '/account/notifications'},
       {'icon': Icons.lock_outline_rounded, 'title': 'Security & Privacy', 'badge': null, 'route': null},
       {'icon': Icons.headset_mic_outlined, 'title': 'Customer Support', 'badge': null, 'route': null},
     ];

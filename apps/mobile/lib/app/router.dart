@@ -12,6 +12,8 @@ import '../features/live_auction/live_auction_room_screen.dart';
 import '../features/lot_detail/lot_detail_screen.dart';
 import '../features/materials/materials_screen.dart';
 import '../features/my_bids/my_bids_screen.dart';
+import '../features/notifications/notification_center_screen.dart';
+import '../features/notifications/notification_preferences_screen.dart';
 import '../features/real_estate/real_estate_screen.dart';
 import '../features/vehicles/vehicles_screen.dart';
 
@@ -147,6 +149,17 @@ class PioneerRouter {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/account/deposits',
         builder: (context, state) => const DepositDashboardScreen(),
+      ),
+      // Task 010: Notification Center & Preferences
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/account/notifications',
+        builder: (context, state) => const NotificationPreferencesScreen(),
       ),
       // Task 009: Hosted payment return contract stub
       GoRoute(
