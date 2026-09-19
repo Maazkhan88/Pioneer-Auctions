@@ -383,7 +383,7 @@ async function createApp(
         useValue: {
           createPaymentIntent: vi
             .fn()
-            .mockImplementation((_accountId, amountFils, _returnUrl) =>
+            .mockImplementation((_accountId, amountFils) =>
               Promise.resolve({
                 amount: { amountFils, currency: "AED" },
                 contractVersion: 1,

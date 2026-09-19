@@ -14,6 +14,7 @@ import { HealthModule } from "./health/health.module.js";
 import { IdentityModule } from "./identity/identity.module.js";
 import { CorrelationIdMiddleware } from "./observability/correlation-id.middleware.js";
 import { ObservabilityModule } from "./observability/observability.module.js";
+import { NotificationsModule } from "./notifications/notifications.module.js";
 import { PaymentsModule } from "./payments/payments.module.js";
 
 @Module({
@@ -25,6 +26,7 @@ import { PaymentsModule } from "./payments/payments.module.js";
     AuditModule,
     AuctionsModule,
     BiddingModule,
+    NotificationsModule,
     PaymentsModule,
     HealthModule,
     ContractsModule,
