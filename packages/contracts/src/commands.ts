@@ -3,12 +3,15 @@ import { z } from "zod";
 import { MyBidStatusSchema, ReserveStatusSchema } from "./auction.js";
 import {
   CommandMetaSchema,
+  ContractVersionSchema,
+  CurrencySchema,
   EmiratesIdNumberSchema,
   IsoDateSchema,
   IsoDateTimeSchema,
   KycStatusSchema,
   MoneySchema,
   NonNegativeIntegerSchema,
+  PositiveIntegerSchema,
   UuidSchema,
   createCommandAckSchema,
 } from "./core.js";
@@ -165,3 +168,135 @@ export type SubmitKycRestRequest = z.infer<typeof SubmitKycRestRequestSchema>;
 export type KycStatusResponse = z.infer<typeof KycStatusResponseSchema>;
 export type KycSessionResponse = z.infer<typeof KycSessionResponseSchema>;
 export type SubmitKycResponse = z.infer<typeof SubmitKycResponseSchema>;
+
+export const DepositBalanceSchema = z.strictObject({
+  availableFils: NonNegativeIntegerSchema,
+  currency: CurrencySchema,
+  heldFils: NonNegativeIntegerSchema,
+  totalDepositedFils: NonNegativeIntegerSchema,
+});
+export type DepositBalance = z.infer<typeof DepositBalanceSchema>;
+
+export const DepositLedgerEntryDirectionSchema = z.enum(["CREDIT", "DEBIT"]);
+export type DepositLedgerEntryDirection = z.infer<
+  typeof DepositLedgerEntryDirectionSchema
+>;
+
+export const DepositLedgerEntrySchema = z.strictObject({
+  amountFils: PositiveIntegerSchema,
+  createdAt: IsoDateTimeSchema,
+  currency: CurrencySchema,
+  direction: DepositLedgerEntryDirectionSchema,
+  id: UuidSchema,
+  lotId: UuidSchema.nullable().optional(),
+  reasonCode: z.string().min(1),
+});
+export type DepositLedgerEntry = z.infer<typeof DepositLedgerEntrySchema>;
+
+export const DepositRefundRequestStatusSchema = z.enum([
+  "REQUESTED",
+  "PROCESSING",
+  "COMPLETED",
+  "REJECTED",
+]);
+export type DepositRefundRequestStatus = z.infer<
+  typeof DepositRefundRequestStatusSchema
+>;
+
+export const DepositRefundRequestSchema = z.strictObject({
+  amountFils: PositiveIntegerSchema,
+  currency: CurrencySchema,
+  estimatedSettlementDays: PositiveIntegerSchema,
+  id: UuidSchema,
+  reason: z.string().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
+  requestedAt: IsoDateTimeSchema,
+  status: DepositRefundRequestStatusSchema,
+});
+export type DepositRefundRequest = z.infer<typeof DepositRefundRequestSchema>;
+
+export const GetDepositsResponseSchema = z.strictObject({
+  balance: DepositBalanceSchema,
+  contractVersion: ContractVersionSchema,
+  entries: z.array(DepositLedgerEntrySchema),
+  refundRequests: z.array(DepositRefundRequestSchema),
+});
+export type GetDepositsResponse = z.infer<typeof GetDepositsResponseSchema>;
+
+export const PaymentIntentStatusSchema = z.enum([
+  "REQUIRES_ACTION",
+  "PROCESSING",
+  "SUCCEEDED",
+  "FAILED",
+  "CANCELLED",
+]);
+export type PaymentIntentStatus = z.infer<typeof PaymentIntentStatusSchema>;
+
+export const CreateDepositPaymentIntentRequestSchema = z.strictObject({
+  amount: MoneySchema,
+  returnUrl: z.string().min(1).optional(),
+});
+export type CreateDepositPaymentIntentRequest = z.infer<
+  typeof CreateDepositPaymentIntentRequestSchema
+>;
+
+export const PaymentIntentResponseSchema = z.strictObject({
+  amount: MoneySchema,
+  contractVersion: ContractVersionSchema,
+  id: z.string().min(1),
+  provider: z.string().min(1),
+  redirectUrl: z.string().min(1),
+  status: PaymentIntentStatusSchema,
+});
+export type PaymentIntentResponse = z.infer<typeof PaymentIntentResponseSchema>;
+
+export const CreateDepositRefundRequestSchema = z.strictObject({
+  amount: MoneySchema,
+  reason: z.string().trim().max(500).optional(),
+});
+export type CreateDepositRefundRequest = z.infer<
+  typeof CreateDepositRefundRequestSchema
+>;
+
+export const DepositRefundResponseSchema = z.strictObject({
+  contractVersion: ContractVersionSchema,
+  refundRequest: DepositRefundRequestSchema,
+});
+export type DepositRefundResponse = z.infer<typeof DepositRefundResponseSchema>;
+
+export const AdminDepositAccountBalanceSchema = z.strictObject({
+  accountId: UuidSchema,
+  availableFils: NonNegativeIntegerSchema,
+  displayName: z.string().min(1),
+  email: z.string().nullable().optional(),
+  heldFils: NonNegativeIntegerSchema,
+  phoneE164: z.string().nullable().optional(),
+  totalDepositedFils: NonNegativeIntegerSchema,
+});
+export type AdminDepositAccountBalance = z.infer<
+  typeof AdminDepositAccountBalanceSchema
+>;
+
+export const AdminDepositActionsResponseSchema = z.strictObject({
+  accounts: z.array(AdminDepositAccountBalanceSchema),
+  contractVersion: ContractVersionSchema,
+  pendingRefunds: z.array(DepositRefundRequestSchema),
+  recentEntries: z.array(DepositLedgerEntrySchema),
+});
+export type AdminDepositActionsResponse = z.infer<
+  typeof AdminDepositActionsResponseSchema
+>;
+
+export const AdminApproveRefundRequestSchema = z.strictObject({
+  note: z.string().trim().max(500).optional(),
+});
+export type AdminApproveRefundRequest = z.infer<
+  typeof AdminApproveRefundRequestSchema
+>;
+
+export const AdminRejectRefundRequestSchema = z.strictObject({
+  rejectionReason: z.string().trim().min(3).max(500),
+});
+export type AdminRejectRefundRequest = z.infer<
+  typeof AdminRejectRefundRequestSchema
+>;

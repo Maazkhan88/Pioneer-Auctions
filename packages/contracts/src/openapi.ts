@@ -2,10 +2,18 @@ import { z } from "zod";
 
 import { LotPublicStateSchema } from "./auction.js";
 import {
+  AdminApproveRefundRequestSchema,
+  AdminDepositActionsResponseSchema,
+  AdminRejectRefundRequestSchema,
   BidCommandAckSchema,
   BidLatestStateSchema,
+  CreateDepositPaymentIntentRequestSchema,
+  CreateDepositRefundRequestSchema,
+  DepositRefundResponseSchema,
+  GetDepositsResponseSchema,
   KycSessionResponseSchema,
   KycStatusResponseSchema,
+  PaymentIntentResponseSchema,
   PlaceBidRestRequestSchema,
   SetProxyBidRestRequestSchema,
   SubmitKycResponseSchema,
@@ -18,14 +26,22 @@ import { restOperations, type RestOperation } from "./rest.js";
 export const OPENAPI_PATH = "/api/v1/openapi.json";
 
 const componentSchemas = {
+  AdminApproveRefundRequest: AdminApproveRefundRequestSchema,
+  AdminDepositActionsResponse: AdminDepositActionsResponseSchema,
+  AdminRejectRefundRequest: AdminRejectRefundRequestSchema,
   ApiError: ApiErrorSchema,
   BidCommandAck: BidCommandAckSchema,
   BidLatestState: BidLatestStateSchema,
+  CreateDepositPaymentIntentRequest: CreateDepositPaymentIntentRequestSchema,
+  CreateDepositRefundRequest: CreateDepositRefundRequestSchema,
+  DepositRefundResponse: DepositRefundResponseSchema,
+  GetDepositsResponse: GetDepositsResponseSchema,
   KycSessionResponse: KycSessionResponseSchema,
   KycStatusResponse: KycStatusResponseSchema,
   LotPublicState: LotPublicStateSchema,
   LotSnapshot: LotSnapshotSchema,
   Money: MoneySchema,
+  PaymentIntentResponse: PaymentIntentResponseSchema,
   PlaceBidRestRequest: PlaceBidRestRequestSchema,
   SetProxyBidRestRequest: SetProxyBidRestRequestSchema,
   SubmitKycResponse: SubmitKycResponseSchema,
@@ -142,6 +158,99 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
       responses: {
         "200": jsonResponse("KYC submission result", "SubmitKycResponse"),
         "4XX": jsonResponse("Validation or client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/me/deposits") {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Deposit balances and ledger history",
+          "GetDepositsResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "post" &&
+    operation.path === "/deposit-payment-intents"
+  ) {
+    return {
+      ...base,
+      requestBody: jsonBody("CreateDepositPaymentIntentRequest"),
+      responses: {
+        "201": jsonResponse(
+          "Payment intent created",
+          "PaymentIntentResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "get" &&
+    operation.path === "/deposit-payment-intents/{id}"
+  ) {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Payment intent status",
+          "PaymentIntentResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "post" &&
+    operation.path === "/deposit-refund-requests"
+  ) {
+    return {
+      ...base,
+      requestBody: jsonBody("CreateDepositRefundRequest"),
+      responses: {
+        "201": jsonResponse(
+          "Deposit refund requested",
+          "DepositRefundResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/admin/deposit-actions") {
+    return {
+      ...base,
+      responses: {
+        "200": jsonResponse(
+          "Admin deposit actions and balances",
+          "AdminDepositActionsResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
+    };
+  }
+
+  if (
+    operation.method === "post" &&
+    operation.path === "/admin/deposit-actions/{id}"
+  ) {
+    return {
+      ...base,
+      requestBody: jsonBody("AdminApproveRefundRequest"),
+      responses: {
+        "200": jsonResponse(
+          "Deposit action applied",
+          "DepositRefundResponse",
+        ),
+        "4XX": jsonResponse("Client error", "ApiError"),
       },
     };
   }

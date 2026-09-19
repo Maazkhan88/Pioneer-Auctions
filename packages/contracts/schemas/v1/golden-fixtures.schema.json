@@ -173,6 +173,10 @@
                     "COMMAND_CONFLICT",
                     "RATE_LIMITED",
                     "PROVIDER_UNAVAILABLE",
+                    "REFUND_INSUFFICIENT_BALANCE",
+                    "PAYMENT_INTENT_NOT_FOUND",
+                    "INVALID_WEBHOOK_SIGNATURE",
+                    "DEPOSIT_REFUND_NOT_FOUND",
                     "VALIDATION_FAILED",
                     "INTERNAL_ERROR"
                   ]

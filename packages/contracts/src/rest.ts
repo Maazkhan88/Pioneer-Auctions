@@ -46,19 +46,31 @@ export const restOperations = [
   operation("delete", "/lots/{lotId}/watch", "Unwatch lot"),
   operation("post", "/lots/{lotId}/terms-acceptances", "Accept lot terms"),
   operation("get", "/me/eligibility", "Explain bidding eligibility"),
-  operation("get", "/me/deposits", "List deposit balances and holds"),
+  operation(
+    "get",
+    "/me/deposits",
+    "List deposit balances and holds",
+    "contracted",
+  ),
   operation("get", "/me/transactions", "List account transactions"),
   operation(
     "post",
     "/deposit-payment-intents",
     "Create deposit payment intent",
+    "contracted",
   ),
   operation(
     "get",
     "/deposit-payment-intents/{id}",
     "Get deposit payment intent",
+    "contracted",
   ),
-  operation("post", "/deposit-refund-requests", "Request deposit refund"),
+  operation(
+    "post",
+    "/deposit-refund-requests",
+    "Request deposit refund",
+    "contracted",
+  ),
   operation("get", "/me/invoices", "List invoices and receipts"),
   operation("post", "/lots/{lotId}/bids", "Place bid", "contracted"),
   operation(
@@ -127,8 +139,18 @@ export const restOperations = [
     "/admin/consignment-reviews/{id}",
     "Decide consignment review",
   ),
-  operation("get", "/admin/deposit-actions", "List deposit actions"),
-  operation("post", "/admin/deposit-actions/{id}", "Apply deposit action"),
+  operation(
+    "get",
+    "/admin/deposit-actions",
+    "List deposit actions",
+    "contracted",
+  ),
+  operation(
+    "post",
+    "/admin/deposit-actions/{id}",
+    "Apply deposit action",
+    "contracted",
+  ),
   operation("get", "/admin/audit-events", "List immutable audit events"),
 ] as const satisfies readonly RestOperation[];
 
