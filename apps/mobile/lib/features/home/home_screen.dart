@@ -470,78 +470,81 @@ class _HomeScreenState extends State<HomeScreen> {
             separatorBuilder: (context, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final auc = upcoming[index];
-              return Container(
-                width: 250,
-                decoration: BoxDecoration(
-                  color: PioneerColors.surface,
-                  borderRadius: PioneerSpacing.borderRadiusCard,
-                  border: Border.all(color: PioneerColors.border, width: 1.0),
-                  boxShadow: PioneerSpacing.cardShadow,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Stack(
-                      children: [
-                        AspectRatio(
-                          aspectRatio: 2.2,
-                          child: Image.asset(auc.imagePath, fit: BoxFit.cover),
-                        ),
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: PioneerColors.upcomingPurple,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              'UPCOMING',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
+              return GestureDetector(
+                onTap: () => context.push('/auctions'),
+                child: Container(
+                  width: 250,
+                  decoration: BoxDecoration(
+                    color: PioneerColors.surface,
+                    borderRadius: PioneerSpacing.borderRadiusCard,
+                    border: Border.all(color: PioneerColors.border, width: 1.0),
+                    boxShadow: PioneerSpacing.cardShadow,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 2.2,
+                            child: Image.asset(auc.imagePath, fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: PioneerColors.upcomingPurple,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'UPCOMING',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              auc.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: PioneerTypography.cardTitle.copyWith(fontSize: 13.0),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              auc.dateString,
-                              style: PioneerTypography.metadata.copyWith(
-                                color: PioneerColors.brandPurple,
-                                fontWeight: FontWeight.w600,
+                        ],
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                auc.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: PioneerTypography.cardTitle.copyWith(fontSize: 13.0),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${auc.lotCount} Lots • ${auc.location}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: PioneerTypography.metadata,
-                            ),
-                          ],
+                              const SizedBox(height: 3),
+                              Text(
+                                auc.dateString,
+                                style: PioneerTypography.metadata.copyWith(
+                                  color: PioneerColors.brandPurple,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${auc.lotCount} Lots • ${auc.location}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: PioneerTypography.metadata,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -601,78 +604,81 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPromotionalBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: PioneerSpacing.pageMargin),
-      child: Container(
-        height: 130,
-        decoration: BoxDecoration(
-          borderRadius: PioneerSpacing.borderRadiusCard,
-          boxShadow: PioneerSpacing.cardShadow,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                AssetPaths.bannerDubai,
-                fit: BoxFit.cover,
+      child: GestureDetector(
+        onTap: () => context.push('/browse'),
+        child: Container(
+          height: 130,
+          decoration: BoxDecoration(
+            borderRadius: PioneerSpacing.borderRadiusCard,
+            boxShadow: PioneerSpacing.cardShadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  AssetPaths.bannerDubai,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      PioneerColors.brandPurpleDeep.withValues(alpha: 0.92),
-                      PioneerColors.brandPurple.withValues(alpha: 0.7),
-                    ],
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        PioneerColors.brandPurpleDeep.withValues(alpha: 0.92),
+                        PioneerColors.brandPurple.withValues(alpha: 0.7),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Trusted Auctions for a\nStronger Tomorrow',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: PioneerColors.brandOrange,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Row(
-                          children: [
-                            Text(
-                              'Bid. Win. Move Forward. >',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Trusted Auctions for a\nStronger Tomorrow',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: PioneerColors.brandOrange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Bid. Win. Move Forward. >',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

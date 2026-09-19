@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/asset_paths.dart';
 import '../../core/constants/pioneer_spacing.dart';
@@ -174,20 +175,23 @@ class AccountDashboardScreen extends StatelessWidget {
                                         : PioneerColors.statusExpiredText,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                isVerified
-                                    ? 'Verified Account'
-                                    : isPending
-                                        ? 'Verification Pending'
-                                        : 'Identity Unverified',
-                                style: TextStyle(
-                                  color: isVerified
-                                      ? PioneerColors.winningBadgeText
+                              Flexible(
+                                child: Text(
+                                  isVerified
+                                      ? 'Verified Account'
                                       : isPending
-                                          ? PioneerColors.statusPendingText
-                                          : PioneerColors.statusExpiredText,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                                          ? 'Verification Pending'
+                                          : 'Identity Unverified',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: isVerified
+                                        ? PioneerColors.winningBadgeText
+                                        : isPending
+                                            ? PioneerColors.statusPendingText
+                                            : PioneerColors.statusExpiredText,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
                             ],
@@ -276,7 +280,7 @@ class AccountDashboardScreen extends StatelessWidget {
       {'label': 'Registered', 'value': '${user.registeredAuctionsCount}', 'route': '/auctions'},
       {'label': 'Watchlist', 'value': '${user.watchlistCount}', 'route': '/browse'},
       {'label': 'Won Lots', 'value': '${user.wonLotsCount}', 'route': '/my-bids'},
-      {'label': 'Payments Due', 'value': PioneerFormatters.currency(user.paymentsDueAmount), 'route': null},
+      {'label': 'Payments Due', 'value': PioneerFormatters.currency(user.paymentsDueAmount), 'route': '/account/deposits'},
     ];
 
     return SizedBox(
@@ -337,7 +341,7 @@ class AccountDashboardScreen extends StatelessWidget {
       {'icon': Icons.gavel_rounded, 'title': 'My Registered Auctions', 'badge': null, 'route': '/auctions'},
       {'icon': Icons.receipt_long_rounded, 'title': 'My Bids & Orders', 'badge': null, 'route': '/my-bids'},
       {'icon': Icons.emoji_events_rounded, 'title': 'Won Assets', 'badge': null, 'route': '/my-bids'},
-      {'icon': Icons.credit_card_rounded, 'title': 'Payments & Invoices', 'badge': null, 'route': null},
+      {'icon': Icons.credit_card_rounded, 'title': 'Payments & Invoices', 'badge': null, 'route': '/account/deposits'},
       {'icon': Icons.account_balance_wallet_outlined, 'title': 'Security Deposits', 'badge': 'Active', 'route': '/account/deposits'},
       {
         'icon': Icons.folder_open_rounded,
@@ -348,8 +352,8 @@ class AccountDashboardScreen extends StatelessWidget {
       {'icon': Icons.language_rounded, 'title': 'Language / اللغة', 'badge': isAr ? 'العربية' : 'EN', 'action': 'toggle_language'},
       {'icon': Icons.notifications_none_rounded, 'title': 'Notification Center', 'badge': '3', 'route': '/notifications'},
       {'icon': Icons.tune_rounded, 'title': 'Notification Preferences', 'badge': null, 'route': '/account/notifications'},
-      {'icon': Icons.lock_outline_rounded, 'title': 'Security & Privacy', 'badge': null, 'route': null},
-      {'icon': Icons.headset_mic_outlined, 'title': 'Customer Support', 'badge': null, 'route': null},
+      {'icon': Icons.lock_outline_rounded, 'title': 'Security & Privacy', 'badge': null, 'action': 'open_security_modal'},
+      {'icon': Icons.headset_mic_outlined, 'title': 'Customer Support', 'badge': null, 'action': 'open_support_modal'},
     ];
 
     return Padding(
@@ -427,6 +431,10 @@ class AccountDashboardScreen extends StatelessWidget {
                       duration: const Duration(seconds: 1),
                     ),
                   );
+                } else if (item['action'] == 'open_support_modal') {
+                  _showCustomerSupportSheet(context);
+                } else if (item['action'] == 'open_security_modal') {
+                  _showSecurityPrivacySheet(context);
                 } else if (item['route'] != null) {
                   context.push(item['route'] as String);
                 }
@@ -438,6 +446,331 @@ class AccountDashboardScreen extends StatelessWidget {
     ),
   );
 }
+
+  void _showCustomerSupportSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: PioneerColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: PioneerColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: PioneerColors.brandPurpleLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.headset_mic_rounded, color: PioneerColors.brandPurple, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Customer Support & Concierge', style: PioneerTypography.sectionTitle),
+                        SizedBox(height: 2),
+                        Text('Pioneer Auctions UAE • 24/7 Floor Desk', style: PioneerTypography.metadata),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: PioneerColors.textSecondary),
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildSupportTile(
+                context,
+                icon: Icons.phone_in_talk_rounded,
+                title: 'Toll-Free UAE',
+                subtitle: '800-PIONEER (800-746-6337)',
+                actionLabel: 'Copy',
+                copyText: '8007466337',
+              ),
+              const SizedBox(height: 10),
+              _buildSupportTile(
+                context,
+                icon: Icons.chat_bubble_outline_rounded,
+                title: 'WhatsApp Concierge',
+                subtitle: '+971 4 333 1234',
+                actionLabel: 'Copy',
+                copyText: '+97143331234',
+              ),
+              const SizedBox(height: 10),
+              _buildSupportTile(
+                context,
+                icon: Icons.mail_outline_rounded,
+                title: 'Support Email',
+                subtitle: 'support@pioneerauctions.ae',
+                actionLabel: 'Copy',
+                copyText: 'support@pioneerauctions.ae',
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: PioneerColors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: PioneerColors.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, size: 16, color: PioneerColors.brandPurple),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Floor Support Hours: Mon – Sat, 8:00 AM – 8:00 PM GST\nAl Aweer Auto Market, Ras Al Khor, Dubai, UAE',
+                        style: PioneerTypography.metadata.copyWith(fontSize: 11, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSupportTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String actionLabel,
+    required String copyText,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: PioneerColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: PioneerColors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: PioneerColors.brandPurple),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 11, color: PioneerColors.textSecondary, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: PioneerColors.textPrimary)),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: PioneerColors.brandPurple,
+              visualDensity: VisualDensity.compact,
+              side: const BorderSide(color: PioneerColors.brandPurpleLight),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            ),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: copyText));
+              HapticFeedback.lightImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$title copied to clipboard'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Text(actionLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSecurityPrivacySheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: PioneerColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: PioneerColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: PioneerColors.brandPurpleLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.shield_outlined, color: PioneerColors.brandPurple, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Security & Privacy', style: PioneerTypography.sectionTitle),
+                        SizedBox(height: 2),
+                        Text('UAE Regulatory Compliance & Data Safety', style: PioneerTypography.metadata),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: PioneerColors.textSecondary),
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: PioneerColors.statusWonBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: PioneerColors.registeredGreen.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.verified_user_rounded, color: PioneerColors.registeredGreen, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Emirates ID Bank-Grade Encryption',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: PioneerColors.statusWonText),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'All document scans and identity artifacts are encrypted with AES-256 at rest and transmitted using TLS 1.3 in compliance with UAE Federal Decree-Law No. 45 of 2021 on Personal Data Protection.',
+                            style: PioneerTypography.metadata.copyWith(fontSize: 11, color: PioneerColors.textSecondary, height: 1.3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: PioneerColors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: PioneerColors.border),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.fingerprint_rounded, size: 20, color: PioneerColors.brandPurple),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text('Biometric Authentication', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: PioneerColors.winningBadgeBg,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text('Active', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: PioneerColors.winningBadgeText)),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.lock_clock_rounded, size: 20, color: PioneerColors.brandPurple),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text('Session Auto-Timeout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                        Text('15 Minutes', style: PioneerTypography.metadata.copyWith(fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: PioneerColors.brandPurple,
+                  side: const BorderSide(color: PioneerColors.brandPurple),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pioneer Terms of Service (v2026.1) is active on this session'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: const Text('View Terms of Service & Privacy Policy', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildRecentActivitySection(List<UserActivityItem> activities) {
     return Padding(

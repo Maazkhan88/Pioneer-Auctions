@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pioneer_mobile/core/constants/pioneer_spacing.dart';
 import 'package:pioneer_mobile/core/localization/pioneer_localizations.dart';
 import 'package:pioneer_mobile/core/models/lot_model.dart';
+import 'package:pioneer_mobile/design_system/components/pioneer_app_header.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_bottom_nav.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_slide_to_bid.dart';
 import 'package:pioneer_mobile/design_system/components/pioneer_status_chip.dart';
+import 'package:pioneer_mobile/features/account/account_dashboard_screen.dart';
+import 'package:pioneer_mobile/features/lot_detail/lot_detail_screen.dart';
 
 void main() {
   testWidgets('PioneerSlideToBid renders and triggers onSubmitRequested', (WidgetTester tester) async {
@@ -151,5 +154,75 @@ void main() {
     expect(find.text('OUTBID'), findsOneWidget);
     expect(find.text('WON'), findsOneWidget);
     expect(find.text('LOST'), findsOneWidget);
+  });
+
+  testWidgets('PioneerAppHeader avatar has ValueKey and is interactive', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        localizationsDelegates: PioneerLocalizations.localizationsDelegates,
+        supportedLocales: PioneerLocalizations.supportedLocales,
+        home: Scaffold(
+          appBar: PioneerAppHeader(isRoot: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final avatar = find.byKey(const ValueKey('header_avatar'));
+    expect(avatar, findsOneWidget);
+  });
+
+  testWidgets('LotDetailScreen share button copies link to clipboard', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: PioneerLocalizations.localizationsDelegates,
+        supportedLocales: PioneerLocalizations.supportedLocales,
+        home: const LotDetailScreen(lotId: 'lot-118'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final shareButton = find.byKey(const ValueKey('lot_share_button'));
+    expect(shareButton, findsOneWidget);
+
+    await tester.tap(shareButton);
+    await tester.pump();
+
+    expect(find.text('Lot link copied to clipboard'), findsOneWidget);
+  });
+
+  testWidgets('AccountDashboardScreen opens Customer Support and Security sheets', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390 * 2.1872, 1200 * 2.1872);
+    tester.view.devicePixelRatio = 2.1872;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: PioneerLocalizations.localizationsDelegates,
+        supportedLocales: PioneerLocalizations.supportedLocales,
+        home: const AccountDashboardScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Customer Support'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Customer Support & Concierge'), findsOneWidget);
+    expect(find.text('Toll-Free UAE'), findsOneWidget);
+    expect(find.text('800-PIONEER (800-746-6337)'), findsOneWidget);
+    expect(find.text('WhatsApp Concierge'), findsOneWidget);
+
+    // Close sheet
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+
+    // Tap Security & Privacy
+    await tester.tap(find.widgetWithText(ListTile, 'Security & Privacy'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Security & Privacy'), findsWidgets);
+    expect(find.text('Emirates ID Bank-Grade Encryption'), findsOneWidget);
+    expect(find.text('Biometric Authentication'), findsOneWidget);
   });
 }

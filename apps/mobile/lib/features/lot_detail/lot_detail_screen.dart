@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pioneer_contracts/pioneer_contracts.dart' hide State;
 import '../../core/bidding/bid_state_machine.dart';
@@ -126,8 +127,18 @@ class _LotDetailScreenState extends State<LotDetailScreen> {
             onPressed: () => setState(() => _isWatchlisted = !_isWatchlisted),
           ),
           IconButton(
+            key: const ValueKey('lot_share_button'),
             icon: const Icon(Icons.share_outlined, color: PioneerColors.textPrimary, size: 22),
-            onPressed: () {},
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: 'https://auctions.pioneer.ae/lots/${widget.lotId}'));
+              HapticFeedback.lightImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Lot link copied to clipboard'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
           ),
         ],
       ),

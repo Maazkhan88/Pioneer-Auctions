@@ -180,20 +180,24 @@ class PioneerAppHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildAvatar(BuildContext context) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: const BoxDecoration(
-        color: PioneerColors.avatarBg,
-        shape: BoxShape.circle,
-      ),
-      child: const Center(
-        child: Text(
-          'AA',
-          style: TextStyle(
-            color: PioneerColors.avatarText,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
+    return GestureDetector(
+      key: const ValueKey('header_avatar'),
+      onTap: () => context.push('/account'),
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: const BoxDecoration(
+          color: PioneerColors.avatarBg,
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Text(
+            'AA',
+            style: TextStyle(
+              color: PioneerColors.avatarText,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
