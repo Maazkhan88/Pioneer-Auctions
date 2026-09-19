@@ -1,51 +1,62 @@
-import { Body, Controller, Headers, Inject, Post, Req } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  Req,
+} from "@nestjs/common";
 import type { Request } from "express";
 
-import { AuditService } from "../audit/audit.service.js";
 import { SessionService } from "../identity/session.service.js";
+import { DepositsService } from "./deposits.service.js";
 import { parseCreateDepositPaymentIntentInput } from "./payment-intent.dto.js";
-import { PAYMENT_PROVIDER } from "./payment-provider.js";
-import type { PaymentIntent, PaymentProvider } from "./payment-provider.js";
 
 @Controller("/api/v1/deposit-payment-intents")
 export class PaymentsController {
   constructor(
-    @Inject(PAYMENT_PROVIDER)
-    private readonly paymentProvider: PaymentProvider,
+    @Inject(DepositsService)
+    private readonly depositsService: DepositsService,
     @Inject(SessionService)
     private readonly session: SessionService,
-    @Inject(AuditService)
-    private readonly audit: AuditService,
   ) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async createDepositPaymentIntent(
     @Body() body: unknown,
     @Req() request: Request,
     @Headers("x-correlation-id") correlationId = "missing-correlation-id",
-  ): Promise<PaymentIntent> {
+  ) {
     const account = await this.session.requireTestHeaderAccount(request);
     const input = parseCreateDepositPaymentIntentInput(body);
-    const intent = await this.paymentProvider.createIntent({
-      accountId: account.id,
-      amountFils: input.amountFils,
+    const intent = await this.depositsService.createPaymentIntent(
+      account.id,
+      input.amountFils,
+      input.returnUrl,
       correlationId,
-      purpose: "DEPOSIT",
-    });
+    );
 
-    await this.audit.record({
-      action: "payments.deposit_intent.create",
-      actorAccountId: account.id,
-      correlationId,
-      metadata: {
-        amountFils: intent.amountFils,
-        provider: intent.provider,
-        status: intent.status,
-      },
-      subjectId: null,
-      subjectType: "payment_intent",
-    });
+    return {
+      ...intent,
+      amountFils: intent.amount.amountFils,
+    };
+  }
 
-    return intent;
+  @Get(":id")
+  async getDepositPaymentIntent(
+    @Param("id") id: string,
+    @Req() request: Request,
+  ) {
+    const account = await this.session.requireTestHeaderAccount(request);
+    const intent = await this.depositsService.getPaymentIntent(id, account.id);
+    return {
+      ...intent,
+      amountFils: intent.amount.amountFils,
+    };
   }
 }

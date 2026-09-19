@@ -13,6 +13,7 @@ import {
 import { AdminPermissionGuard } from "../src/identity/admin-permission.guard.js";
 import { SessionService } from "../src/identity/session.service.js";
 import { PaymentsController } from "../src/payments/payments.controller.js";
+import { DepositsService } from "../src/payments/deposits.service.js";
 import { PAYMENT_PROVIDER } from "../src/payments/payment-provider.js";
 
 const activeAccount: AccountSummary = {
@@ -375,6 +376,23 @@ async function createApp(
             redirectUrl: "/api/v1/dummy-payments/dummy_test/complete",
             status: "REQUIRES_ACTION",
           }),
+        },
+      },
+      {
+        provide: DepositsService,
+        useValue: {
+          createPaymentIntent: vi
+            .fn()
+            .mockImplementation((_accountId, amountFils, _returnUrl) =>
+              Promise.resolve({
+                amount: { amountFils, currency: "AED" },
+                contractVersion: 1,
+                id: "dummy_test",
+                provider: "dummy",
+                redirectUrl: "/api/v1/dummy-payments/dummy_test/complete",
+                status: "REQUIRES_ACTION",
+              }),
+            ),
         },
       },
     ],
