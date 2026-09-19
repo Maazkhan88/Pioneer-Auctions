@@ -31,10 +31,31 @@ class ApiClient {
   }
 
   /// Fetches public lot cards list from GET /api/v1/lots.
-  /// Backend returns `{ contractVersion: 1, items: PublicLotCard[] }`.
-  Future<ApiResult<List<PublicLotCard>>> fetchLots() async {
+  /// Backend returns `{ contractVersion: 1, items: PublicLotCard[], total, limit, offset }`.
+  Future<ApiResult<List<PublicLotCard>>> fetchLots({
+    String? q,
+    String? category,
+    String? status,
+    int? minPriceFils,
+    int? maxPriceFils,
+    String? sort,
+    int? limit,
+    int? offset,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl/api/v1/lots');
+      final queryParams = <String, String>{};
+      if (q != null && q.trim().isNotEmpty) queryParams['q'] = q.trim();
+      if (category != null && category.isNotEmpty) queryParams['category'] = category;
+      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (minPriceFils != null) queryParams['minPriceFils'] = minPriceFils.toString();
+      if (maxPriceFils != null) queryParams['maxPriceFils'] = maxPriceFils.toString();
+      if (sort != null && sort.isNotEmpty) queryParams['sort'] = sort;
+      if (limit != null) queryParams['limit'] = limit.toString();
+      if (offset != null) queryParams['offset'] = offset.toString();
+
+      final uri = Uri.parse('$baseUrl/api/v1/lots').replace(
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
       final response = await _httpClient
           .get(uri, headers: ApiConfig.defaultHeaders())
           .timeout(const Duration(seconds: 4));

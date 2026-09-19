@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { LotPublicStateSchema } from "./auction.js";
+import {
+  LotPublicStateSchema,
+  PublicLotCardSchema,
+  SearchLotsResponseSchema,
+} from "./auction.js";
 import {
   AdminApproveRefundRequestSchema,
   AdminDepositActionsResponseSchema,
@@ -53,8 +57,10 @@ const componentSchemas = {
   NotificationListResponse: NotificationListResponseSchema,
   PaymentIntentResponse: PaymentIntentResponseSchema,
   PlaceBidRestRequest: PlaceBidRestRequestSchema,
+  PublicLotCard: PublicLotCardSchema,
   RegisterDeviceTokenRequest: RegisterDeviceTokenRequestSchema,
   RegisterDeviceTokenResponse: RegisterDeviceTokenResponseSchema,
+  SearchLotsResponse: SearchLotsResponseSchema,
   SetProxyBidRestRequest: SetProxyBidRestRequestSchema,
   SubmitKycResponse: SubmitKycResponseSchema,
   SubmitKycRestRequest: SubmitKycRestRequestSchema,
@@ -127,6 +133,26 @@ function createOperation(operation: RestOperation): Record<string, unknown> {
       ...base,
       requestBody: jsonBody("SetProxyBidRestRequest"),
       responses: commandResponses(),
+    };
+  }
+
+  if (operation.method === "get" && operation.path === "/lots") {
+    return {
+      ...base,
+      parameters: [
+        { in: "query", name: "q", schema: { type: "string" }, required: false },
+        { in: "query", name: "category", schema: { type: "string", enum: ["VEHICLES", "REAL_ESTATE", "GENERAL_MATERIALS"] }, required: false },
+        { in: "query", name: "status", schema: { type: "string" }, required: false },
+        { in: "query", name: "minPriceFils", schema: { type: "integer" }, required: false },
+        { in: "query", name: "maxPriceFils", schema: { type: "integer" }, required: false },
+        { in: "query", name: "sort", schema: { type: "string", enum: ["ending_soon", "price_asc", "price_desc", "newest", "most_bids"], default: "ending_soon" }, required: false },
+        { in: "query", name: "limit", schema: { type: "integer", default: 50 }, required: false },
+        { in: "query", name: "offset", schema: { type: "integer", default: 0 }, required: false },
+      ],
+      responses: {
+        "200": jsonResponse("Search lots result", "SearchLotsResponse"),
+        "4XX": jsonResponse("Client error", "ApiError"),
+      },
     };
   }
 

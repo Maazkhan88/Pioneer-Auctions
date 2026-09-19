@@ -21,6 +21,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   String _selectedMake = 'All Makes';
   String _searchQuery = '';
   bool _filtersExpanded = false;
+  String _sortBy = 'Latest';
   List<LotItem> _vehicleLots = [];
   bool _isLoading = true;
 
@@ -52,6 +53,20 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       }
       return true;
     }).toList();
+
+    filteredLots.sort((a, b) {
+      switch (_sortBy) {
+        case 'Price: Low to High':
+          return a.currentBid.compareTo(b.currentBid);
+        case 'Price: High to Low':
+          return b.currentBid.compareTo(a.currentBid);
+        case 'Ending Soon':
+          return a.timeRemaining.compareTo(b.timeRemaining);
+        case 'Latest':
+        default:
+          return b.id.compareTo(a.id);
+      }
+    });
 
     return Scaffold(
       backgroundColor: PioneerColors.background,
@@ -93,27 +108,37 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                           color: PioneerColors.textPrimary,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: PioneerColors.surfaceSubtle,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: PioneerColors.border),
-                        ),
-                        child: const Row(
-                          children: [
-                            Text(
-                              'Sort: Latest',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: PioneerColors.textPrimary,
+                      PopupMenuButton<String>(
+                        initialValue: _sortBy,
+                        onSelected: (val) => setState(() => _sortBy = val),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: PioneerColors.surfaceSubtle,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: PioneerColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Sort: $_sortBy',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: PioneerColors.textPrimary,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: PioneerColors.textSecondary),
-                          ],
+                              const SizedBox(width: 4),
+                              const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: PioneerColors.textSecondary),
+                            ],
+                          ),
                         ),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'Latest', child: Text('Latest')),
+                          const PopupMenuItem(value: 'Price: Low to High', child: Text('Price: Low to High')),
+                          const PopupMenuItem(value: 'Price: High to Low', child: Text('Price: High to Low')),
+                          const PopupMenuItem(value: 'Ending Soon', child: Text('Ending Soon')),
+                        ],
                       ),
                     ],
                   ),

@@ -168,6 +168,162 @@ export class LotsRepository {
     return result.rows.map(toAdminLotView);
   }
 
+  async search(
+    query: {
+      category?: string;
+      limit?: number;
+      maxPriceFils?: number;
+      minPriceFils?: number;
+      offset?: number;
+      q?: string;
+      sort?: "ending_soon" | "price_asc" | "price_desc" | "newest" | "most_bids";
+      status?: string;
+    },
+  ): Promise<{ items: AdminLotView[]; total: number }> {
+    if (process.env.PIONEER_ADMIN_DUMMY_LOTS === "1") {
+      let lots = dummyAdminLots.filter((l) => l.lifecycle !== "DRAFT");
+      if (query.q) {
+        const qLower = query.q.toLowerCase();
+        lots = lots.filter(
+          (l) =>
+            l.titleEn.toLowerCase().includes(qLower) ||
+            l.titleAr.toLowerCase().includes(qLower) ||
+            l.lotNumber.toLowerCase().includes(qLower),
+        );
+      }
+      if (query.status) {
+        lots = lots.filter((l) => l.lifecycle === query.status);
+      }
+      if (query.minPriceFils !== undefined) {
+        lots = lots.filter(
+          (l) => (l.currentBidFils ?? l.startingBidFils) >= query.minPriceFils!,
+        );
+      }
+      if (query.maxPriceFils !== undefined) {
+        lots = lots.filter(
+          (l) => (l.currentBidFils ?? l.startingBidFils) <= query.maxPriceFils!,
+        );
+      }
+      if (query.sort === "price_asc") {
+        lots.sort(
+          (a, b) =>
+            (a.currentBidFils ?? a.startingBidFils) -
+            (b.currentBidFils ?? b.startingBidFils),
+        );
+      } else if (query.sort === "price_desc") {
+        lots.sort(
+          (a, b) =>
+            (b.currentBidFils ?? b.startingBidFils) -
+            (a.currentBidFils ?? a.startingBidFils),
+        );
+      } else if (query.sort === "newest") {
+        lots.sort(
+          (a, b) =>
+            new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
+        );
+      } else {
+        lots.sort(
+          (a, b) =>
+            new Date(a.closesAt).getTime() - new Date(b.closesAt).getTime(),
+        );
+      }
+      const total = lots.length;
+      const offset = query.offset ?? 0;
+      const limit = query.limit ?? 50;
+      const paged = lots.slice(offset, offset + limit);
+      return { items: paged, total };
+    }
+
+    const conditions: string[] = ["lifecycle != 'DRAFT'"];
+    const params: unknown[] = [];
+
+    if (query.q) {
+      params.push(`%${query.q}%`);
+      conditions.push(
+        `(title_en ILIKE $${params.length} OR title_ar ILIKE $${params.length} OR lot_number ILIKE $${params.length})`,
+      );
+    }
+
+    if (query.status) {
+      params.push(query.status);
+      conditions.push(`lifecycle = $${params.length}`);
+    }
+
+    if (query.minPriceFils !== undefined) {
+      params.push(query.minPriceFils);
+      conditions.push(
+        `COALESCE(current_bid_fils, starting_bid_fils) >= $${params.length}`,
+      );
+    }
+
+    if (query.maxPriceFils !== undefined) {
+      params.push(query.maxPriceFils);
+      conditions.push(
+        `COALESCE(current_bid_fils, starting_bid_fils) <= $${params.length}`,
+      );
+    }
+
+    let orderBy = "closes_at ASC, id ASC";
+    if (query.sort === "price_asc") {
+      orderBy = "COALESCE(current_bid_fils, starting_bid_fils) ASC, id ASC";
+    } else if (query.sort === "price_desc") {
+      orderBy = "COALESCE(current_bid_fils, starting_bid_fils) DESC, id ASC";
+    } else if (query.sort === "newest") {
+      orderBy = "starts_at DESC, id DESC";
+    }
+
+    const whereClause = conditions.join(" AND ");
+
+    const countResult = await this.database.query<{ count: string }>(
+      `SELECT count(*)::text FROM lots WHERE ${whereClause}`,
+      params,
+    );
+    const total = Number.parseInt(countResult.rows[0]?.count ?? "0", 10);
+
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    params.push(limit);
+    const limitIndex = params.length;
+    params.push(offset);
+    const offsetIndex = params.length;
+
+    const result = await this.database.query<LotRow>(
+      `
+        SELECT
+          id::text,
+          auction_id::text,
+          lot_number,
+          title_en,
+          title_ar,
+          lifecycle,
+          starts_at,
+          closes_at,
+          starting_bid_fils::text,
+          current_bid_fils::text,
+          next_minimum_bid_fils::text,
+          minimum_increment_fils::text,
+          bid_increment_source,
+          minimum_increment_percent_bps,
+          reserve_price_fils::text,
+          reserve_status,
+          sequence,
+          soft_close_window_ms,
+          soft_close_extension_ms,
+          soft_close_maximum_extensions
+        FROM lots
+        WHERE ${whereClause}
+        ORDER BY ${orderBy}
+        LIMIT $${limitIndex} OFFSET $${offsetIndex}
+      `,
+      params,
+    );
+
+    return {
+      items: result.rows.map(toAdminLotView),
+      total,
+    };
+  }
+
   async findById(id: string): Promise<AdminLotView | null> {
     if (process.env.PIONEER_ADMIN_DUMMY_LOTS === "1") {
       return dummyAdminLots.find((lot) => lot.id === id) ?? null;

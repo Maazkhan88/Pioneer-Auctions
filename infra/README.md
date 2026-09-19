@@ -13,11 +13,11 @@ The API readiness endpoint probes PostgreSQL and Redis with a bounded timeout. M
 
 Required runbooks before MVP release:
 
-- test auction and go/no-go;
-- auction pause/resume/cancel;
-- bid event replay and snapshot rebuild;
-- Redis degradation and recovery;
-- database point-in-time recovery;
-- payment webhook replay and reconciliation;
-- notification provider outage;
-- credential rotation and suspected account compromise.
+- [01: Test auction and go/no-go](runbooks/01-test-auction-and-go-no-go.md)
+- [02: Auction pause/resume/cancel](runbooks/02-auction-pause-resume-cancel.md)
+- [03: Bid event replay and snapshot rebuild](runbooks/03-bid-event-replay-and-snapshot-rebuild.md)
+- [04: Redis degradation and recovery](runbooks/04-redis-degradation-and-recovery.md)
+- [05: Database point-in-time recovery](runbooks/05-database-point-in-time-recovery.md)
+- [06: Payment webhook replay and reconciliation](runbooks/06-payment-webhook-replay-and-reconciliation.md)
+- [07: Notification provider outage](runbooks/07-notification-provider-outage.md)
+- [08: Credential rotation and suspected account compromise](runbooks/08-credential-rotation-and-suspected-compromise.md)

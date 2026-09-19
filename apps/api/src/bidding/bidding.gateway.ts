@@ -1,4 +1,4 @@
-import { Inject } from "@nestjs/common";
+import { Inject, Optional } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,11 +6,12 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import type { OnGatewayConnection } from "@nestjs/websockets";
+import type { OnGatewayConnection, OnGatewayDisconnect } from "@nestjs/websockets";
 import type { Server, Socket } from "socket.io";
 import { ZodError } from "zod";
 
 import { SessionService } from "../identity/session.service.js";
+import { MetricsService } from "../observability/metrics.service.js";
 import {
   parseLotSubscribeInput,
   parseLotSyncInput,
@@ -47,7 +48,7 @@ type AuthenticatedSocket = Socket & {
   cors: { credentials: true, origin: true },
   namespace: "/auctions/v1",
 })
-export class BiddingGateway implements OnGatewayConnection {
+export class BiddingGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private readonly server!: Server;
 
@@ -58,9 +59,13 @@ export class BiddingGateway implements OnGatewayConnection {
     private readonly outboxPublisher: BiddingOutboxPublisher,
     @Inject(SessionService)
     private readonly session: SessionService,
+    @Inject(MetricsService)
+    @Optional()
+    private readonly metrics?: MetricsService,
   ) {}
 
   handleConnection(socket: AuthenticatedSocket): void {
+    this.metrics?.recordSocketConnect();
     const accountId = socket.handshake.auth["testAccountId"];
     if (typeof accountId === "string" && accountId.length > 0) {
       socket.data.accountId = accountId;
@@ -74,6 +79,10 @@ export class BiddingGateway implements OnGatewayConnection {
       maxCommandSkewSequence: 250,
       serverTime: new Date().toISOString(),
     });
+  }
+
+  handleDisconnect(_socket: Socket): void {
+    this.metrics?.recordSocketDisconnect();
   }
 
   @SubscribeMessage("lot:subscribe")
@@ -127,19 +136,32 @@ export class BiddingGateway implements OnGatewayConnection {
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() body: unknown,
   ): Promise<PlaceBidAck> {
+    const start = Date.now();
     try {
       const input = parseSocketPlaceBidCommand(body);
       const account = await this.session.requireAccountId(
         socket.data.accountId,
       );
-      return await this.bidding.placeManualBid({
+      const ack = await this.bidding.placeManualBid({
         accountId: account.id,
         commandId: input.commandId,
         correlationId: socketCorrelationId(socket),
         input,
         lotId: input.lotId,
       });
+      const durationMs = Date.now() - start;
+      if (ack.status === "ACCEPTED") {
+        this.metrics?.recordBidCommand("ACCEPTED", durationMs);
+        if (ack.result?.extended) {
+          this.metrics?.recordSoftCloseExtension();
+        }
+      } else {
+        this.metrics?.recordBidCommand("REJECTED", durationMs, ack.error?.code ?? "REJECTED");
+      }
+      return ack;
     } catch (error) {
+      const durationMs = Date.now() - start;
+      this.metrics?.recordBidCommand("REJECTED", durationMs, "EXCEPTION");
       return bidCommandError(error, commandIdFrom(body));
     }
   }
@@ -149,25 +171,36 @@ export class BiddingGateway implements OnGatewayConnection {
     @ConnectedSocket() socket: AuthenticatedSocket,
     @MessageBody() body: unknown,
   ): Promise<SetProxyBidAck> {
+    const start = Date.now();
     try {
       const input = parseSocketSetProxyBidCommand(body);
       const account = await this.session.requireAccountId(
         socket.data.accountId,
       );
-      return await this.bidding.setProxyBid({
+      const ack = await this.bidding.setProxyBid({
         accountId: account.id,
         commandId: input.commandId,
         correlationId: socketCorrelationId(socket),
         input,
         lotId: input.lotId,
       });
+      const durationMs = Date.now() - start;
+      if (ack.status === "ACCEPTED") {
+        this.metrics?.recordBidCommand("ACCEPTED", durationMs);
+      } else {
+        this.metrics?.recordBidCommand("REJECTED", durationMs, ack.error?.code ?? "REJECTED");
+      }
+      return ack;
     } catch (error) {
+      const durationMs = Date.now() - start;
+      this.metrics?.recordBidCommand("REJECTED", durationMs, "EXCEPTION");
       return bidCommandError(error, commandIdFrom(body));
     }
   }
 
   async publishPendingOutboxEvents(batchSize = 100): Promise<number> {
-    return this.outboxPublisher.publishPendingLotEvents(this.server, batchSize);
+    const published = await this.outboxPublisher.publishPendingLotEvents(this.server, batchSize);
+    return published;
   }
 
   private async syncAck(

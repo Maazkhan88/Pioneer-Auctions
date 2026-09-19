@@ -10,6 +10,7 @@ class PublicLotCard {
   final String lifecycle;
   final Money currentBid;
   final Money nextMinimumBid;
+  final String? category;
   final String reserveStatus;
   final DateTime closesAt;
   final int contractVersion;
@@ -23,6 +24,7 @@ class PublicLotCard {
     required this.lifecycle,
     required this.currentBid,
     required this.nextMinimumBid,
+    this.category,
     required this.reserveStatus,
     required this.closesAt,
     this.contractVersion = 1,
@@ -43,6 +45,7 @@ class PublicLotCard {
       titleEn: json['titleEn'] as String? ?? json['title'] as String? ?? '',
       titleAr: json['titleAr'] as String? ?? '',
       lifecycle: json['lifecycle'] as String? ?? 'DRAFT',
+      category: json['category'] as String?,
       currentBid: currentBidRaw is Map<String, dynamic>
           ? Money.fromJson(currentBidRaw)
           : Money(amountFils: (currentBidRaw is num ? (currentBidRaw * 100).round() : 0), currency: Currency.AED),
@@ -62,6 +65,7 @@ class PublicLotCard {
         'titleEn': titleEn,
         'titleAr': titleAr,
         'lifecycle': lifecycle,
+        if (category != null) 'category': category,
         'currentBid': currentBid.toJson(),
         'nextMinimumBid': nextMinimumBid.toJson(),
         'reserveStatus': reserveStatus,
@@ -85,10 +89,16 @@ class PublicLotCard {
 class PublicLotsResponse {
   final int contractVersion;
   final List<PublicLotCard> items;
+  final int total;
+  final int limit;
+  final int offset;
 
   const PublicLotsResponse({
     this.contractVersion = 1,
     required this.items,
+    this.total = 0,
+    this.limit = 50,
+    this.offset = 0,
   });
 
   factory PublicLotsResponse.fromJson(Map<String, dynamic> json) {
@@ -106,11 +116,17 @@ class PublicLotsResponse {
     return PublicLotsResponse(
       contractVersion: json['contractVersion'] as int? ?? 1,
       items: lotItems,
+      total: json['total'] as int? ?? lotItems.length,
+      limit: json['limit'] as int? ?? lotItems.length,
+      offset: json['offset'] as int? ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'contractVersion': contractVersion,
         'items': items.map((i) => i.toJson()).toList(),
+        'total': total,
+        'limit': limit,
+        'offset': offset,
       };
 }

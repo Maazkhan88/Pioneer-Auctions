@@ -31,3 +31,11 @@ Prove the platform can be operated safely during a real auction and that stated 
 ## Validation
 
 Archive load configuration, commit/release identifier, environment shape, result summary, raw artifact location, and defects found. Re-run after material bidding/storage changes.
+
+## Status: COMPLETE
+
+1. **Prometheus Metrics Endpoint**: Delivered in `apps/api/src/observability/metrics.service.ts` and `metrics.controller.ts` exposing `GET /metrics`, `GET /api/v1/metrics`, and `GET /api/v1/metrics/summary`. Tested in `test/metrics.spec.ts`.
+2. **Reproducible Bidding Load Harness**: Delivered in `apps/api/test/load/bidding-load-harness.ts` modeling concurrency, throughput, proxies, and p50/p90/p95/p99 latency with clean domain vs technical failure separation. Validated in `test/bidding-load.spec.ts`.
+3. **Failure Injection Test Suite**: Delivered in `apps/api/test/failure-injection.spec.ts` proving fail-closed DB locks, crash snapshot recovery, and transactional outbox drainage during transport failures.
+4. **Operational Runbooks**: Delivered 8 production SOPs in `infra/runbooks/` with severities, owners, diagnostic steps, mitigation commands, and post-incident checklists.
+

@@ -96,3 +96,57 @@ export type SoftCloseState = z.infer<typeof SoftCloseStateSchema>;
 export type SoftClosePolicy = z.infer<typeof SoftClosePolicySchema>;
 export type LotPublicState = z.infer<typeof LotPublicStateSchema>;
 export type MyBidState = z.infer<typeof MyBidStateSchema>;
+
+export const LotCategorySchema = z.enum([
+  "VEHICLES",
+  "REAL_ESTATE",
+  "GENERAL_MATERIALS",
+]);
+
+export const LotSearchSortSchema = z.enum([
+  "ending_soon",
+  "price_asc",
+  "price_desc",
+  "newest",
+  "most_bids",
+]);
+
+export const SearchLotsQuerySchema = z.object({
+  category: LotCategorySchema.optional(),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+  maxPriceFils: z.coerce.number().int().nonnegative().optional(),
+  minPriceFils: z.coerce.number().int().nonnegative().optional(),
+  offset: z.coerce.number().int().nonnegative().default(0),
+  q: z.string().trim().optional(),
+  sort: LotSearchSortSchema.default("ending_soon"),
+  status: LotLifecycleSchema.optional(),
+});
+
+export const PublicLotCardSchema = z.object({
+  auctionId: z.string(),
+  category: LotCategorySchema.optional(),
+  closesAt: IsoDateTimeSchema,
+  contractVersion: z.literal(1),
+  currentBid: MoneySchema,
+  lifecycle: LotLifecycleSchema,
+  lotId: z.string(),
+  lotNumber: z.string(),
+  nextMinimumBid: MoneySchema,
+  reserveStatus: ReserveStatusSchema,
+  titleAr: z.string(),
+  titleEn: z.string(),
+});
+
+export const SearchLotsResponseSchema = z.object({
+  contractVersion: z.literal(1),
+  items: z.array(PublicLotCardSchema),
+  limit: z.number().int().positive(),
+  offset: z.number().int().nonnegative(),
+  total: NonNegativeIntegerSchema,
+});
+
+export type LotCategory = z.infer<typeof LotCategorySchema>;
+export type LotSearchSort = z.infer<typeof LotSearchSortSchema>;
+export type SearchLotsQuery = z.infer<typeof SearchLotsQuerySchema>;
+export type PublicLotCard = z.infer<typeof PublicLotCardSchema>;
+export type SearchLotsResponse = z.infer<typeof SearchLotsResponseSchema>;

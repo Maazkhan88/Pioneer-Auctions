@@ -4,7 +4,10 @@ import {
   Inject,
   NotFoundException,
   Param,
+  Query,
 } from "@nestjs/common";
+import { SearchLotsQuerySchema } from "@pioneer/contracts";
+import type { SearchLotsResponse } from "@pioneer/contracts";
 
 import type { AdminLotView } from "./lot.dto.js";
 import { LotsRepository } from "./lots.repository.js";
@@ -32,6 +35,9 @@ export interface PublicLotCard {
 export interface PublicLotsResponse {
   readonly contractVersion: 1;
   readonly items: readonly PublicLotCard[];
+  readonly limit?: number;
+  readonly offset?: number;
+  readonly total?: number;
 }
 
 @Controller("/api/v1/lots")
@@ -42,13 +48,21 @@ export class PublicLotsController {
   ) {}
 
   @Get()
-  async list(): Promise<PublicLotsResponse> {
-    const lots = await this.lots.list();
+  async list(
+    @Query() rawQuery?: Record<string, unknown>,
+  ): Promise<SearchLotsResponse> {
+    const parsed = SearchLotsQuerySchema.safeParse(rawQuery ?? {});
+    const query = parsed.success
+      ? parsed.data
+      : { limit: 50, offset: 0, sort: "ending_soon" as const };
+
+    const { items, total } = await this.lots.search(query);
     return {
       contractVersion: 1,
-      items: lots
-        .filter((lot) => lot.lifecycle !== "DRAFT")
-        .map(toPublicLotCard),
+      items: items.map(toPublicLotCard),
+      limit: query.limit,
+      offset: query.offset,
+      total,
     };
   }
 
