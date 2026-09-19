@@ -140,7 +140,7 @@ This is the MVP surface. Additive response fields are allowed within v1; removal
 | PATCH  | `/me/preferences`         | Locale, timezone, theme, numeral and notifications preferences |
 | GET    | `/me/kyc`                 | KYC state and next permitted action                            |
 | POST   | `/me/kyc/sessions`        | Start fallback KYC provider session                            |
-| POST   | `/me/kyc/submit`          | Submit Emirates ID KYC verification                           |
+| POST   | `/me/kyc/submit`          | Submit Emirates ID KYC verification                            |
 
 ### Catalog and auctions
 
@@ -360,10 +360,116 @@ Response (`200 OK`):
 ```
 
 Validation rules:
+
 - `emiratesIdNumber`: strictly formatted as `784-YYYY-XXXXXXX-Z`.
 - `dateOfBirth`: must be an ISO calendar date (`YYYY-MM-DD`) in the past.
 - `expiryDate`: must be an ISO calendar date (`YYYY-MM-DD`) in the future.
 - `cardFrontRef`, `cardBackRef`: uploaded document object references.
+
+## 5c. Security deposits, payment intents, and refund REST endpoints
+
+Base paths:
+
+- `/api/v1/me/deposits`
+- `/api/v1/deposit-payment-intents`
+- `/api/v1/deposit-refund-requests`
+- `/api/v1/admin/deposit-actions`
+
+All buyer-facing deposit and payment endpoints require authentication (`x-pioneer-test-account-id` header or Bearer session token). Admin endpoints require administrative credentials. Webhook endpoints (`/api/v1/webhooks/payments/:provider`) require valid HMAC-SHA256 signatures from the configured provider and operate behind server-to-server security boundaries.
+
+### `GET /api/v1/me/deposits`
+
+Returns the authenticated account's current deposit balance, ledger transaction history, and active refund requests.
+
+Response (`200 OK`):
+
+```json
+{
+  "contractVersion": 1,
+  "balance": {
+    "availableFils": 500000,
+    "currency": "AED",
+    "heldFils": 0,
+    "totalDepositedFils": 500000
+  },
+  "entries": [
+    {
+      "amountFils": 500000,
+      "createdAt": "2026-07-14T17:00:00.000Z",
+      "currency": "AED",
+      "direction": "CREDIT",
+      "id": "22222222-2222-4222-8222-222222222222",
+      "reasonCode": "TOPUP_GATEWAY"
+    }
+  ],
+  "refundRequests": []
+}
+```
+
+### `POST /api/v1/deposit-payment-intents`
+
+Creates a hosted checkout session intent for security deposit top-up. Card processing is strictly hosted off-platform.
+
+Request (`POST /api/v1/deposit-payment-intents`):
+
+```json
+{
+  "amount": {
+    "currency": "AED",
+    "amountFils": 500000
+  },
+  "returnUrl": "https://pioneerauctions.ae/account/deposits"
+}
+```
+
+Response (`201 Created`):
+
+```json
+{
+  "contractVersion": 1,
+  "id": "pi_11111111-1111-4111-8111-111111111111",
+  "provider": "dummy_payment",
+  "redirectUrl": "https://checkout.dummy-pay.com/pay/pi_11111111-1111-4111-8111-111111111111",
+  "status": "REQUIRES_ACTION",
+  "amount": {
+    "currency": "AED",
+    "amountFils": 500000
+  }
+}
+```
+
+### `POST /api/v1/deposit-refund-requests`
+
+Submits a request to withdraw unheld security deposit funds back to the original funding source. Follows a 3–5 business day settlement SLA.
+
+Request (`POST /api/v1/deposit-refund-requests`):
+
+```json
+{
+  "amount": {
+    "currency": "AED",
+    "amountFils": 200000
+  },
+  "reason": "Unused deposit refund"
+}
+```
+
+Response (`201 Created`):
+
+```json
+{
+  "contractVersion": 1,
+  "refundRequest": {
+    "amountFils": 200000,
+    "currency": "AED",
+    "estimatedSettlementDays": 5,
+    "id": "33333333-3333-4333-8333-333333333333",
+    "reason": "Unused deposit refund",
+    "requestedAt": "2026-07-14T17:00:00.000Z",
+    "status": "REQUESTED"
+  }
+}
+```
 
 ## 6. Socket.IO connection and rooms
 

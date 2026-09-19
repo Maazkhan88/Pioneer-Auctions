@@ -241,3 +241,18 @@ Record durable product and architecture decisions here. New entries are append-o
   - **Privacy & Audit Logging**: Sensitive PII (full Emirates ID numbers, full names, biometric images, document references) is redacted from application logs and security audit records.
   - **Online vs Live-Hall Boundary**: Pioneer timed online auctions and live-hall auctions have separate lifecycles. Timed soft-close bidding extensions (2-minute window) apply to online timed auctions only and are not conflated with live auctioneer calls.
 - Why: Ensures regulatory compliance, prevents fraudulent bidding bypasses, protects buyer privacy, and guarantees system resilience under network and provider downtime.
+
+## DEC-027: Append-Only Balanced Deposit Ledger, Hosted Checkout Lifecycle, and Idempotent Webhook Processing
+
+- Date: 2026-09-19
+- Status: Accepted
+- Context: In Task 009, implementing security deposits, payment intents, and refund lifecycle required an authoritative, audited financial model preventing double crediting, unbacked bids, and unsafe storage of card data.
+- Decision:
+  - **Append-Only Financial Ledger**: `deposit_ledger` is strictly append-only. Balance is derived dynamically as `COALESCE(SUM(CASE WHEN entry_type = 'CREDIT' THEN amount_fils ELSE -amount_fils END), 0)`. Negative balances are prevented by database check constraints (`CHECK (amount_fils > 0)`) and service-level pre-validation. All monetary values are tracked in pure integer fils per DEC-025.
+  - **Hosted Checkout Lifecycle**: Pioneer servers never collect, process, or store raw credit card numbers or secrets (PCI-DSS out-of-scope compliance). Clients request a hosted session via `POST /api/v1/deposit-payment-intents`, and the client opens the returned hosted payment gateway URL.
+  - **Authoritative Clearance via Signed Webhooks Only**: Client return URLs (`returnUrl`) NEVER credit the user's ledger or grant bidding eligibility. Clearance occurs exclusively upon receiving a cryptographically verified webhook from the payment provider.
+  - **Idempotent Webhook Ingestion**: Webhook signatures are verified via HMAC-SHA256 (`PaymentProvider.verifyWebhookSignature`). Ingestion is recorded in `payment_webhook_inbox (provider, event_id)` with a unique constraint. Duplicate webhook deliveries are acknowledged with 200 OK without re-executing ledger mutations. Webhook inbox recording, intent status update, and deposit ledger insertion execute in a single PostgreSQL transaction.
+  - **Safe Development Provider Boundary**: `DummyPaymentProvider` validates HMAC-SHA256 signatures, parses payloads with Zod, generates deterministic hosted payment URLs, and throws an explicit fatal exception if instantiated when `NODE_ENV === 'production'` without live provider credentials.
+  - **Deposit Refund Lifecycle**: Refund requests (`POST /api/v1/deposit-refund-requests`) follow a state machine: `REQUESTED` -> `COMPLETED` / `REJECTED`. Refunds require that the requested amount does not exceed the available unheld balance, state a 3–5 business day SLA, and require two-step administrative approval or rejection with audited notes (`POST /api/v1/admin/deposit-actions`).
+  - **Authoritative Deposit Gating**: `lots.required_deposit_fils` configures required security deposits on restricted or high-value lots. The mobile bidding flow (`BidConfirmationSheet`) evaluates available deposit balance before submission and routes users directly to `/account/deposits` when additional deposit funds are required.
+- Why: Guarantees financial ledger integrity, prevents race conditions and double crediting from webhook replays, preserves PCI-DSS compliance, and prevents unbacked or unauthorized bidding.

@@ -4,11 +4,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   BidCommandAckSchema,
+  CreateDepositPaymentIntentRequestSchema,
+  CreateDepositRefundRequestSchema,
+  DepositRefundResponseSchema,
   EmiratesIdNumberSchema,
+  GetDepositsResponseSchema,
   GoldenFixturesSchema,
   IsoDateTimeSchema,
   KycStatusSchema,
   MoneySchema,
+  PaymentIntentResponseSchema,
   PlaceBidRestRequestSchema,
   SubmitKycVerificationCommandSchema,
   UuidSchema,
@@ -132,7 +137,7 @@ describe("documentation drift", () => {
       (match) => JSON.parse(match[1] ?? "null"),
     );
 
-    expect(examples).toHaveLength(7);
+    expect(examples).toHaveLength(12);
     expect(PlaceBidRestRequestSchema.safeParse(examples[0])).toMatchObject({
       success: true,
     });
@@ -145,9 +150,30 @@ describe("documentation drift", () => {
     expect(examples[3].contractVersion).toBe(1);
     expect(KycStatusSchema.safeParse(examples[3].status).success).toBe(true);
     expect(examples[4].contractVersion).toBe(1);
-    expect(EmiratesIdNumberSchema.safeParse(examples[5].emiratesIdNumber).success).toBe(true);
+    expect(
+      EmiratesIdNumberSchema.safeParse(examples[5].emiratesIdNumber).success,
+    ).toBe(true);
     expect(examples[6].contractVersion).toBe(1);
     expect(KycStatusSchema.safeParse(examples[6].status).success).toBe(true);
+    expect(GetDepositsResponseSchema.safeParse(examples[7])).toMatchObject({
+      success: true,
+    });
+    expect(
+      CreateDepositPaymentIntentRequestSchema.safeParse(examples[8]),
+    ).toMatchObject({
+      success: true,
+    });
+    expect(PaymentIntentResponseSchema.safeParse(examples[9])).toMatchObject({
+      success: true,
+    });
+    expect(
+      CreateDepositRefundRequestSchema.safeParse(examples[10]),
+    ).toMatchObject({
+      success: true,
+    });
+    expect(DepositRefundResponseSchema.safeParse(examples[11])).toMatchObject({
+      success: true,
+    });
   });
 
   it("keeps the REST inventory aligned with generated OpenAPI inputs", async () => {
@@ -193,12 +219,12 @@ describe("formatMoney", () => {
 
 describe("Emirates ID & KYC Contracts", () => {
   it("validates standard 15-digit UAE Emirates ID format", () => {
-    expect(
-      EmiratesIdNumberSchema.safeParse("784-1988-1234567-1").success,
-    ).toBe(true);
-    expect(
-      EmiratesIdNumberSchema.safeParse("784-2001-7654321-9").success,
-    ).toBe(true);
+    expect(EmiratesIdNumberSchema.safeParse("784-1988-1234567-1").success).toBe(
+      true,
+    );
+    expect(EmiratesIdNumberSchema.safeParse("784-2001-7654321-9").success).toBe(
+      true,
+    );
 
     // Invalid formats
     expect(EmiratesIdNumberSchema.safeParse("784198812345671").success).toBe(
@@ -240,4 +266,3 @@ describe("Emirates ID & KYC Contracts", () => {
     ).toBe(true);
   });
 });
-
