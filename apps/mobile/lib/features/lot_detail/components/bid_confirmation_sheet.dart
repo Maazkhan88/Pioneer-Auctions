@@ -273,6 +273,24 @@ class _BidConfirmationSheetState extends State<BidConfirmationSheet> {
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
+                  ] else if (state.reason == BidGateReason.depositRequired ||
+                      state.reason == BidGateReason.depositInsufficient) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: PioneerColors.brandOrange,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        context.push('/account/deposits');
+                      },
+                      icon: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                      label: const Text(
+                        'Add Security Deposit Now',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
                   ],
                 ],
               ),

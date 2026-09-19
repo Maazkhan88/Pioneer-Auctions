@@ -136,6 +136,19 @@ class PioneerLocalizations {
   String get outbidMessage => isArabic ? 'تمت المزايدة عليك بسعر أعلى!' : 'You have been outbid!';
   String get bidAcceptedTitle => isArabic ? 'تم قبول المزايدة بنجاح!' : 'Bid Accepted!';
   String get bidRejectedTitle => isArabic ? 'لم يتم قبول المزايدة' : 'Bid Not Accepted';
+
+  // Security Deposit Dashboard
+  String get availableDeposit => isArabic ? 'الرصيد المتاح' : 'Available Balance';
+  String get totalDeposited => isArabic ? 'إجمالي الودائع' : 'Total Deposited';
+  String get heldDeposit => isArabic ? 'المبالغ المحجوزة' : 'Locked Holds';
+  String get addDeposit => isArabic ? 'إيداع تأمين جديد' : 'Add Security Deposit';
+  String get requestRefund => isArabic ? 'طلب استرداد التأمين' : 'Request Refund';
+  String get refundNotice => isArabic ? 'يتم استرداد التأمين إلى وسيلة الدفع الأصلية خلال ٣-٥ أيام عمل.' : 'Refunds are processed back to your original payment method within 3–5 business days.';
+  String get depositHistory => isArabic ? 'سجل عمليات التأمين' : 'Deposit History';
+  String get enterCustomAmount => isArabic ? 'أدخل مبلغاً مخصصاً' : 'Enter custom amount';
+  String get depositNow => isArabic ? 'إيداع الآن' : 'Deposit Now';
+  String get proceedToPayment => isArabic ? 'المتابعة إلى بوابة الدفع' : 'Proceed to Payment';
+  String get depositSuccessful => isArabic ? 'تم تأكيد إيداع التأمين بنجاح' : 'Deposit successfully cleared';
 }
 
 class _PioneerLocalizationsDelegate extends LocalizationsDelegate<PioneerLocalizations> {

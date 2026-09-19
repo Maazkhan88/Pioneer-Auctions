@@ -5,6 +5,7 @@ import '../design_system/components/pioneer_bottom_nav.dart';
 import '../features/account/account_dashboard_screen.dart';
 import '../features/auctions/auctions_screen.dart';
 import '../features/browse/browse_lots_screen.dart';
+import '../features/deposits/deposit_dashboard_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/kyc/emirates_id_verification_screen.dart';
 import '../features/live_auction/live_auction_room_screen.dart';
@@ -140,6 +141,12 @@ class PioneerRouter {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/kyc/verify',
         builder: (context, state) => const EmiratesIdVerificationScreen(),
+      ),
+      // Task 009: Security Deposits dashboard
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/account/deposits',
+        builder: (context, state) => const DepositDashboardScreen(),
       ),
       // Task 009: Hosted payment return contract stub
       GoRoute(

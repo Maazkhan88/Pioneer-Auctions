@@ -338,7 +338,7 @@ class AccountDashboardScreen extends StatelessWidget {
       {'icon': Icons.receipt_long_rounded, 'title': 'My Bids & Orders', 'badge': null, 'route': '/my-bids'},
       {'icon': Icons.emoji_events_rounded, 'title': 'Won Assets', 'badge': null, 'route': '/my-bids'},
       {'icon': Icons.credit_card_rounded, 'title': 'Payments & Invoices', 'badge': null, 'route': null},
-      {'icon': Icons.account_balance_wallet_outlined, 'title': 'Security Deposits', 'badge': null, 'route': null},
+      {'icon': Icons.account_balance_wallet_outlined, 'title': 'Security Deposits', 'badge': 'Active', 'route': '/account/deposits'},
       {
         'icon': Icons.folder_open_rounded,
         'title': 'Documents & Emirates ID',
