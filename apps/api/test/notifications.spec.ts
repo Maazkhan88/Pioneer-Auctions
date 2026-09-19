@@ -2,7 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 import type { Request } from "express";
 import { describe, expect, it } from "vitest";
 
-import type { SessionService } from "../src/auth/session.service.js";
+import type { SessionService } from "../src/identity/session.service.js";
 import type { DatabasePool } from "../src/database/database.pool.js";
 import { DeviceTokensController } from "../src/notifications/device-tokens.controller.js";
 import { NotificationsController } from "../src/notifications/notifications.controller.js";
